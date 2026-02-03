@@ -1,0 +1,38 @@
+{
+	"name": "vitest-config",
+	"version": "1.5.0",
+	"type": "module",
+	"peerDependencies": {
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	},
+	"devDependencies": {
+		"typescript-config": "workspace:*",
+		"tsdown-config": "workspace:*",
+		"vite": "catalog:"
+	},
+	"exports": {
+		"./frontend": {
+			"types": "./src/frontend.ts",
+			"import": "./dist/frontend.mjs",
+			"require": "./dist/frontend.mjs"
+		},
+		"./node": {
+			"types": "./src/node.ts",
+			"import": "./dist/node.mjs",
+			"require": "./dist/node.mjs"
+		},
+		"./base": {
+			"types": "./src/base.ts",
+			"import": "./dist/base.mjs",
+			"require": "./dist/base.mjs"
+		}
+	},
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit",
+		"build": "tsdown --config-loader unrun",
+		"format": "biome format --write .",
+		"format:check": "biome ci ."
+	}
+}

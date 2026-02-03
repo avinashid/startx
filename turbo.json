@@ -1,21 +1,66 @@
 {
-  "$schema": "https://turborepo.dev/schema.json",
-  "ui": "tui",
-  "tasks": {
-    "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "check-types": {
-      "dependsOn": ["^check-types"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    }
-  }
+	"$schema": "https://turborepo.dev/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"clean": {
+			"cache": false
+		},
+		"deep:clean": {
+			"cache": false
+		},
+		"lint": {
+			"cache": true,
+			"inputs": ["src/**", "eslint.config.*", ".eslintrc.*", "package.json"]
+		},
+
+		"build": {
+			"cache": true,
+			"dependsOn": ["lint", "^build"],
+			"inputs": ["src/**", "tsconfig*.json", "package.json"],
+			"outputs": ["dist/**"]
+		},
+
+		"typecheck": {
+			"cache": true,
+			"dependsOn": ["^typecheck", "build"],
+			"inputs": ["src/**", "tsconfig*.json"]
+		},
+
+		"test": {
+			"cache": true,
+			"dependsOn": ["build"],
+			"inputs": ["src/**", "test/**", "vitest.config.*", "package.json"],
+			"outputs": ["coverage/**", "*.xml"]
+		},
+		"test:dev": {
+			"cache": false,
+			"inputs": ["src/**", "test/**", "vitest.config.*", "package.json"],
+			"outputs": ["coverage/**", "*.xml"],
+			"interactive": true
+		},
+
+		"check-types": {
+			"cache": true,
+			"dependsOn": ["^check-types"]
+		},
+
+		"watch": {
+			"cache": false,
+			"persistent": true
+		},
+
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"start": {
+			"cache": false
+		},
+		"format": {
+			"cache": false
+		},
+		"format:check": {
+			"cache": false
+		}
+	}
 }

@@ -1,0 +1,61 @@
+{
+	"name": "@repo/eslint-config",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./base": {
+			"types": "./src/configs/node.ts",
+			"import": "./dist/configs/node.mjs",
+			"require": "./dist/configs/node.mjs"
+		},
+		"./frontend": {
+			"types": "./src/configs/frontend.ts",
+			"import": "./dist/configs/frontend.mjs",
+			"require": "./dist/configs/frontend.mjs"
+		},
+		"./node": {
+			"types": "./src/configs/node.ts",
+			"import": "./dist/consfigs/node.mjs",
+			"require": "./dist/configs/node.mjs"
+		}
+	},
+	"scripts": {
+		"build": "tsdown",
+		"clean": "rimraf dist .turbo",
+		"deep:clean": "rimraf node_modules dist .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"test": "vitest run",
+		"test:dev": "vitest"
+	},
+	"dependencies": {
+		"@eslint/compat": "^2.0.2",
+		"vite": "catalog:"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.0.0",
+		"@stylistic/eslint-plugin": "^2.0.0",
+		"@types/eslint-config-prettier": "^6.11.3",
+		"@types/eslint-plugin-jsx-a11y": "^6.10.1",
+		"@typescript-eslint/eslint-plugin": "^8.0.0",
+		"@typescript-eslint/rule-tester": "^8.54.0",
+		"@typescript-eslint/utils": "^8.0.0",
+		"eslint": "catalog:",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-import-resolver-typescript": "^3.6.1",
+		"eslint-plugin-import-x": "^4.0.0",
+		"eslint-plugin-jsx-a11y": "^6.9.0",
+		"eslint-plugin-lodash": "^8.0.0",
+		"eslint-plugin-react": "^7.35.0",
+		"eslint-plugin-react-hooks": "^5.0.0",
+		"eslint-plugin-unicorn": "^55.0.0",
+		"eslint-plugin-unused-imports": "^4.0.0",
+		"globals": "^15.9.0",
+		"tsdown-config": "workspace:*",
+		"typescript-config": "workspace:*",
+		"typescript-eslint": "^8.0.0",
+		"vitest-config": "workspace:*"
+	}
+}
