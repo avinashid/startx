@@ -3,7 +3,6 @@ import type { InlineConfig } from "vitest/node";
 
 // Detect if we are running in "dev" mode (npm run test:dev)
 const isDev = process.env.npm_lifecycle_event === "test:dev";
-console.log("hello world")
 export const baseVitestConfig = (options: InlineConfig = {}) =>
   defineConfig({
     test: {

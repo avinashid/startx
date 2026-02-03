@@ -31,8 +31,7 @@
 		"test:dev": "vitest"
 	},
 	"dependencies": {
-		"@eslint/compat": "^2.0.2",
-		"vite": "catalog:"
+		"@eslint/compat": "^2.0.2"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.0.0",

@@ -78,9 +78,6 @@ importers:
       '@eslint/compat':
         specifier: ^2.0.2
         version: 2.0.2(eslint@9.39.2)
-      vite:
-        specifier: 'catalog:'
-        version: 7.3.1(@types/node@25.2.0)
     devDependencies:
       '@eslint/js':
         specifier: ^9.0.0
@@ -172,9 +169,6 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@25.2.0)
-      vitest-config:
-        specifier: workspace:*
-        version: 'link:'
 
 packages:
 
