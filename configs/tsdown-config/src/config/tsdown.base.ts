@@ -8,6 +8,7 @@ export const baseConfig = defineConfig({
   sourcemap: false,
   minify: true,
   treeshake: true,
+	unbundle: true,
   shims: true,
   external: [/^@unrs\//],
 });

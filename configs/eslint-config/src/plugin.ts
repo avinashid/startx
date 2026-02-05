@@ -1,12 +1,10 @@
 import type { ESLint } from "eslint";
 import { rules } from "./rules/index.js";
-
 const plugin = {
 	configs: {},
 	// @ts-expect-error Rules type does not match for typescript-eslint and eslint
 	rules: rules as ESLint.Plugin["rules"],
 } satisfies ESLint.Plugin;
-
 export const localRulesPlugin = {
 	...plugin,
 	configs: {

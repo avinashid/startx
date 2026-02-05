@@ -1,13 +1,13 @@
 {
-	"name": "@repo/eslint-config",
+	"name": "eslint-config",
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
 	"exports": {
 		"./base": {
-			"types": "./src/configs/node.ts",
-			"import": "./dist/configs/node.mjs",
-			"require": "./dist/configs/node.mjs"
+			"types": "./src/configs/base.ts",
+			"import": "./dist/configs/base.mjs",
+			"require": "./dist/configs/base.mjs"
 		},
 		"./frontend": {
 			"types": "./src/configs/frontend.ts",
@@ -16,7 +16,7 @@
 		},
 		"./node": {
 			"types": "./src/configs/node.ts",
-			"import": "./dist/consfigs/node.mjs",
+			"import": "./dist/configs/node.mjs",
 			"require": "./dist/configs/node.mjs"
 		}
 	},
@@ -31,17 +31,9 @@
 		"test:dev": "vitest"
 	},
 	"dependencies": {
-		"@eslint/compat": "^2.0.2"
-	},
-	"devDependencies": {
+		"@eslint/compat": "^2.0.2",
 		"@eslint/js": "^9.0.0",
 		"@stylistic/eslint-plugin": "^2.0.0",
-		"@types/eslint-config-prettier": "^6.11.3",
-		"@types/eslint-plugin-jsx-a11y": "^6.10.1",
-		"@typescript-eslint/eslint-plugin": "^8.0.0",
-		"@typescript-eslint/rule-tester": "^8.54.0",
-		"@typescript-eslint/utils": "^8.0.0",
-		"eslint": "catalog:",
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-import-resolver-typescript": "^3.6.1",
 		"eslint-plugin-import-x": "^4.0.0",
@@ -52,9 +44,17 @@
 		"eslint-plugin-unicorn": "^55.0.0",
 		"eslint-plugin-unused-imports": "^4.0.0",
 		"globals": "^15.9.0",
+		"typescript-eslint": "^8.54.0"
+	},
+	"devDependencies": {
+		"@types/eslint-config-prettier": "^6.11.3",
+		"@types/eslint-plugin-jsx-a11y": "^6.10.1",
+		"@typescript-eslint/eslint-plugin": "^8.0.0",
+		"@typescript-eslint/rule-tester": "^8.54.0",
+		"@typescript-eslint/utils": "^8.0.0",
+		"eslint": "catalog:",
 		"tsdown-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"typescript-eslint": "^8.0.0",
 		"vitest-config": "workspace:*"
 	}
 }

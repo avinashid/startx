@@ -1,6 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "packages/@repo/*"
   - "configs/*"
 
 catalog:
@@ -15,6 +16,7 @@ catalog:
   # utils
   "@biomejs/biome": ^2.3.13
   prettier: ^3.8.1
+  zod: ^4.3.6
 
   # testing
   vitest: ^4.0.18
@@ -22,3 +24,13 @@ catalog:
 
   # types
   "@types/node": ^25.1.0
+
+  # frontend
+  react: ^19.2.4
+  react-dom: ^19.2.4
+  lucide-react: ^0.563.0
+  tailwindcss: ^4.1.18
+
+  # frontend types
+  "@types/react": ^19.2.4
+  "@types/react-dom": ^19.2.4

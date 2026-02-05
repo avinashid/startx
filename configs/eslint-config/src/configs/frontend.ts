@@ -1,5 +1,5 @@
 import { fixupPluginRules } from "@eslint/compat";
-import { baseConfig } from "./base.js"; // Adjust path as needed
+import { baseConfig } from "./base.js";
 import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";

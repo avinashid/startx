@@ -17,12 +17,14 @@
 		"prettier": "catalog:",
 		"rimraf": "catalog:",
 		"turbo": "catalog:",
-		"typescript": "catalog:"
+		"typescript": "catalog:",
+		"eslint": "catalog:",
+		"tsdown": "catalog:",
+		"vitest": "catalog:",
+		"@types/node": "catalog:"
 	},
 	"dependencies": {
-		"@types/node": "catalog:",
-		"tsdown": "catalog:",
-		"vitest": "catalog:"
+		"zod": "catalog:"
 	},
 	"engines": {
 		"node": ">=22"
