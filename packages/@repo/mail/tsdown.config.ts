@@ -3,5 +3,7 @@ import { baseConfig } from "tsdown-config";
 
 export default defineConfig({
   ...baseConfig,
-  entry: ["./src/**/*.ts"],
+  entry: [
+    "./src/**/*.ts",
+  ],
 });

@@ -3,12 +3,12 @@
 	"compilerOptions": {
 		"target": "esnext",
 		"module": "esnext",
+		"moduleResolution": "bundler",
 		"importHelpers": true,
 		"allowJs": true,
 		"incremental": false,
 		"jsx": "react-jsx",
 		"allowSyntheticDefaultImports": true,
 		"lib": ["esnext", "dom", "dom.iterable", "scripthost"]
-	},
-	"include": ["src/**/*.ts"]
+	}
 }

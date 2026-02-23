@@ -8,30 +8,17 @@
 	},
 	"devDependencies": {
 		"typescript-config": "workspace:*",
-		"tsdown-config": "workspace:*",
 		"vite": "catalog:"
 	},
 	"exports": {
-		"./frontend": {
-			"types": "./src/frontend.ts",
-			"import": "./dist/frontend.mjs",
-			"require": "./dist/frontend.mjs"
-		},
-		"./node": {
-			"types": "./src/node.ts",
-			"import": "./dist/node.mjs",
-			"require": "./dist/node.mjs"
-		},
-		"./base": {
-			"types": "./src/base.ts",
-			"import": "./dist/base.mjs",
-			"require": "./dist/base.mjs"
-		}
+		"./frontend": "./src/frontend.ts",
+		"./node": "./src/node.ts",
+		"./base": "./src/base.ts"
 	},
 	"scripts": {
 		"clean": "rimraf dist .turbo",
+		"deep:clean": "rimraf node_modules dist .turbo",
 		"typecheck": "tsc --noEmit",
-		"build": "tsdown --config-loader unrun",
 		"format": "biome format --write .",
 		"format:check": "biome ci ."
 	}

@@ -21,7 +21,7 @@
 		}
 	},
 	"scripts": {
-		"build": "tsdown",
+		"config:build": "tsdown",
 		"clean": "rimraf dist .turbo",
 		"deep:clean": "rimraf node_modules dist .turbo",
 		"typecheck": "tsc --noEmit",

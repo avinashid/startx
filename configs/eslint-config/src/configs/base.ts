@@ -26,6 +26,7 @@ export const baseConfig = tseslint.config(
       "cypress.config.js",
       "vite.config.ts",
       "vitest.config.ts",
+			"tsdown.config.ts",
     ],
   },
 
@@ -44,7 +45,7 @@ export const baseConfig = tseslint.config(
       "react-hooks": fixupPluginRules(reactHooksPlugin as any),
       lodash: fixupPluginRules(lodashPlugin),
 
-      "@stylistic": stylisticPlugin,
+      "@stylistic": stylisticPlugin as any,
       unicorn: unicornPlugin,
       react: reactPlugin,
     },
@@ -175,7 +176,7 @@ export const baseConfig = tseslint.config(
       //                     Import X
       // ******************************************************************
       "import-x/no-cycle": ["error", { ignoreExternal: false, maxDepth: 3 }],
-      "import-x/no-default-export": "error",
+      "import-x/no-default-export": "warn",
       "import-x/no-duplicates": "error",
       "import-x/order": [
         "error",

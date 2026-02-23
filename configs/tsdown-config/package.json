@@ -6,17 +6,9 @@
 	"files": [
 		"dist"
 	],
-	"types": "./src/index.ts",
-	"exports": {
-		"types": "./src/index.ts",
-		"import": "./dist/index.mjs",
-		"require": "./dist/index.cjs"
-	},
+	"exports": "./src/config/tsdown.base.ts",
 	"scripts": {
-		"build": "tsdown --config-loader unrun",
-		"clean": "rimraf dist"
-	},
-	"devDependencies": {
-		"unrun": "^0.2.26"
+		"clean": "rimraf dist",
+		"deep:clean": "rimraf node_modules dist"
 	}
 }

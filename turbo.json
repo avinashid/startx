@@ -2,22 +2,28 @@
 	"$schema": "https://turborepo.dev/schema.json",
 	"ui": "tui",
 	"tasks": {
-		"clean": {
-			"cache": false
-		},
-		"deep:clean": {
-			"cache": false
+		"build:config": {
+			"cache": true,
+			"dependsOn": ["lint", "^build"],
+			"inputs": [
+				"src/**",
+				"tsconfig*.json",
+				"package.json",
+				"vitest.config.ts",
+				"tsdown.config.ts"
+			],
+			"outputs": ["dist/**"]
 		},
 		"lint": {
 			"cache": true,
-			"inputs": ["src/**", "eslint.config.*", ".eslintrc.*", "package.json"]
+			"inputs": ["src/**", "eslint.config.*", ".eslintrc.*", "tsdown.config.ts", "package.json"]
 		},
 
 		"build": {
 			"cache": true,
-			"dependsOn": ["lint", "^build"],
 			"inputs": ["src/**", "tsconfig*.json", "package.json"],
-			"outputs": ["dist/**"]
+			"outputs": ["dist/**"],
+			"dependsOn": ["lint", "^build"]
 		},
 
 		"typecheck": {
@@ -28,7 +34,6 @@
 
 		"test": {
 			"cache": true,
-			"dependsOn": ["build"],
 			"inputs": ["src/**", "test/**", "vitest.config.*", "package.json"],
 			"outputs": ["coverage/**", "*.xml"]
 		},
@@ -60,6 +65,12 @@
 			"cache": false
 		},
 		"format:check": {
+			"cache": false
+		},
+		"clean": {
+			"cache": false
+		},
+		"deep:clean": {
 			"cache": false
 		}
 	}

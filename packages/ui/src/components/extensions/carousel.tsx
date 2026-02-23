@@ -49,7 +49,7 @@ const CarouselContext = createContext<CarouselContextType | null>(null);
 
 const Carousel = forwardRef<
 	HTMLDivElement,
-	CarouselContextProps & React.HTMLAttributes<HTMLDivElement>
+	CarouselContextProps & React.HTMLAttributes<HTMLDivElement> & {dir: DirectionOption}
 >(
 	(
 		{ carouselOptions, orientation = 'horizontal', dir, plugins, children, className, ...props },
@@ -180,7 +180,7 @@ const Carousel = forwardRef<
 			>
 				<div
 					{...props}
-					tabIndex={0}
+					// tabIndex={0}
 					ref={ref}
 					onKeyDownCapture={handleKeyDown}
 					className={cn('grid gap-2 w-full relative focus:outline-none', className)}
@@ -195,8 +195,9 @@ const Carousel = forwardRef<
 
 Carousel.displayName = 'Carousel';
 
-const CarouselMainContainer = forwardRef<HTMLDivElement, {} & React.HTMLAttributes<HTMLDivElement>>(
-	({ className, dir, children, ...props }, ref) => {
+const CarouselMainContainer = forwardRef<HTMLDivElement, {
+} & React.HTMLAttributes<HTMLDivElement>>(
+	({ className, children, ...props }, ref) => {
 		const { mainRef, orientation, direction } = useCarousel();
 
 		return (
@@ -217,7 +218,7 @@ CarouselMainContainer.displayName = 'CarouselMainContainer';
 const CarouselThumbsContainer = forwardRef<
 	HTMLDivElement,
 	{} & React.HTMLAttributes<HTMLDivElement>
->(({ className, dir, children, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
 	const { thumbsRef, orientation, direction } = useCarousel();
 
 	return (

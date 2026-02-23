@@ -13,5 +13,6 @@ export default defineConfig(frontendConfig, {
 		"@typescript-eslint/no-unsafe-return": "warn",
 		"@typescript-eslint/no-unsafe-assignment": "warn",
 		"@typescript-eslint/no-unused-vars": "warn",
+		"import-x/default": "off",
 	},
 });

@@ -3,8 +3,14 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"ui": "pnpm dlx shadcn@latest",
-		"lint:dev": "eslint ."
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"peerDependencies": {
 		"react": "^19.0.0"
@@ -56,12 +62,6 @@
 		"./globals.css": "./src/globals.css",
 		"./postcss.config": "./postcss.config.mjs",
 		"./tailwind.config": "./tailwind.config.ts",
-		"./lib/*": "./src/components/lib/*.ts",
-		"./util/*": "./src/components/util/*.ts",
-		"./hooks/*": [
-			"./src/hooks/*.ts",
-			"./src/hooks/*.tsx"
-		],
-		"./components/*": "./src/components/*.tsx"
+		"./components/*": "./src/components/*"
 	}
 }

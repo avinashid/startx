@@ -5,9 +5,10 @@ import { Command as CommandPrimitive, useCommandState } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
 import { forwardRef, useEffect } from "react";
+
+import { Command, CommandGroup, CommandItem, CommandList } from "./command";
 import { cn } from "../lib/utils";
 import { Badge } from "../ui/badge";
-import { Command, CommandGroup, CommandItem, CommandList } from "./command";
 
 export interface Option {
 	value: string;
@@ -147,7 +148,7 @@ const CommandEmpty = forwardRef<
 		<div
 			ref={forwardedRef}
 			className={cn("py-6 text-center text-sm", className)}
-			cmdk-empty=""
+			// cmdk-empty=""
 			role="presentation"
 			{...props}
 		/>
@@ -363,7 +364,7 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 				}}
 				className={cn("h-auto max-h-fit overflow-visible  bg-transparent", commandProps?.className)}
 				shouldFilter={
-					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+
 					commandProps?.shouldFilter !== undefined ? commandProps.shouldFilter : !onSearch
 				} // When onSearch is provided, we don't want to filter the options. You can still override it.
 				filter={commandFilter()}
@@ -453,8 +454,7 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 					</div>
 				</div>
 				<div className="relative">
-					{open && (
-						<CommandList className="absolute top-1 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+					{open ? <CommandList className="absolute top-1 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
 							{isLoading ? (
 								<>{loadingIndicator}</>
 							) : (
@@ -499,8 +499,7 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 									))}
 								</>
 							)}
-						</CommandList>
-					)}
+						</CommandList> : null}
 				</div>
 			</Command>
 		);

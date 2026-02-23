@@ -2,29 +2,11 @@
 	"extends": "typescript-config/tsconfig.frontend.json",
 	"compilerOptions": {
 		"strict": true,
-		// "ignoreDeprecations": "6.0",
 		"baseUrl": ".",
 		"paths": {
-			"@repo/ui/*": ["./src/*"],
-			"@/*": ["./src/*"],
-			"@/lib/*": ["./src/lib/*"],
-			"react": ["node_modules/@types/react"]
+			"@/*": ["./src/*"]
 		}
 	},
-	"typeRoots": [
-		"./node_modules/@testing-library",
-		"./node_modules/@types",
-		"../../../../node_modules",
-		"../../../../node_modules/@types"
-	],
-	"include": [
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts",
-		"tailwind.config.ts",
-		"stylelint.config.mjs",
-		"eslint.config.mjs"
-	],
-	"exclude": ["node_modules"]
+
+	"include": ["src/**/*", "tailwind.config.ts", "stylelint.config.mjs", "eslint.config.mjs"]
 }

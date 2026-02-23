@@ -1,6 +1,7 @@
 import type React from 'react';
 
-import { cn } from '@repo/ui/lib/utils';
+import { cn } from '../lib/utils';
+
 interface TypographyProps {
 	children: React.ReactNode; // Text content to display
 	className?: string; // Additional class names for styling
@@ -76,7 +77,7 @@ const Value: React.FC<TypographyProps> = ({ children, className }) => (
 
 const List: React.FC<TypographyProps & { label?: string }> = ({ children, className, label }) => (
 	<ul className={cn(className)}>
-		{label && <span className="font-semibold">{label}</span>}
+		{label ? <span className="font-semibold">{label}</span> : null}
 		{children}
 	</ul>
 );

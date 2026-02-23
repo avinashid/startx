@@ -1,0 +1,19 @@
+{
+	"name": "@repo/constants",
+	"version": "0.12.0",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"typescript-config": "workspace:*",
+		"eslint-config": "workspace:*"
+	}
+}

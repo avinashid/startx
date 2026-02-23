@@ -1,0 +1,30 @@
+{
+	"name": "@repo/db",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"@types/eslint": "^8.56.5",
+		"@types/node": "^20.16.5",
+		"@types/pg": "^8.16.0",
+		"eslint": "catalog:",
+		"eslint-config": "workspace:*",
+		"tsc-alias": "^1.8.10",
+		"typescript": "5.5.4",
+		"typescript-config": "workspace:*"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.36.0",
+		"pg": "^8.16.3"
+	}
+}

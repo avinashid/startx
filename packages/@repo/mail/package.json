@@ -1,0 +1,29 @@
+{
+	"name": "@repo/email",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+		"dev": "email dev --port 3014 --dir ./src"
+	},
+	"exports": "./src/index.ts",
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@react-email/preview-server": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"react-email": "catalog:",
+		"tsdown-config": "workspace:*"
+	},
+	"dependencies": {
+		"@react-email/components": "catalog:",
+		"@react-email/render": "catalog:",
+		"@react-email/tailwind": "catalog:",
+		"eslint-config": "workspace:*",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"typescript-config": "workspace:*"
+	}
+}

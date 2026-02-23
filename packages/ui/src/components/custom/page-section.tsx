@@ -42,13 +42,13 @@ const PageSection = ({
 		<section className={cn(pageSectionVariant({ variant: props.variant }), className)} {...props}>
 			<div className="flex gap-1 flex-col">
 				<div className="flex items-center gap-2">
-					{icon && <div className="h-6 w-6 text-muted-foreground">{icon}</div>}
+					{icon ? <div className="h-6 w-6 text-muted-foreground">{icon}</div> : null}
 
 					<span className="text-lg font-semibold">{title}</span>
 					<div className="ml-auto">{suffixIcon}</div>
 				</div>
 				<p className="text-sm text-muted-foreground">{description}</p>
-				{separator && <Separator className="mt-1" />}
+				{separator ? <Separator className="mt-1" /> : null}
 			</div>
 
 			{children}

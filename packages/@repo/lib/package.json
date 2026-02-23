@@ -1,0 +1,57 @@
+{
+	"name": "@repo/lib",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"files": [
+		"dist/**/*"
+	],
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"@repo/email": "workspace:*",
+		"@repo/redis": "workspace:*",
+		"@types/eslint": "^8.56.5",
+		"@types/express": "^5.0.0",
+		"@types/node": "^20.16.5",
+		"@types/jsonwebtoken": "^9.0.7",
+		"@types/nodemailer": "^6.4.16",
+		"eslint-config": "workspace:*",
+		"tsc-alias": "^1.8.10",
+		"typescript-config": "workspace:*",
+		"vitest": "catalog:",
+		"vitest-config": "workspace:*",
+		"vitest-mock-extended": "^3.1.0",
+		"vine": "link:@types/vinejs/vine"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.693.0",
+		"@repo/db": "workspace:^",
+		"@types/express-fileupload": "^1.5.1",
+		"@vinejs/vine": "^4.3.0",
+		"@repo/email": "workspace:*",
+		"axios": "^1.7.7",
+		"bcryptjs": "^3.0.2",
+		"country-state-city": "^3.2.1",
+		"dayjs": "^1.11.13",
+		"dayjs-plugin-utc": "^0.1.2",
+		"dotenv": "^16.6.1",
+		"drizzle-orm": "^0.36.0",
+		"express": "^4.21.1",
+		"express-fileupload": "^1.5.1",
+		"firebase-admin": "^13.0.2",
+		"fs.promises.exists": "^1.1.4",
+		"jsonwebtoken": "^9.0.2",
+		"nodemailer": "^6.9.16",
+		"winston": "^3.16.0",
+		"winston-daily-rotate-file": "^5.0.0"
+	}
+}

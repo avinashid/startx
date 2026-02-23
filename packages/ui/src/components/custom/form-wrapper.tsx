@@ -184,7 +184,7 @@ export const FormTextField = <
 					<FormControl>
 						<Input {...field} {...props} />
 					</FormControl>
-					{props.description && <FormDescription>{props.description}</FormDescription>}
+					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
 					<FormMessage />
 				</FormItem>
 			)}
@@ -209,11 +209,11 @@ export const FormTextAreaField = <
 			name={props.name}
 			render={({ field }) => (
 				<FormItem className="flex flex-col ">
-					{props.label && <Label className="self-start">{props.label}</Label>}
+					{props.label ? <Label className="self-start">{props.label}</Label> : null}
 					<FormControl>
 						<Textarea {...field} {...props} ref={field.ref} />
 					</FormControl>
-					{props.description && <FormDescription>{props.description}</FormDescription>}
+					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
 					<FormMessage />
 				</FormItem>
 			)}
@@ -250,7 +250,7 @@ export const FormNumberField = <
 							{...props}
 						/>
 					</FormControl>
-					{props.description && <FormDescription>{props.description}</FormDescription>}
+					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
 					<FormMessage />
 				</FormItem>
 			)}
@@ -294,7 +294,7 @@ export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infe
 
 	return (
 		<div className="multiple-form-item">
-			{label && <p className="mt-6 text-sm ">{label}</p>}
+			{label ? <p className="mt-6 text-sm ">{label}</p> : null}
 			<div className={cn(wrapperClassName)}>
 				{fields.map((field, index) => (
 					<div key={field.id} className={cn("flex flex-col gap-2 max-w-xl", className)}>
@@ -406,7 +406,7 @@ export const FormDefaultDateField = <
 							max="9999-12-31"
 						/>
 					</FormControl>
-					{props.description && <FormDescription>{props.description}</FormDescription>}
+					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
 					<FormMessage />
 				</FormItem>
 			)}
@@ -462,7 +462,7 @@ export function FormMultiSelectField<
 
 				return (
 					<FormItem className={cn("flex flex-col", className)}>
-						{label && <FormLabel>{label}</FormLabel>}
+						{label ? <FormLabel>{label}</FormLabel> : null}
 						<FormControl className="w-full">
 							<Popover open={open} onOpenChange={setOpen}>
 								<PopoverTrigger asChild disabled={disabled}>
@@ -523,8 +523,7 @@ export function FormMultiSelectField<
 						</FormControl>
 						<FormMessage />
 
-						{showSelected && (
-							<div className=" flex flex-wrap gap-2">
+						{showSelected ? <div className=" flex flex-wrap gap-2">
 								{selected.map(value => {
 									const label =
 										options
@@ -543,8 +542,7 @@ export function FormMultiSelectField<
 										</Badge>
 									);
 								})}
-							</div>
-						)}
+							</div> : null}
 					</FormItem>
 				);
 			}}

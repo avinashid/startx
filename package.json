@@ -2,6 +2,7 @@
 	"name": "monorepo-v2",
 	"private": true,
 	"scripts": {
+		"config:build": "turbo run config:build",
 		"build": "turbo run build",
 		"dev": "turbo run dev",
 		"lint": "turbo run lint",
@@ -20,6 +21,7 @@
 		"typescript": "catalog:",
 		"eslint": "catalog:",
 		"tsdown": "catalog:",
+		"unrun": "catalog:",
 		"vitest": "catalog:",
 		"@types/node": "catalog:"
 	},
