@@ -1,12 +1,12 @@
 import { ErrorResponse, logger } from "@repo/lib";
-import type { NextFunction, Request, Response } from "express";
+import type {  Request, Response } from "express";
 
 interface Error {
 	message?: string;
 	statusCode?: number;
 }
 
-export const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
+export const errorMiddleware = (error: Error, req: Request, res: Response) => {
 	error.message = error?.message ? error.message : "Internal Server Error";
 	error.statusCode = error instanceof ErrorResponse ? error.statusCode : 500;
 

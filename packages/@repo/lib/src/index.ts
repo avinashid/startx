@@ -24,4 +24,4 @@ export * from "./error-handlers-module/index.js";
 export * from "./validation-module.js";
 export * from "./command-module.js";
 export * from "./logger-module/memory-profiler.js";
-export type * from "./user-session.js";
+export * from "./user-session.js";

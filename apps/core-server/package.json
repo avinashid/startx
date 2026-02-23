@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"start": "node --conditions=production dist/index.js",
+		"lint": "eslint .",
 		"build": "tsdown --config-loader unrun",
 		"clean": "rimraf dist",
 		"dev": " tsx watch src/index.ts",

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import type { SessionUser } from "@repo/lib";
 
 declare global {

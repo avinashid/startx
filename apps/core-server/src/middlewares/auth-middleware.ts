@@ -1,4 +1,4 @@
-import { UserSession } from "@repo/lib";
+import {  UserSession } from "@repo/lib";
 import type { NextFunction, Request, Response } from "express";
 export class AuthMiddlewares {
 	static async validateActiveSession(req: Request, res: Response, next: NextFunction) {

@@ -3,11 +3,13 @@ import cookieParser from "cookie-parser";
 import type { Request, Response } from "express";
 import express from "express";
 import fileUpload from "express-fileupload";
-import { corsMiddleware } from "middlewares/cors-middleware.js";
-import { errorMiddleware } from "middlewares/error-middleware.js";
-import { loggerMiddleware } from "middlewares/logger-middleware.js";
-import { notFoundMiddleware } from "middlewares/notfound-middleware.js";
-import { serveStatic } from "middlewares/serve-static.js";
+
+
+import { corsMiddleware } from "@/middlewares/cors-middleware.ts";
+import { errorMiddleware } from "@/middlewares/error-middleware.ts";
+import { loggerMiddleware } from "@/middlewares/logger-middleware.ts";
+import { notFoundMiddleware } from "@/middlewares/notfound-middleware.ts";
+import { serveStatic } from "@/middlewares/serve-static.ts";
 
 import { createFilesRouter } from "./files/router.js";
 
@@ -26,7 +28,7 @@ app.get("/test", (req: Request, res: Response) => {
 	res.json("OK");
 	return;
 });
-console.log(ping);
+console.warn(ping);
 app.use(serveStatic());
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
