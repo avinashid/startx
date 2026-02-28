@@ -8,5 +8,11 @@
 		}
 	},
 
-	"include": ["src/**/*", "tailwind.config.ts", "stylelint.config.mjs", "eslint.config.mjs"]
+	"include": [
+		"src/**/*",
+		"tailwind.config.ts",
+		"stylelint.config.mjs",
+		"eslint.config.mjs",
+		"postcss.config.mjs"
+	]
 }

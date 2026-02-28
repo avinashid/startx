@@ -5,8 +5,9 @@ import * as React from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
 import type { ClassNameValue } from "tailwind-merge";
-import { cn } from "../lib/utils";
+
 import { Label } from "./label";
+import { cn } from "../lib/utils";
 
 const Form = FormProvider;
 
