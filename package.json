@@ -1,6 +1,10 @@
 {
-	"name": "monorepo-v2",
-	"private": true,
+	"name": "startx",
+	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/avinashid/startx.git"
+	},
 	"scripts": {
 		"config:build": "turbo run config:build",
 		"build": "turbo run build",
@@ -31,5 +35,13 @@
 	"engines": {
 		"node": ">=22"
 	},
+	"keywords": [
+		"startx",
+		"turborepo",
+		"scaffold",
+		"express"
+	],
+	"author": "avinashid",
+	"license": "MIT",
 	"packageManager": "pnpm@10.28.2"
 }
