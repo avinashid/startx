@@ -1,7 +1,6 @@
 import { ping } from "@repo/constants";
 import { AdminEmailTemplate } from "@repo/email";
 import { logger } from "@repo/lib";
-import * as sharp from "sharp";
 
 import { ServerEvents } from "./events/index.js";
 import { app } from "./routes/server.js";
@@ -9,7 +8,6 @@ import { app } from "./routes/server.js";
 // PushNotificationManager.initialize({
 //   type: "env",
 // });
-console.log(sharp);
 
 console.log(ping);
 console.log(await AdminEmailTemplate.getOtpEmail({ otp: "1234" }));

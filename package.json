@@ -9,10 +9,10 @@
 		"startx": "./packages/cli/dist/index.mjs"
 	},
 	"scripts": {
-		"build:config": "turbo run build:config",
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"cli": "turbo run dev --filter=cli -- ping",
+		"backend": "turbo run dev --filter=core-server -- ",
+		"cli": "turbo run dev --filter=cli -- ",
 		"lint": "turbo run lint",
 		"typecheck": "turbo run typecheck",
 		"clean": "turbo run clean",

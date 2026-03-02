@@ -1,10 +1,14 @@
-import express, { Router, type Request, type Response, type NextFunction } from "express";
+import express, { type NextFunction, type Request, type Response, Router } from "express";
 import path from "path";
+import { fileURLToPath } from "url";
 
-const distPath =
-	process.env.NODE_ENV === "production" ? "../frontend" : "../../../web-client/dist/client";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// __dirname is available at runtime because we compile to CommonJS
+const isProd = process.env.NODE_ENV === "production";
+
+const distPath = isProd ? "../frontend" : "../../../web-client/dist/client";
+
 const reactDistPath = path.resolve(__dirname, distPath);
 
 export const serveStatic = (): Router => {
@@ -14,9 +18,11 @@ export const serveStatic = (): Router => {
 
 	router.get("*", (req: Request, res: Response, next: NextFunction) => {
 		const accept = req.headers.accept ?? "";
+
 		if (accept.includes("text/html")) {
 			return res.sendFile(path.join(reactDistPath, "index.html"));
 		}
+
 		return next();
 	});
 

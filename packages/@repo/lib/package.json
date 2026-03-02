@@ -1,6 +1,7 @@
 {
 	"name": "@repo/lib",
 	"version": "0.0.0",
+	"type": "module",
 	"private": true,
 	"scripts": {
 		"clean": "rimraf dist .turbo",
@@ -12,9 +13,6 @@
 		"lint:fix": "eslint . --fix",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
-	"files": [
-		"dist/**/*"
-	],
 	"exports": "./src/index.ts",
 	"devDependencies": {
 		"@repo/email": "workspace:*",

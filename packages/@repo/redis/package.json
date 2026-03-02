@@ -1,6 +1,7 @@
 {
 	"name": "@repo/redis",
 	"version": "0.0.0",
+	"type": "module",
 	"private": true,
 	"scripts": {
 		"clean": "rimraf dist .turbo",

@@ -2,11 +2,11 @@
 	"compilerOptions": {
 		"target": "ES2022",
 		"useDefineForClassFields": true,
-		"module": "ESNext",
+		"module": "nodenext",
 		"lib": ["ES2022"],
 		"skipLibCheck": true,
 
-		"moduleResolution": "bundler",
+		"moduleResolution": "nodenext",
 		"allowImportingTsExtensions": true,
 		"resolveJsonModule": true,
 		"isolatedModules": true,

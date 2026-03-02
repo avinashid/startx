@@ -12,6 +12,7 @@ import {
 	Section,
 	Text,
 } from "@react-email/components";
+import React from "react";
 
 export default function VerifyEmailOtp({
 	verificationCode = "596853",

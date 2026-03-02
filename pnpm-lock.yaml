@@ -538,9 +538,6 @@ importers:
       react-email:
         specifier: 'catalog:'
         version: 5.2.8
-      tsdown-config:
-        specifier: workspace:*
-        version: link:../../../configs/tsdown-config
 
   packages/@repo/redis:
     dependencies:

@@ -14,8 +14,7 @@
 		"@react-email/preview-server": "catalog:",
 		"@types/react": "catalog:",
 		"@types/react-dom": "catalog:",
-		"react-email": "catalog:",
-		"tsdown-config": "workspace:*"
+		"react-email": "catalog:"
 	},
 	"dependencies": {
 		"@react-email/components": "catalog:",

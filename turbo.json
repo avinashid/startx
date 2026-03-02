@@ -2,17 +2,6 @@
 	"$schema": "https://turborepo.dev/schema.json",
 	"ui": "tui",
 	"tasks": {
-		"build:config": {
-			"cache": true,
-			"inputs": [
-				"src/**",
-				"tsconfig*.json",
-				"package.json",
-				"vitest.config.ts",
-				"tsdown.config.ts"
-			],
-			"outputs": ["dist/**"]
-		},
 		"lint": {
 			"cache": true,
 			"inputs": ["src/**", "eslint.config.*", ".eslintrc.*", "tsdown.config.ts", "package.json"]
