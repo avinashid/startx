@@ -5,10 +5,14 @@
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
 	},
+	"bin": {
+		"startx": "./packages/cli/dist/index.mjs"
+	},
 	"scripts": {
-		"config:build": "turbo run config:build",
+		"build:config": "turbo run build:config",
 		"build": "turbo run build",
 		"dev": "turbo run dev",
+		"cli": "turbo run dev --filter=cli -- ping",
 		"lint": "turbo run lint",
 		"typecheck": "turbo run typecheck",
 		"clean": "turbo run clean",

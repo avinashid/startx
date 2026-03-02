@@ -4,31 +4,17 @@
 	"private": true,
 	"type": "module",
 	"exports": {
-		"./base": {
-			"types": "./src/configs/base.ts",
-			"import": "./dist/configs/base.mjs",
-			"require": "./dist/configs/base.mjs"
-		},
-		"./frontend": {
-			"types": "./src/configs/frontend.ts",
-			"import": "./dist/configs/frontend.mjs",
-			"require": "./dist/configs/frontend.mjs"
-		},
-		"./node": {
-			"types": "./src/configs/node.ts",
-			"import": "./dist/configs/node.mjs",
-			"require": "./dist/configs/node.mjs"
-		}
+		"./base": "./src/configs/base.ts",
+		"./frontend": "./src/configs/frontend.ts",
+		"./node": "./src/configs/node.ts"
 	},
 	"scripts": {
-		"config:build": "tsdown",
 		"clean": "rimraf dist .turbo",
 		"deep:clean": "rimraf node_modules dist .turbo",
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
-		"test": "vitest run",
-		"test:dev": "vitest"
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@eslint/compat": "^2.0.2",

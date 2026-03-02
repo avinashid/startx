@@ -1,34 +1,47 @@
-import { RuleTester } from '@typescript-eslint/rule-tester';
-import { NoJsonParseJsonStringifyRule } from './no-json-parse-json-stringify.js';
+import { RuleTester } from "@typescript-eslint/rule-tester";
+import { NoJsonParseJsonStringifyRule } from "./no-json-parse-json-stringify.js";
 
-const ruleTester = new RuleTester();
+const ruleTester = new RuleTester({
+	languageOptions: {
+		parserOptions: {
+			ecmaVersion: 2022,
+			sourceType: "module",
+		},
+	},
+});
 
-ruleTester.run('no-json-parse-json-stringify', NoJsonParseJsonStringifyRule, {
+ruleTester.run("no-json-parse-json-stringify", NoJsonParseJsonStringifyRule, {
 	valid: [
 		{
-			code: 'deepCopy(foo)',
+			code: "structuredClone(foo)",
+		},
+		{
+			code: "JSON.parse(foo)",
+		},
+		{
+			code: "JSON.stringify(foo)",
 		},
 	],
 	invalid: [
 		{
-			code: 'JSON.parse(JSON.stringify(foo))',
-			errors: [{ messageId: 'noJsonParseJsonStringify' }],
-			output: 'deepCopy(foo)',
+			code: "JSON.parse(JSON.stringify(foo))",
+			errors: [{ messageId: "noJsonParseJsonStringify" }],
+			output: "structuredClone(foo)",
 		},
 		{
-			code: 'JSON.parse(JSON.stringify(foo.bar))',
-			errors: [{ messageId: 'noJsonParseJsonStringify' }],
-			output: 'deepCopy(foo.bar)',
+			code: "JSON.parse(JSON.stringify(foo.bar))",
+			errors: [{ messageId: "noJsonParseJsonStringify" }],
+			output: "structuredClone(foo.bar)",
 		},
 		{
-			code: 'JSON.parse(JSON.stringify(foo.bar.baz))',
-			errors: [{ messageId: 'noJsonParseJsonStringify' }],
-			output: 'deepCopy(foo.bar.baz)',
+			code: "JSON.parse(JSON.stringify(foo.bar.baz))",
+			errors: [{ messageId: "noJsonParseJsonStringify" }],
+			output: "structuredClone(foo.bar.baz)",
 		},
 		{
-			code: 'JSON.parse(JSON.stringify(foo.bar[baz]))',
-			errors: [{ messageId: 'noJsonParseJsonStringify' }],
-			output: 'deepCopy(foo.bar[baz])',
+			code: "JSON.parse(JSON.stringify(foo.bar[baz]))",
+			errors: [{ messageId: "noJsonParseJsonStringify" }],
+			output: "structuredClone(foo.bar[baz])",
 		},
 	],
 });

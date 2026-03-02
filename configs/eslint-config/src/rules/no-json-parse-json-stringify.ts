@@ -1,48 +1,51 @@
-import { isJsonParseCall, isJsonStringifyCall } from '../utils/json.js';
-import { ESLintUtils, TSESTree } from '@typescript-eslint/utils';
+import { ESLintUtils, TSESTree } from "@typescript-eslint/utils";
+import { isJsonParseCall, isJsonStringifyCall } from "../utils/json.js";
 
 export const NoJsonParseJsonStringifyRule = ESLintUtils.RuleCreator.withoutDocs({
-	name: 'no-json-parse-json-stringify',
+	name: "no-json-parse-json-stringify",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
 			description:
-				'Calls to `JSON.parse(JSON.stringify(arg))` must be replaced with `deepCopy(arg)` from `workflow`.',
+				"Calls to `JSON.parse(JSON.stringify(arg))` must be replaced with `structuredClone(arg)`.",
 		},
 		schema: [],
 		messages: {
-			noJsonParseJsonStringify: 'Replace with `deepCopy({{ argText }})`',
+			noJsonParseJsonStringify: "Replace with `structuredClone({{ argText }})`",
 		},
-		fixable: 'code',
+		fixable: "code",
 	},
 	defaultOptions: [],
 	create(context) {
 		return {
 			CallExpression(node) {
-				if (isJsonParseCall(node) && isJsonStringifyCall(node)) {
-					const [callExpression] = node.arguments;
+				// Must be JSON.parse(...)
+				if (!isJsonParseCall(node)) return;
 
-					if (callExpression.type !== TSESTree.AST_NODE_TYPES.CallExpression) {
-						return;
-					}
+				const [inner] = node.arguments;
 
-					const { arguments: args } = callExpression;
-
-					if (!Array.isArray(args) || args.length !== 1) return;
-
-					const [arg] = args;
-
-					if (!arg) return;
-
-					const argText = context.sourceCode.getText(arg);
-
-					context.report({
-						messageId: 'noJsonParseJsonStringify',
-						node,
-						data: { argText },
-						fix: (fixer) => fixer.replaceText(node, `deepCopy(${argText})`),
-					});
+				// Must be JSON.stringify(...)
+				if (
+					!inner ||
+					inner.type !== TSESTree.AST_NODE_TYPES.CallExpression ||
+					!isJsonStringifyCall(inner)
+				) {
+					return;
 				}
+
+				if (inner.arguments.length !== 1) return;
+
+				const arg = inner.arguments[0];
+				if (!arg) return;
+
+				const argText = context.sourceCode.getText(arg);
+
+				context.report({
+					node,
+					messageId: "noJsonParseJsonStringify",
+					data: { argText },
+					fix: fixer => fixer.replaceText(node, `structuredClone(${argText})`),
+				});
 			},
 		};
 	},

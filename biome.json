@@ -1,62 +1,59 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "vcs": {
-    "clientKind": "git",
-    "enabled": true,
-    "useIgnoreFile": true
-  },
-  "files": {
-    "ignoreUnknown": false,
-    "ignore": [
-      "**/.turbo",
-      "**/components.d.ts",
-      "**/coverage",
-      "**/dist",
-      "**/build",
-      "**/node_modules",
-      "**/pnpm-lock.yaml",
-      "**/package-lock.json",
-      "**/yarn.lock",
-      "**/CHANGELOG.md",
-      "**/cl100k_base.json",
-      "**/o200k_base.json"
-    ]
-  },
-  "formatter": {
-    "enabled": true,
-    "formatWithErrors": false,
-    "indentStyle": "tab",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 100,
-    "attributePosition": "auto"
-  },
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": false
-  },
-  "javascript": {
-    "parser": {
-      "unsafeParameterDecoratorsEnabled": true
-    },
-    "formatter": {
-      "jsxQuoteStyle": "double",
-      "quoteProperties": "preserve",
-      "trailingCommas": "es5",
-      "semicolons": "always",
-      "arrowParentheses": "asNeeded",
-      "bracketSpacing": true,
-      "bracketSameLine": false,
-      "quoteStyle": "double",
-      "attributePosition": "auto"
-    }
-  },
-  "json": {
-    "parser": {
-      "allowComments": true,
-      "allowTrailingCommas": false
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.3.13/schema.json",
+	"vcs": {
+		"clientKind": "git",
+		"enabled": true,
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!**/.turbo",
+			"!**/components.d.ts",
+			"!**/coverage",
+			"!**/dist",
+			"!**/build",
+			"!**/node_modules",
+			"!**/pnpm-lock.yaml",
+			"!**/package-lock.json",
+			"!**/yarn.lock",
+			"!**/CHANGELOG.md"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"formatWithErrors": false,
+		"indentStyle": "tab",
+		"indentWidth": 2,
+		"lineEnding": "lf",
+		"lineWidth": 100,
+		"attributePosition": "auto"
+	},
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"linter": {
+		"enabled": false
+	},
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		},
+		"formatter": {
+			"jsxQuoteStyle": "double",
+			"quoteProperties": "preserve",
+			"trailingCommas": "es5",
+			"semicolons": "always",
+			"arrowParentheses": "asNeeded",
+			"bracketSpacing": true,
+			"bracketSameLine": false,
+			"quoteStyle": "double",
+			"attributePosition": "auto"
+		}
+	},
+	"json": {
+		"parser": {
+			"allowComments": true,
+			"allowTrailingCommas": false
+		}
+	}
 }

@@ -4,7 +4,6 @@
 	"tasks": {
 		"build:config": {
 			"cache": true,
-			"dependsOn": ["lint", "^build"],
 			"inputs": [
 				"src/**",
 				"tsconfig*.json",

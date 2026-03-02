@@ -1,19 +1,17 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
-import { isJsonParseCall, isJsonStringifyCall } from '../utils/json.js';
+import { ESLintUtils } from "@typescript-eslint/utils";
+import { isJsonParseCall, isJsonStringifyCall } from "../utils/json.js";
 
 export const NoUncaughtJsonParseRule = ESLintUtils.RuleCreator.withoutDocs({
-	name: 'no-uncaught-json-parse',
+	name: "no-uncaught-json-parse",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		hasSuggestions: true,
 		docs: {
-			description:
-				'Calls to `JSON.parse()` must be replaced with `jsonParse()` from `workflow` or surrounded with a try/catch block.',
+			description: "Surrounded with a try/catch block.",
 		},
 		schema: [],
 		messages: {
-			noUncaughtJsonParse:
-				'Use `jsonParse()` from `workflow` or surround the `JSON.parse()` call with a try/catch block.',
+			noUncaughtJsonParse: "Surround the `JSON.parse()` call with a try/catch block.",
 		},
 	},
 	defaultOptions: [],
@@ -29,14 +27,14 @@ export const NoUncaughtJsonParseRule = ESLintUtils.RuleCreator.withoutDocs({
 				}
 
 				if (
-					sourceCode.getAncestors(node).find((node) => node.type === 'TryStatement') !== undefined
+					sourceCode.getAncestors(node).find(node => node.type === "TryStatement") !== undefined
 				) {
 					return;
 				}
 
 				// Found a JSON.parse() call not wrapped into a try/catch, so report it
 				report({
-					messageId: 'noUncaughtJsonParse',
+					messageId: "noUncaughtJsonParse",
 					node,
 				});
 			},

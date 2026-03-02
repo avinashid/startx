@@ -7,7 +7,7 @@
 		"lint": "eslint .",
 		"build": "tsdown --config-loader unrun",
 		"clean": "rimraf dist",
-		"dev": " tsx watch src/index.ts",
+		"dev": "tsx src/index.ts",
 		"bun:dev": "bun --watch src/index.ts",
 		"command": "tsx src/commands/index.ts",
 		"schedule": "tsx src/commands/schedular.ts",
