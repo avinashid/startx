@@ -1,5 +1,7 @@
 import * as jwt from "jsonwebtoken";
 import z from "zod";
+
+import { ENV } from "../env-module/default-env.js";
 import { defineEnv } from "../env-module/define-env.js";
 export type AuthTokenPayload = {
 	userID: string;
@@ -27,7 +29,7 @@ export class TokenModule {
 		}
 	}
 	static signAccessToken(payload: AuthTokenPayload) {
-		const expiration = process.env.NODE_ENV === "development" ? "30d" : "1d";
+		const expiration = ENV.NODE_ENV === "development" ? "30d" : "1d";
 		return jwt.sign(payload, accessTokenSecret, { expiresIn: expiration });
 	}
 	static verifyAccessToken(accessToken: string) {

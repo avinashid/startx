@@ -1,8 +1,10 @@
 import crypto from "crypto";
 import path from "path";
 
+import { ENV } from "./env-module/default-env.js";
+
 export function __dirname() {
-	if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
+	if (ENV.NODE_ENV === "development") {
 		return path.resolve(process.cwd(), "../../");
 	}
 	return process.cwd();

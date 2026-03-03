@@ -158,7 +158,7 @@ export const baseConfig = defineConfig(
 			],
 
 			// Plugins
-			"unused-imports/no-unused-imports": process.env.NODE_ENV === "development" ? "warn" : "error",
+			"unused-imports/no-unused-imports": "warn",
 			"unicorn/no-unnecessary-await": "warn",
 			"unicorn/no-useless-promise-resolve-reject": "warn",
 			"lodash/path-style": ["warn", "as-needed"],

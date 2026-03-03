@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import { config } from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -15,7 +15,7 @@ export function projectRoot() {
 		const thisDir = path.dirname(__filename);
 		return path.resolve(thisDir, "../../../../../");
 	} catch (error) {
-		console.log({ error });
+		console.error({ error });
 		return process.cwd();
 	}
 }
@@ -30,18 +30,18 @@ export function projectRoot() {
 export function loadDotenv(opts?: { root?: string }) {
 	const root = opts?.root ?? projectRoot();
 	if (process.env.NODE_ENV === "test") {
-		dotenv.config({ path: path.join(root, ".env.test") });
+		config({ path: path.join(root, ".env.test") });
 		// optional: if you want local test overrides
-		dotenv.config({ path: path.join(root, ".env.test.local"), override: true });
+		config({ path: path.join(root, ".env.test.local"), override: true });
 		return;
 	}
 
 	// production/dev flow
-	dotenv.config({ path: path.join(root, ".env") }); // base
+	config({ path: path.join(root, ".env") }); // base
 	// .env.local should override the base (for dev machine secrets)
-	dotenv.config({ path: path.join(root, ".env.local"), override: true });
+	config({ path: path.join(root, ".env.local"), override: true });
 	// also load .env.${NODE_ENV}.local if you want per-env local overrides:
 	if (process.env.NODE_ENV) {
-		dotenv.config({ path: path.join(root, `.env.${process.env.NODE_ENV}.local`), override: true });
+		config({ path: path.join(root, `.env.${process.env.NODE_ENV}.local`), override: true });
 	}
 }

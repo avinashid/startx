@@ -21,6 +21,7 @@
 	},
 	"dependencies": {
 		"drizzle-orm": "catalog:",
-		"pg": "catalog:"
+		"pg": "catalog:",
+		"@repo/lib": "workspace:*"
 	}
 }

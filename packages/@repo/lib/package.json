@@ -15,8 +15,7 @@
 	},
 	"exports": {
 		".": "./src/index.ts",
-		"./*": "./src/*/index.ts",
-		"./env": "./src/env-module/index.ts"
+		"./*": "./src/*/index.ts"
 	},
 
 	"devDependencies": {

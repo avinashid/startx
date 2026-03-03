@@ -1,5 +1,6 @@
+import { ENV } from "@repo/lib/env-module";
 import cors from "cors";
 export const corsMiddleware = cors({
-	origin: [process.env.CLIENT_URL, process.env.CORS_URL!],
+	origin: [ENV.CLIENT_URL, ENV.CORS_URL],
 	credentials: true,
 });
