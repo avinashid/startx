@@ -1,10 +1,11 @@
+# pnpm-workspace.yaml
 packages:
   - "apps/*"
   - "packages/*"
   - "packages/@repo/*"
   - "configs/*"
 
-catalog:
+catalog:   # shorthand for catalog:default
   # configs
   typescript: ^5.9.2
   eslint: ^9.39.2
@@ -14,11 +15,15 @@ catalog:
   vite: ^7.3.1
   rimraf: ^6.1.2
   turbo: ^2.8.1
+  tsx: ^4.21.0
 
   # utils
   "@biomejs/biome": ^2.3.13
   prettier: ^3.8.1
   zod: ^4.3.6
+  "@vinejs/vine": ^4.3.0
+  axios: ^1.13.6
+  date-fns: ^4.1.0
 
   # testing
   vitest: ^4.0.18
@@ -41,3 +46,9 @@ catalog:
   # frontend types
   "@types/react": ^19.2.4
   "@types/react-dom": ^19.2.3
+
+  # backend
+  express: ^5.2.1
+  bcrypt: ^6.0.0
+  cors: ^2.7.6
+  cookie-parser: ^1.4.7

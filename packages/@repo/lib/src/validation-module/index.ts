@@ -1,37 +1,39 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import vine from "@vinejs/vine";
 import type { Infer, SchemaTypes } from "@vinejs/vine/types";
-import type { NextFunction, Request, Response } from "express";
 
-import { logger } from "./logger-module/logger";
+import type { NextFunction, Request, Response } from "express";
+import { ErrorResponse } from "../error-handlers-module/index.js";
+import { logger } from "../logger-module/logger.js";
 
 export async function validateBody<T extends SchemaTypes>(
 	schema: T,
-	validate: any,
+	validate: any
 ): Promise<{
 	data?: Infer<T>;
 	error: string[];
 }> {
 	try {
-		const validator = vine.compile(schema as any);
-		const payload = (await validator.validate(validate)) as Infer<T>;
+		const validator = vine.compile(schema);
+		const payload = await validator.validate(validate);
 		return { data: payload, error: [] };
 	} catch (error: any) {
 		return {
 			error: error.messages.map((e: any) => {
 				return e.message;
-			}) as string[],
+			}),
 		};
 	}
 }
 
 export function bodyValidator<T extends SchemaTypes>(schema: T) {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+	return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
 		const originalMethod = descriptor.value;
 
 		descriptor.value = async function (
 			req: Request<unknown, unknown, Infer<T>>,
 			res: Response,
-			next: NextFunction,
+			next: NextFunction
 		) {
 			const { error, data } = await validateBody(schema, req.body);
 			logger.info(`Body: ${JSON.stringify(req.body, null, 2)} `, {
@@ -42,7 +44,7 @@ export function bodyValidator<T extends SchemaTypes>(schema: T) {
 				return res.status(422).json({ message: error.join("\n") });
 			}
 
-			req.body = data; // Make req.body type-safe
+			req.body = data as typeof data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -50,7 +52,7 @@ export function bodyValidator<T extends SchemaTypes>(schema: T) {
 	};
 }
 export function paramsValidator(schema: SchemaTypes) {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+	return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
 		const originalMethod = descriptor.value;
 
 		descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
@@ -59,7 +61,7 @@ export function paramsValidator(schema: SchemaTypes) {
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.params = data; // Make req.body type-safe
+			req.params = data as typeof data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -68,7 +70,7 @@ export function paramsValidator(schema: SchemaTypes) {
 }
 
 export function queryValidator(schema: SchemaTypes) {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+	return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
 		const originalMethod = descriptor.value;
 
 		descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
@@ -77,7 +79,7 @@ export function queryValidator(schema: SchemaTypes) {
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.query = data; // Make req.body type-safe
+			req.query = data as typeof data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -116,8 +118,8 @@ export function queryValidator(schema: SchemaTypes) {
 // 	};
 // }
 
-export function mediaBodyValidator(schema: SchemaTypes, optional = false) {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+export function mediaBodyValidator(schema: SchemaTypes, optional: boolean = false) {
+	return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
 		const originalMethod = descriptor.value;
 
 		descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
@@ -130,19 +132,18 @@ export function mediaBodyValidator(schema: SchemaTypes, optional = false) {
 
 			const isJSON = (str: any) => {
 				try {
-					const value = JSON.parse(str as string);
+					const value = JSON.parse(str);
 
 					if (typeof value === "object" || value === null || typeof value === "boolean") {
 						return value;
 					}
 					return str;
 				} catch (e) {
-					console.log(e)
 					return str;
 				}
 			};
 
-			const parseData = Object.entries(req.body as object).map(([key, value]) => {
+			const parseData = Object.entries(req.body).map(([key, value]) => {
 				return [key, isJSON(value)];
 			});
 
@@ -156,7 +157,7 @@ export function mediaBodyValidator(schema: SchemaTypes, optional = false) {
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.body = data;
+			req.body = data as typeof data;
 			req.files = files;
 			return originalMethod.apply(this, [req, res, next]);
 		};
@@ -173,15 +174,31 @@ export const paginationValidator = vine.object({
 	page: vine
 		.number()
 		.positive()
-		.parse((e: any) => (!e ? 1 : e))
+		.parse(e => (!e ? 1 : e))
 		.optional(),
 	limit: vine
 		.number()
 		.positive()
-		.parse((e: any) => (!e ? 10 : e))
+		.parse(e => (!e ? 10 : e))
 		.optional(),
 	query: vine
 		.string()
-		.parse((e: any) => (!e ? "" : e))
+		.parse(e => (!e ? "" : e))
 		.optional(),
 });
+
+type ValidationResult<T> = {
+	data?: T;
+	error: string[];
+};
+
+export async function validate<T extends SchemaTypes>(
+	schema: T,
+	payload: Infer<T>
+): Promise<Infer<T>> {
+	const result = await validateBody(schema, payload);
+	if (result.error.length) {
+		throw new ErrorResponse(result.error.join("\n"), 422);
+	}
+	return result.data!;
+}

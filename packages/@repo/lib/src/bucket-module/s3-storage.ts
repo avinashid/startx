@@ -7,22 +7,28 @@ import {
 	type PutObjectCommandInput,
 	S3Client,
 } from "@aws-sdk/client-s3";
+import z from "zod";
+import { defineEnv } from "../env-module/define-env.js";
 
-const s3Endpoint = process.env.S3_ENDPOINT;
+const credentials = defineEnv({
+	AWS_ACCESS_KEY_ID: z.string(),
+	AWS_SECRET_ACCESS_KEY: z.string(),
+	AWS_REGION: z.string().default("us-east-1"),
+	AWS_BUCKET: z.string(),
+	S3_ENDPOINT: z.string().optional(),
+});
 
-const credentials = {
-	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-};
-
-// Create an S3 service client object.
+const s3Endpoint = credentials.S3_ENDPOINT;
 const s3Client = new S3Client({
-	credentials,
-	region: process.env.AWS_REGION,
+	credentials: {
+		accessKeyId: credentials.AWS_ACCESS_KEY_ID,
+		secretAccessKey: credentials.AWS_SECRET_ACCESS_KEY,
+	},
+	region: credentials.AWS_REGION,
 	endpoint: s3Endpoint,
 });
 
-const bucket = process.env.AWS_BUCKET;
+const bucket = credentials.AWS_BUCKET;
 
 export type UploadFile = {
 	name: string;
@@ -49,11 +55,11 @@ export class S3Bucket {
 	}
 
 	static getAwsUrl(path: string) {
-		return `https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/${path}`;
+		return `https://${bucket}.s3.${credentials.AWS_REGION}.amazonaws.com/${path}`;
 	}
 
 	static getKeyFromUrl(url: string) {
-		const key = url.split(`https://${bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/`)[1];
+		const key = url.split(`https://${bucket}.s3.${credentials.AWS_REGION}.amazonaws.com/`)[1];
 		return key;
 	}
 
@@ -70,7 +76,7 @@ export class S3Bucket {
 
 			// let upload = [] as { url: string; type: string; name: string }[];
 			const upload = await Promise.all(
-				files.map(async (file) => {
+				files.map(async file => {
 					const key = file.name;
 					const params: PutObjectCommandInput = {
 						Bucket: bucket,
@@ -85,7 +91,7 @@ export class S3Bucket {
 						type: file.mimetype,
 						name: file.name,
 					};
-				}),
+				})
 			);
 			return upload;
 			// if (upload.length > 0) return upload;

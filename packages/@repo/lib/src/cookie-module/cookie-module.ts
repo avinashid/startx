@@ -1,4 +1,11 @@
 import type { CookieOptions } from "express";
+import z from "zod";
+import { ENV } from "../env-module/default-env.js";
+import { defineEnv } from "../env-module/define-env.js";
+
+const credentials = defineEnv({
+	COOKIE_DOMAIN: z.string().optional().default(".localhost"),
+});
 
 const constants = {
 	refreshToken: {
@@ -10,19 +17,19 @@ const constants = {
 	initialize() {
 		const prodMaxAge = 1000 * 60 * 60 * 24 * 30;
 		const stagingMaxAge = 1000 * 60 * 60 * 24 * 365;
-		const prodEnv = process.env.NODE_ENV === "production";
-		const stagingEnv = process.env.NODE_ENV === "staging";
+		const prodEnv = ENV.NODE_ENV === "production";
+		const stagingEnv = ENV.NODE_ENV === "staging";
 
 		if (prodEnv) {
 			this.refreshToken.cookie = "refresh-token";
-			this.refreshToken.cookieDomain = process.env.COOKIE_DOMAIN;
+			this.refreshToken.cookieDomain = credentials.COOKIE_DOMAIN;
 			this.refreshToken.secureCookie = true;
 			this.refreshToken.maxAge = prodMaxAge;
 		} else {
 			this.refreshToken.cookie = "refresh-token-staging";
 			this.refreshToken.cookieDomain = stagingEnv
-				? process.env.COOKIE_DOMAIN
-				: process.env.COOKIE_DOMAIN || "localhost";
+				? credentials.COOKIE_DOMAIN!
+				: credentials.COOKIE_DOMAIN || "localhost";
 			this.refreshToken.secureCookie = stagingEnv ? true : false;
 			this.refreshToken.maxAge = stagingMaxAge;
 		}

@@ -13,7 +13,12 @@
 		"lint:fix": "eslint . --fix",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
-	"exports": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*/index.ts",
+		"./env": "./src/env-module/index.ts"
+	},
+
 	"devDependencies": {
 		"@repo/email": "workspace:*",
 		"@repo/redis": "workspace:*",
@@ -23,7 +28,6 @@
 		"@types/jsonwebtoken": "^9.0.7",
 		"@types/nodemailer": "^6.4.16",
 		"eslint-config": "workspace:*",
-		"tsc-alias": "^1.8.10",
 		"typescript-config": "workspace:*",
 		"vitest": "catalog:",
 		"vitest-config": "workspace:*",

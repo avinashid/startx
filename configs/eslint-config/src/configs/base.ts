@@ -1,6 +1,7 @@
 import { fixupPluginRules } from "@eslint/compat";
 import js from "@eslint/js";
 import stylisticPlugin from "@stylistic/eslint-plugin";
+import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier";
 import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
 import importPlugin from "eslint-plugin-import-x";
@@ -13,7 +14,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 import { localRulesPlugin } from "../plugin.js";
 
-export const baseConfig = tseslint.config(
+export const baseConfig = defineConfig(
 	// 1. Global Ignores
 	{
 		ignores: [
@@ -21,7 +22,7 @@ export const baseConfig = tseslint.config(
 			"**/dist/**",
 			"**/build/**",
 			"**/.next/**",
-			"eslint.config.mjs",
+			"eslint.config.ts",
 			"tsup.config.ts",
 			"jest.config.js",
 			"cypress.config.js",
@@ -35,8 +36,8 @@ export const baseConfig = tseslint.config(
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	...tseslint.configs.recommendedTypeChecked,
-	importPlugin.flatConfigs.recommended,
-	importPlugin.flatConfigs.typescript,
+	importPlugin.flatConfigs.recommended as any,
+	importPlugin.flatConfigs.typescript as any,
 
 	// 3. Main Configuration
 	{
@@ -57,7 +58,7 @@ export const baseConfig = tseslint.config(
 				...globals.es2021,
 			},
 			parserOptions: {
-				projectService: true, // Faster than 'project: true' for monorepos
+				projectService: true,
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
@@ -83,7 +84,12 @@ export const baseConfig = tseslint.config(
 			"@typescript-eslint/no-floating-promises": ["error", { ignoreVoid: true }],
 			"@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: false }],
 			"@typescript-eslint/only-throw-error": "error",
-
+			"@typescript-eslint/no-explicit-any": "warn",
+			"@typescript-eslint/no-unsafe-assignment": "warn",
+			"@typescript-eslint/no-unsafe-argument": "warn",
+			"@typescript-eslint/no-unsafe-call": "warn",
+			"@typescript-eslint/no-unsafe-return": "warn",
+			"@typescript-eslint/no-unsafe-member-access": "warn",
 			// Downgraded: Stylistic type rules shouldn't break the build instantly.
 			"@typescript-eslint/array-type": ["warn", { default: "array-simple" }],
 			"@typescript-eslint/consistent-type-assertions": "warn",
@@ -96,13 +102,22 @@ export const baseConfig = tseslint.config(
 			"@typescript-eslint/naming-convention": [
 				"warn",
 				{ selector: "default", format: ["camelCase"] },
+
 				{ selector: "import", format: ["camelCase", "PascalCase"] },
+
 				{
 					selector: "variable",
 					format: ["camelCase", "snake_case", "UPPER_CASE", "PascalCase"],
 					leadingUnderscore: "allowSingleOrDouble",
 					trailingUnderscore: "allowSingleOrDouble",
 				},
+
+				{
+					selector: "parameter",
+					format: ["camelCase"],
+					leadingUnderscore: "allowSingleOrDouble",
+				},
+
 				{ selector: "typeLike", format: ["PascalCase"] },
 				{ selector: "enumMember", format: ["UPPER_CASE", "PascalCase"] },
 			],

@@ -1,17 +1,25 @@
 import firebaseAdmin from "firebase-admin";
 import path from "path";
-
+import z from "zod";
+import { defineEnv } from "../env-module/define-env.js";
 import { logger } from "../logger-module/logger.js";
 import { __dirname } from "../utils.js";
 
 export type FcmPayload = {
-	notification?: {
+	data?: Record<string, any> & {
 		title: string;
 		body?: string;
+		url?: string;
 	};
-	data?: Record<string, any>;
 	token: string;
 };
+
+const credentials = defineEnv({
+	FIREBASE_PROJECT_ID: z.string(),
+	FIREBASE_CLIENT_EMAIL: z.string(),
+	FIREBASE_PRIVATE_KEY: z.string(),
+	FIREBASE_KEY_PATH: z.string().optional().default("/keys/firebase-messaging-secret.json"),
+});
 
 type InitOptions =
 	| {
@@ -32,13 +40,13 @@ export class PushNotificationManager {
 
 			if (options.type === "file") {
 				credential = firebaseAdmin.credential.cert(
-					path.join(__dirname(), "/keys/firebase-messaging-secret.json"),
+					path.join(__dirname(), credentials.FIREBASE_KEY_PATH)
 				);
 			} else if (options.type === "env") {
 				credential = firebaseAdmin.credential.cert({
-					projectId: process.env.FIREBASE_PROJECT_ID,
-					clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
-					privateKey: process.env.FIREBASE_PRIVATE_KEY!.replace(/\\n/g, "\n"),
+					projectId: credentials.FIREBASE_PROJECT_ID,
+					clientEmail: credentials.FIREBASE_CLIENT_EMAIL,
+					privateKey: credentials.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
 				});
 			} else {
 				throw new Error("Invalid initialization options");
@@ -58,24 +66,22 @@ export class PushNotificationManager {
 			return;
 		}
 
-		const formattedPayload = payload.map((item) => {
+		const formattedPayload = payload.map(item => {
 			const data: Record<string, string> = {};
 
 			for (const key in item.data) {
-				const value = item.data[key] as string;
-				if (value !== null) {
+				const value = item.data[key];
+				if (value != null) {
 					data[key] = typeof value === "string" ? value : String(value);
 				}
 			}
 
 			return {
-				notification: item.notification
-					? {
-							title: item.notification.title,
-							body: item.notification.body,
-						}
-					: undefined,
-				data,
+				data: {
+					...data,
+					title: item.data?.title!,
+					body: item.data?.body!,
+				},
 				token: item.token,
 			};
 		});

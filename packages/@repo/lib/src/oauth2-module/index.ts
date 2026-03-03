@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { logger } from "./logger-module/logger";
+import { logger } from "../logger-module/logger.js";
 
 type AuthorizationURLParams = {
 	authorizationURL: string;
@@ -63,10 +63,7 @@ export class OauthClient {
 		return url.toString();
 	}
 
-	static async getAccessToken(
-		params: AccessTokenParams,
-		options?: { authInBody?: boolean },
-	) {
+	static async getAccessToken(params: AccessTokenParams, options?: { authInBody?: boolean }) {
 		try {
 			const body = new URLSearchParams();
 			body.append("grant_type", "authorization_code");

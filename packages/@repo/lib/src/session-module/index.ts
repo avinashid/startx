@@ -1,7 +1,8 @@
 import { redisClient } from "@repo/redis";
-
-import { constants } from "./constants.js";
-import { TokenModule } from "./token-module.js";
+import { TokenModule } from "../extra/token-module.js";
+export const constants = {
+	sessionDuration: 60 * 60 * 6,
+};
 
 const accessTokenKey = (key: string) => `access_token:${key}`;
 const refreshTokenKey = (key: string) => `refresh_token:${key}`;
@@ -20,7 +21,7 @@ function jsonParse<T>(value: string) {
 	try {
 		return JSON.parse(value) as T;
 	} catch (error) {
-		console.error(error)
+		console.error(error);
 		throw error;
 	}
 }

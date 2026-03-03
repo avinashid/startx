@@ -1,4 +1,4 @@
-import {  UserSession } from "@repo/lib";
+import { UserSession } from "@repo/lib";
 import type { NextFunction, Request, Response } from "express";
 export class AuthMiddlewares {
 	static async validateActiveSession(req: Request, res: Response, next: NextFunction) {
@@ -24,7 +24,7 @@ export class AuthMiddlewares {
 }
 
 export function validateSession() {
-	return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+	return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
 		descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
 			try {

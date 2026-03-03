@@ -1,0 +1,32 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Debug Core Server",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": ["run", "dev:debug"],
+			"cwd": "${workspaceFolder}/apps/core-server",
+			"attachSimplePort": 9229,
+			"console": "integratedTerminal"
+		},
+		{
+			"name": "Debug Another Server",
+			"type": "node",
+			"request": "launch",
+			"runtimeExecutable": "pnpm",
+			"runtimeArgs": ["run", "dev:debug"],
+			"cwd": "${workspaceFolder}/apps/another-server",
+			"attachSimplePort": 9230,
+			"console": "integratedTerminal"
+		}
+	],
+	"compounds": [
+		{
+			"name": "Debug ALL Servers",
+			"configurations": ["Debug Core Server", "Debug Another Server"],
+			"stopAll": true
+		}
+	]
+}

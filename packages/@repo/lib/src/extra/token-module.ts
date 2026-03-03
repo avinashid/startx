@@ -1,10 +1,17 @@
 import * as jwt from "jsonwebtoken";
+import z from "zod";
+import { defineEnv } from "../env-module/define-env.js";
 export type AuthTokenPayload = {
 	userID: string;
 	email: string;
 };
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
-const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
+
+const credentials = defineEnv({
+	ACCESS_TOKEN_SECRET: z.string(),
+	REFRESH_TOKEN_SECRET: z.string(),
+});
+const accessTokenSecret = credentials.ACCESS_TOKEN_SECRET;
+const refreshTokenSecret = credentials.REFRESH_TOKEN_SECRET;
 
 export class TokenModule {
 	static signRefreshToken(payload: AuthTokenPayload) {
@@ -15,7 +22,7 @@ export class TokenModule {
 			const payload = jwt.verify(refreshToken, refreshTokenSecret) as AuthTokenPayload;
 			return payload;
 		} catch (error) {
-			console.error(error)
+			console.error(error);
 			return null;
 		}
 	}
@@ -28,7 +35,7 @@ export class TokenModule {
 			const payload = jwt.verify(accessToken, accessTokenSecret) as AuthTokenPayload;
 			return payload;
 		} catch (error) {
-			console.error(error)
+			console.error(error);
 			return null;
 		}
 	}

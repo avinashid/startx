@@ -6,7 +6,8 @@
 	"exports": {
 		"./base": "./src/configs/base.ts",
 		"./frontend": "./src/configs/frontend.ts",
-		"./node": "./src/configs/node.ts"
+		"./node": "./src/configs/node.ts",
+		"./extend": "./src/configs/extend.ts"
 	},
 	"scripts": {
 		"clean": "rimraf dist .turbo",

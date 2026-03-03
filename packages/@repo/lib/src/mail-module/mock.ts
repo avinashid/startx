@@ -1,4 +1,4 @@
-import { logger } from "../logger-module/logger";
+import { logger } from "../logger-module/logger.js";
 
 class MockMailService {
 	static sendMail({ text, to }: { to: string; text: string }) {

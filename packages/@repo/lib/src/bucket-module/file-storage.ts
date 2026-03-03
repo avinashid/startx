@@ -1,9 +1,9 @@
 import type { UploadedFile } from "express-fileupload";
 import fs from "fs";
 import path from "path";
-
-import { logger } from "../logger-module/logger";
-import { Random } from "../utils";
+import { ENV } from "../env-module/default-env.js";
+import { logger } from "../logger-module/logger.js";
+import { Random } from "../utils.js";
 
 export class FileBasedBucket {
 	static async upload(file: UploadedFile, subpath?: string) {
@@ -24,12 +24,12 @@ export class FileBasedBucket {
 	}
 
 	static getPath(url: string) {
-		const path = url.replace(`${process.env.SERVER_URL}/files/`, `${process.cwd()}/storage/`);
+		const path = url.replace(`${ENV.SERVER_URL}/files/`, `${process.cwd()}/storage/`);
 		return path;
 	}
 
 	static getPublicUrl(key: string) {
-		return path.join(process.env.SERVER_URL, "/files", key);
+		return path.join(ENV.SERVER_URL, "/files", key);
 	}
 
 	static async createDirectoryIfNotExists(path: string) {
@@ -37,7 +37,7 @@ export class FileBasedBucket {
 			if (fs.existsSync(path)) {
 				resolve(true);
 			} else {
-				fs.mkdir(path, { recursive: true }, (err) => {
+				fs.mkdir(path, { recursive: true }, err => {
 					if (err) {
 						reject(err);
 					}

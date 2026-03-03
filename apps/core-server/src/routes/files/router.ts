@@ -1,7 +1,9 @@
-import { Router, static as expressStatic } from "express";
+import { static as expressStatic, Router } from "express";
 
 export function createFilesRouter(): Router {
 	const router = Router();
-	router.get("/*", expressStatic("storage"));
+
+	router.get("/*splat", expressStatic("storage"));
+
 	return router;
 }

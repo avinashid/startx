@@ -1,78 +1,44 @@
 import { createLogger, format, transports } from "winston";
+import type { LogConfig } from "./log-config.js";
+import { logConfig } from "./log-config.js";
 
-import { type LogConfig, logConfig } from "./log-config.js";
+const { combine, timestamp, printf, errors, colorize, json } = format;
 
-const { combine, timestamp, printf, errors, colorize } = format;
+const isProd = process.env.NODE_ENV === "production";
 
-// Custom format to include error stack traces
-const customFormat = printf(({ level, message, timestamp, stack }: any) => {
-	return `${timestamp} [${level}]: ${stack ?? message}`;
-});
-
-const logConfigFilter = format((info) => {
-	if (!info.logType || logConfig[info.logType as keyof LogConfig]) {
-		return info;
-	}
+const logConfigFilter = format(info => {
+	if (!info.logType) return info;
+	if (logConfig[info.logType as keyof LogConfig]) return info;
 	return false;
 });
 
-// Create level-specific filters
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const levelFilter = (level: string) =>
-	format((info) => {
-		if (info.level === level) {
-			return info;
-		}
-		return false;
-	})();
+const consoleFormat = printf(({ level, message, timestamp, stack, ...meta }) => {
+	const base = stack ?? message;
 
-// Configure the logger
+	const metaString = Object.keys(meta).length > 0 ? `\nmeta: ${JSON.stringify(meta, null, 2)}` : "";
+
+	return `${timestamp} [${level}]: ${base}${metaString}`;
+});
+
 export const logger = createLogger({
+	level: "info",
 	format: combine(
 		timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-		errors({ stack: true }), // Capture stack traces
-		customFormat,
+		errors({ stack: true }),
+		logConfigFilter(),
+		isProd ? json() : consoleFormat
 	),
 	transports: [
-		// Console transport - shows all levels
 		new transports.Console({
-			format: combine(logConfigFilter(), colorize(), customFormat),
+			format: isProd
+				? combine(timestamp(), errors({ stack: true }), logConfigFilter(), json())
+				: combine(
+						timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+						errors({ stack: true }),
+						logConfigFilter(),
+						colorize({ all: true }),
+						consoleFormat
+					),
 		}),
-
-		// Standard log file for all levels
-		// new DailyRotateFile({
-		//   filename: path.join(__dirname(), "logs", "combined-%DATE%.log"),
-		//   datePattern: "DD-MM-YYYY",
-		//   maxFiles: "30d",
-		//   format: combine(logConfigFilter(), customFormat),
-		//   json: true,
-		// }),
-
-		// // File transport for 'info' logs only
-		// new DailyRotateFile({
-		//   filename: path.join(__dirname(), "logs", "info-%DATE%.log"),
-		//   datePattern: "DD-MM-YYYY",
-		//   maxFiles: "30d",
-		//   format: combine(logConfigFilter(), levelFilter("info"), customFormat),
-		//   json: true,
-		// }),
-
-		// // File transport for 'error' logs only
-		// new DailyRotateFile({
-		//   filename: path.join(__dirname(), "logs", "error-%DATE%.log"),
-		//   datePattern: "DD-MM-YYYY",
-		//   maxFiles: "30d",
-		//   format: combine(logConfigFilter(), levelFilter("error"), customFormat),
-		//   json: true,
-		// }),
-
-		// // File transport for 'warn' logs only
-		// new DailyRotateFile({
-		//   filename: path.join(__dirname(), "logs", "warn-%DATE%.log"),
-		//   datePattern: "DD-MM-YYYY",
-		//   maxFiles: "30d",
-		//   format: combine(logConfigFilter(), levelFilter("warn"), customFormat),
-		//   json: true,
-		// }),
 	],
 });
