@@ -15,10 +15,7 @@
 	"devDependencies": {
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"vitest": "catalog:",
 		"vitest-config": "workspace:*",
-		"vitest-mock-extended": "^3.1.0",
-		"vine": "link:@types/vinejs/vine",
 		"tsdown-config": "workspace:*"
 	},
 	"dependencies": {

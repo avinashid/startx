@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/no-json-parse-json-stringify */
 "use client";
 
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
@@ -364,7 +363,6 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 				}}
 				className={cn("h-auto max-h-fit overflow-visible  bg-transparent", commandProps?.className)}
 				shouldFilter={
-
 					commandProps?.shouldFilter !== undefined ? commandProps.shouldFilter : !onSearch
 				} // When onSearch is provided, we don't want to filter the options. You can still override it.
 				filter={commandFilter()}
@@ -454,7 +452,8 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 					</div>
 				</div>
 				<div className="relative">
-					{open ? <CommandList className="absolute top-1 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+					{open ? (
+						<CommandList className="absolute top-1 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
 							{isLoading ? (
 								<>{loadingIndicator}</>
 							) : (
@@ -499,7 +498,8 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
 									))}
 								</>
 							)}
-						</CommandList> : null}
+						</CommandList>
+					) : null}
 				</div>
 			</Command>
 		);

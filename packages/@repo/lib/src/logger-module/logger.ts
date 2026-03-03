@@ -1,10 +1,12 @@
 import { createLogger, format, transports } from "winston";
+
 import type { LogConfig } from "./log-config.js";
 import { logConfig } from "./log-config.js";
+import { ENV } from "../env-module/default-env.js";
 
 const { combine, timestamp, printf, errors, colorize, json } = format;
 
-const isProd = process.env.NODE_ENV === "production";
+const isProd = ENV.NODE_ENV === "production";
 
 const logConfigFilter = format(info => {
 	if (!info.logType) return info;
@@ -17,7 +19,7 @@ const consoleFormat = printf(({ level, message, timestamp, stack, ...meta }) => 
 
 	const metaString = Object.keys(meta).length > 0 ? `\nmeta: ${JSON.stringify(meta, null, 2)}` : "";
 
-	return `${timestamp} [${level}]: ${base}${metaString}`;
+	return `${timestamp as string} [${level}]: ${base as string}${metaString}`;
 });
 
 export const logger = createLogger({

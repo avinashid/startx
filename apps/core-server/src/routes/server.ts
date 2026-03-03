@@ -6,7 +6,6 @@ import { corsMiddleware } from "@/middlewares/cors-middleware.js";
 import { errorMiddleware } from "@/middlewares/error-middleware.js";
 import { loggerMiddleware } from "@/middlewares/logger-middleware.js";
 import { notFoundMiddleware } from "@/middlewares/notfound-middleware.js";
-import { serveStatic } from "@/middlewares/serve-static.js";
 
 import { createFilesRouter } from "./files/router.js";
 
@@ -25,7 +24,7 @@ app.get("/test", (_req, res) => {
 	return;
 });
 
-app.use(serveStatic());
+// app.use(serveStatic());
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

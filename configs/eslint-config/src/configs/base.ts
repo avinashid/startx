@@ -133,7 +133,8 @@ export const baseConfig = defineConfig(
 					},
 				},
 			],
-
+			"@typescript-eslint/no-unused-vars": "warn",
+			"@typescript-eslint/no-empty-object-type": "warn",
 			// Stylistic
 			"@stylistic/member-delimiter-style": [
 				"warn",

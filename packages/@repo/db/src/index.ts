@@ -15,6 +15,7 @@ export type DrizzleTransaction = PgTransaction<
 	ExtractTablesWithRelations<typeof schema>
 >;
 export type DrizzleDB = typeof db;
-export  {db};
+export { db };
+export * from "drizzle-orm";
 export * from "./functions.js";
 export * from "./schema/index.js";

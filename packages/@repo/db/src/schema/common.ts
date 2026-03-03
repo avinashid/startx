@@ -1,6 +1,4 @@
-import { pgTable, uuid, varchar, timestamp, pgEnum, text } from "drizzle-orm/pg-core";
-
-// Helper function to generate current timestamp
+import { pgEnum, pgTable, text, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["user", "admin", "superuser"]);
 
@@ -45,5 +43,3 @@ export const otps = pgTable("otp", {
 		.defaultNow()
 		.$onUpdate(() => new Date()),
 });
-
-// ----------------------------------------------------------------------------

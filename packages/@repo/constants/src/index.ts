@@ -1,6 +1,6 @@
-export * from "./api";
+export * from "./api.js";
 
-export { Time } from "./time";
+export { Time } from "./time.js";
 
 export const MIN_PASSWORD_CHAR_LENGTH = 8;
 

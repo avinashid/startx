@@ -71,7 +71,7 @@ export class PushNotificationManager {
 
 			for (const key in item.data) {
 				const value = item.data[key];
-				if (value != null) {
+				if (value !== null) {
 					data[key] = typeof value === "string" ? value : String(value);
 				}
 			}
@@ -79,8 +79,8 @@ export class PushNotificationManager {
 			return {
 				data: {
 					...data,
-					title: item.data?.title!,
-					body: item.data?.body!,
+					title: item.data?.title ?? "",
+					body: item.data?.body ?? "",
 				},
 				token: item.token,
 			};

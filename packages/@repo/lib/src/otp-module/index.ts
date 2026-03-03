@@ -1,6 +1,5 @@
-import { db, otps } from "@repo/db";
+import { db, eq, otps } from "@repo/db";
 import { AdminEmailTemplate } from "@repo/email";
-import { eq } from "drizzle-orm";
 import { ENV } from "../env-module/default-env.js";
 import { HashingModule } from "../hashing-module/index.js";
 import { logger } from "../logger-module/logger.js";

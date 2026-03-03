@@ -1,5 +1,6 @@
 import type { CookieOptions } from "express";
 import z from "zod";
+
 import { ENV } from "../env-module/default-env.js";
 import { defineEnv } from "../env-module/define-env.js";
 
@@ -28,7 +29,7 @@ const constants = {
 		} else {
 			this.refreshToken.cookie = "refresh-token-staging";
 			this.refreshToken.cookieDomain = stagingEnv
-				? credentials.COOKIE_DOMAIN!
+				? credentials.COOKIE_DOMAIN
 				: credentials.COOKIE_DOMAIN || "localhost";
 			this.refreshToken.secureCookie = stagingEnv ? true : false;
 			this.refreshToken.maxAge = stagingMaxAge;

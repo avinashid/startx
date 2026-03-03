@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import vine from "@vinejs/vine";
 import type { Infer, SchemaTypes } from "@vinejs/vine/types";
-
 import type { NextFunction, Request, Response } from "express";
+
 import { ErrorResponse } from "../error-handlers-module/index.js";
 import { logger } from "../logger-module/logger.js";
 
@@ -44,7 +43,7 @@ export function bodyValidator<T extends SchemaTypes>(schema: T) {
 				return res.status(422).json({ message: error.join("\n") });
 			}
 
-			req.body = data as typeof data; // Make req.body type-safe
+			req.body = data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -61,7 +60,7 @@ export function paramsValidator(schema: SchemaTypes) {
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.params = data as typeof data; // Make req.body type-safe
+			req.params = data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -79,7 +78,7 @@ export function queryValidator(schema: SchemaTypes) {
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.query = data as typeof data; // Make req.body type-safe
+			req.query = data; // Make req.body type-safe
 			return originalMethod.apply(this, [req, res, next]);
 		};
 
@@ -138,7 +137,7 @@ export function mediaBodyValidator(schema: SchemaTypes, optional: boolean = fals
 						return value;
 					}
 					return str;
-				} catch (e) {
+				} catch {
 					return str;
 				}
 			};
@@ -157,7 +156,7 @@ export function mediaBodyValidator(schema: SchemaTypes, optional: boolean = fals
 				logger.error(error.join("\n"), { logType: "validationErrors" });
 				return res.status(422).json({ message: error.join("\n") });
 			}
-			req.body = data as typeof data;
+			req.body = data;
 			req.files = files;
 			return originalMethod.apply(this, [req, res, next]);
 		};
@@ -186,11 +185,6 @@ export const paginationValidator = vine.object({
 		.parse(e => (!e ? "" : e))
 		.optional(),
 });
-
-type ValidationResult<T> = {
-	data?: T;
-	error: string[];
-};
 
 export async function validate<T extends SchemaTypes>(
 	schema: T,

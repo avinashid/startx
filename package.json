@@ -38,7 +38,8 @@
 		"zod": "catalog:",
 		"@vinejs/vine": "catalog:",
 		"axios": "catalog:",
-		"date-fns": "catalog:"
+		"date-fns": "catalog:",
+		"nanoid": "catalog:"
 	},
 	"engines": {
 		"node": ">=22"

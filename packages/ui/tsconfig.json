@@ -12,7 +12,7 @@
 		"src/**/*",
 		"tailwind.config.ts",
 		"stylelint.config.mjs",
-		"eslint.config.mjs",
+		"eslint.config.ts",
 		"postcss.config.mjs"
 	]
 }
