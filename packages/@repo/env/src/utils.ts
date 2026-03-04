@@ -13,7 +13,7 @@ export function projectRoot() {
 	try {
 		const __filename = fileURLToPath(import.meta.url);
 		const thisDir = path.dirname(__filename);
-		return path.resolve(thisDir, "../../../../../");
+		return path.resolve(thisDir, "../../../../");
 	} catch (error) {
 		console.error({ error });
 		return process.cwd();
@@ -29,6 +29,7 @@ export function projectRoot() {
  */
 export function loadDotenv(opts?: { root?: string }) {
 	const root = opts?.root ?? projectRoot();
+
 	if (process.env.NODE_ENV === "test") {
 		config({ path: path.join(root, ".env.test") });
 		// optional: if you want local test overrides
@@ -37,7 +38,9 @@ export function loadDotenv(opts?: { root?: string }) {
 	}
 
 	// production/dev flow
-	config({ path: path.join(root, ".env") }); // base
+	config({ path: path.join(process.cwd(), ".env") }); // prod
+	// dev env
+	config({ path: path.join(root, ".env") });
 	// .env.local should override the base (for dev machine secrets)
 	config({ path: path.join(root, ".env.local"), override: true });
 	// also load .env.${NODE_ENV}.local if you want per-env local overrides:

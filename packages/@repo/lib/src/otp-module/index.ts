@@ -1,6 +1,7 @@
 import { db, eq, otps } from "@repo/db";
 import { AdminEmailTemplate } from "@repo/email";
-import { ENV } from "../env-module/default-env.js";
+import { ENV } from "@repo/env";
+
 import { HashingModule } from "../hashing-module/index.js";
 import { logger } from "../logger-module/logger.js";
 import { SMTPMailService } from "../mail-module/nodemailer.js";

@@ -47,7 +47,9 @@
 			"persistent": true
 		},
 		"start": {
-			"cache": false
+			"cache": false,
+			"persistent": true,
+			"env": ["NODE_ENV=production"]
 		},
 		"format": {
 			"cache": false

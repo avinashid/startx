@@ -7,8 +7,8 @@ import {
 	type PutObjectCommandInput,
 	S3Client,
 } from "@aws-sdk/client-s3";
+import { defineEnv } from "@repo/env";
 import z from "zod";
-import { defineEnv } from "../env-module/define-env.js";
 
 const credentials = defineEnv({
 	AWS_ACCESS_KEY_ID: z.string(),

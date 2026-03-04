@@ -1,8 +1,8 @@
 {
-	"name": "@repo/db",
+	"name": "@repo/env",
 	"version": "0.0.0",
-	"private": true,
 	"type": "module",
+	"private": true,
 	"scripts": {
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",
@@ -14,14 +14,15 @@
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",
+	"types": "./src/index.ts",
+
 	"devDependencies": {
-		"@types/pg": "catalog:",
 		"eslint-config": "workspace:*",
-		"typescript-config": "workspace:*"
+		"typescript-config": "workspace:*",
+		"vitest": "catalog:",
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"drizzle-orm": "catalog:",
-		"pg": "catalog:",
-		"@repo/env": "workspace:*"
+		"dotenv": "catalog:"
 	}
 }

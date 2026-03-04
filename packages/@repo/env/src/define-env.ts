@@ -1,7 +1,10 @@
-import { ZodError, ZodTypeAny, z } from "zod";
+import type { ZodTypeAny } from "zod";
+import { ZodError, z } from "zod";
+
 import { loadDotenv } from "./utils.js";
 
 loadDotenv();
+
 type SpecEntry =
 	| ZodTypeAny
 	| {
@@ -26,7 +29,8 @@ function isZod(v: unknown): v is ZodTypeAny {
 }
 
 export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
-	const result: any = {};
+	const rawEnv: Record<string, unknown> = {};
+	const zodShape: Record<string, ZodTypeAny> = {};
 
 	for (const key of Object.keys(spec) as Array<keyof S>) {
 		const entry = spec[key];
@@ -40,17 +44,18 @@ export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 				};
 
 		const raw = process.env[normalized.env];
-		const value = raw === undefined ? normalized.default : raw;
-		try {
-			result[key] = normalized.schema.parse(value);
-		} catch (err) {
-			if (err instanceof ZodError) {
-				const message = err.issues.map(e => `${String(key)}: ${e.message}`).join("; ");
-				throw new Error(`Invalid environment variable → ${message}`);
-			}
-			throw err;
-		}
+		rawEnv[key as string] = raw === undefined ? normalized.default : raw;
+		zodShape[key as string] = normalized.schema;
 	}
 
-	return result as InferSpec<S>;
+	try {
+		const result = z.object(zodShape).parse(rawEnv);
+		return result as InferSpec<S>;
+	} catch (err) {
+		if (err instanceof ZodError) {
+			const messages = err.issues.map(e => `${e.path.join(".")}: ${e.message}`);
+			throw new Error(`Invalid environment variables:\n  ❌ ${messages.join("\n  ❌ ")}`);
+		}
+		throw err;
+	}
 }

@@ -1,8 +1,8 @@
+import { ENV } from "@repo/env";
 import { createLogger, format, transports } from "winston";
 
 import type { LogConfig } from "./log-config.js";
 import { logConfig } from "./log-config.js";
-import { ENV } from "../env-module/default-env.js";
 
 const { combine, timestamp, printf, errors, colorize, json } = format;
 

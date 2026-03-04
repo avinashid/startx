@@ -1,7 +1,8 @@
+import { defineEnv } from "@repo/env";
 import type { Transporter } from "nodemailer";
 import * as nodemailer from "nodemailer";
 import z from "zod";
-import { defineEnv } from "../env-module/define-env.js";
+
 import { logger } from "../logger-module/logger.js";
 
 const credentials = defineEnv({

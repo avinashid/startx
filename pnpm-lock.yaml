@@ -231,6 +231,9 @@ importers:
       '@repo/email':
         specifier: workspace:^
         version: link:../../packages/@repo/mail
+      '@repo/env':
+        specifier: workspace:^
+        version: link:../../packages/@repo/env
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/@repo/lib
@@ -344,9 +347,6 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.39.2(jiti@2.6.1)
-      tsdown-config:
-        specifier: workspace:*
-        version: link:../tsdown-config
       typescript-config:
         specifier: workspace:*
         version: link:../typescript-config
@@ -382,9 +382,9 @@ importers:
 
   packages/@repo/db:
     dependencies:
-      '@repo/lib':
+      '@repo/env':
         specifier: workspace:*
-        version: link:../lib
+        version: link:../env
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@opentelemetry/api@1.9.0)(@types/pg@8.16.0)(pg@8.19.0)
@@ -402,17 +402,39 @@ importers:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
 
+  packages/@repo/env:
+    dependencies:
+      dotenv:
+        specifier: 'catalog:'
+        version: 17.3.1
+    devDependencies:
+      eslint-config:
+        specifier: workspace:*
+        version: link:../../../configs/eslint-config
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../../configs/typescript-config
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../../configs/vitest-config
+
   packages/@repo/lib:
     dependencies:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
         version: 3.983.0
       '@repo/db':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../db
       '@repo/email':
         specifier: workspace:*
         version: link:../mail
+      '@repo/env':
+        specifier: workspace:*
+        version: link:../env
       '@types/express':
         specifier: 'catalog:'
         version: 5.0.6
@@ -422,9 +444,6 @@ importers:
       bcryptjs:
         specifier: 'catalog:'
         version: 3.0.3
-      dotenv:
-        specifier: 'catalog:'
-        version: 17.3.1
       firebase-admin:
         specifier: 'catalog:'
         version: 13.7.0

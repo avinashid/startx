@@ -40,7 +40,6 @@
 		"@typescript-eslint/rule-tester": "^8.54.0",
 		"@typescript-eslint/utils": "^8.0.0",
 		"eslint": "catalog:",
-		"tsdown-config": "workspace:*",
 		"typescript-config": "workspace:*",
 		"vitest-config": "workspace:*"
 	}

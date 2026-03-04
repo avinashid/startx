@@ -1,4 +1,4 @@
-import { defineEnv } from "@repo/lib/env-module";
+import { defineEnv } from "@repo/env";
 import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
 import { type PgTransaction } from "drizzle-orm/pg-core";

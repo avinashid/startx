@@ -2,13 +2,14 @@ import { defineConfig } from "tsdown";
 import { baseConfig } from "tsdown-config";
 
 export default defineConfig({
-  ...baseConfig,
+	...baseConfig,
 	platform: "node",
 	external: ["sharp"],
-  noExternal: [/(.*)/],
+	noExternal: [/(.*)/],
+	clean: false,
 	outputOptions: {
 		codeSplitting: false,
 		preserveModules: false,
-		legalComments: "none"
+		legalComments: "none",
 	},
 });

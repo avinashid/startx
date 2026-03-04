@@ -1,4 +1,4 @@
-import { ENV } from "@repo/lib/env-module";
+import { ENV } from "@repo/env";
 import { ErrorResponse } from "@repo/lib/error-handlers-module";
 import { logger } from "@repo/lib/logger-module";
 import type { Request, Response } from "express";

@@ -1,7 +1,8 @@
+import { defineEnv } from "@repo/env";
 import firebaseAdmin from "firebase-admin";
 import path from "path";
 import z from "zod";
-import { defineEnv } from "../env-module/define-env.js";
+
 import { logger } from "../logger-module/logger.js";
 import { __dirname } from "../utils.js";
 

@@ -1,7 +1,6 @@
+import { ENV } from "@repo/env";
 import crypto from "crypto";
 import path from "path";
-
-import { ENV } from "./env-module/default-env.js";
 
 export function __dirname() {
 	if (ENV.NODE_ENV === "development") {

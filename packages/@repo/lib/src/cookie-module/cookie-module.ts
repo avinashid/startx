@@ -1,8 +1,6 @@
+import { defineEnv, ENV } from "@repo/env";
 import type { CookieOptions } from "express";
 import z from "zod";
-
-import { ENV } from "../env-module/default-env.js";
-import { defineEnv } from "../env-module/define-env.js";
 
 const credentials = defineEnv({
 	COOKIE_DOMAIN: z.string().optional().default(".localhost"),

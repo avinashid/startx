@@ -1,8 +1,6 @@
+import { defineEnv, ENV } from "@repo/env";
 import * as jwt from "jsonwebtoken";
 import z from "zod";
-
-import { ENV } from "../env-module/default-env.js";
-import { defineEnv } from "../env-module/define-env.js";
 export type AuthTokenPayload = {
 	userID: string;
 	email: string;
