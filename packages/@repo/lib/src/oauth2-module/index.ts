@@ -88,8 +88,8 @@ export class OauthClient {
 			});
 			return data as Record<"access_token" | "refresh_token" | "scope" | "id_token", string>;
 		} catch (error: any) {
-			if (error.response?.data) {
-				logger.error(Error(JSON.stringify(error.response.data, null, 2)));
+			if (error?.response?.data) {
+				logger.error(Error(JSON.stringify(error?.response?.data, null, 2)));
 			} else logger.error(error);
 			return;
 		}

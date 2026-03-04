@@ -10,6 +10,7 @@ import { notFoundMiddleware } from "@/middlewares/notfound-middleware.js";
 import { createFilesRouter } from "./files/router.js";
 
 const app = express();
+
 app.use(loggerMiddleware);
 app.use(cookieParser());
 app.use(urlencoded({ extended: true }));

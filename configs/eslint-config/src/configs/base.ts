@@ -88,9 +88,8 @@ export const baseConfig = defineConfig(
 			"@typescript-eslint/no-unsafe-assignment": "warn",
 			"@typescript-eslint/no-unsafe-argument": "warn",
 			"@typescript-eslint/no-unsafe-call": "warn",
-			"@typescript-eslint/no-unsafe-return": "warn",
-			"@typescript-eslint/no-unsafe-member-access": "warn",
-			// Downgraded: Stylistic type rules shouldn't break the build instantly.
+			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unsafe-member-access": ["error", { "allowOptionalChaining": true }],
 			"@typescript-eslint/array-type": ["warn", { default: "array-simple" }],
 			"@typescript-eslint/consistent-type-assertions": "warn",
 			"@typescript-eslint/consistent-type-imports": "warn",

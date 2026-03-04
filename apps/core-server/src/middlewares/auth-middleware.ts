@@ -1,5 +1,8 @@
 import { UserSession } from "@repo/lib/session-module";
 import type { NextFunction, Request, Response } from "express";
+
+type ExpressHandler = (req: Request, res: Response, next: NextFunction) => unknown;
+
 export class AuthMiddlewares {
 	static async validateActiveSession(req: Request, res: Response, next: NextFunction) {
 		try {
@@ -22,13 +25,25 @@ export class AuthMiddlewares {
 		}
 	}
 }
-
 export function validateSession() {
-	return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
+	return function <T extends ExpressHandler>(
+		_target: unknown,
+		_propertyKey: string,
+		descriptor: TypedPropertyDescriptor<T>
+	): void {
 		const originalMethod = descriptor.value;
-		descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
+
+		if (!originalMethod) return;
+
+		descriptor.value = async function (
+			this: unknown,
+			req: Request,
+			res: Response,
+			next: NextFunction
+		) {
 			try {
-				const accessToken = req.headers["authorization"]?.split(" ")[1];
+				const accessToken = req.headers.authorization?.split(" ")[1];
+
 				if (!accessToken) {
 					res.status(401).json({ message: "access token missing" });
 					return;
@@ -40,11 +55,13 @@ export function validateSession() {
 					res.status(401).json({ message: "invalid access token" });
 					return;
 				}
+
 				req.user = payload;
-				return originalMethod.apply(this, [req, res, next]);
+
+				return originalMethod.call(this, req, res, next);
 			} catch (error) {
 				next(error);
 			}
-		};
+		} as T;
 	};
 }

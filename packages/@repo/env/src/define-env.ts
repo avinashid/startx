@@ -24,8 +24,8 @@ type InferSpec<S extends Spec> = {
 			: never;
 };
 
-function isZod(v: unknown): v is ZodTypeAny {
-	return Boolean(v && typeof (v as any).parse === "function");
+function isZod(v: SpecEntry): v is ZodTypeAny {
+	return typeof v === "object" && v !== null && "parse" in v;
 }
 
 export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
@@ -44,16 +44,19 @@ export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 				};
 
 		const raw = process.env[normalized.env];
+
 		rawEnv[key as string] = raw === undefined ? normalized.default : raw;
+
 		zodShape[key as string] = normalized.schema;
 	}
 
 	try {
 		const result = z.object(zodShape).parse(rawEnv);
 		return result as InferSpec<S>;
-	} catch (err) {
+	} catch (err: unknown) {
 		if (err instanceof ZodError) {
 			const messages = err.issues.map(e => `${e.path.join(".")}: ${e.message}`);
+
 			throw new Error(`Invalid environment variables:\n  ❌ ${messages.join("\n  ❌ ")}`);
 		}
 		throw err;
