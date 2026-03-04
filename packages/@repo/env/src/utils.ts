@@ -1,3 +1,5 @@
+process.env.DOTENV_CONFIG_QUIET = "true";
+
 import { config } from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";

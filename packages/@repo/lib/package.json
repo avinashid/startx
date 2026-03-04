@@ -17,7 +17,6 @@
 		".": "./src/index.ts",
 		"./*": "./src/*/index.ts"
 	},
-
 	"devDependencies": {
 		"@repo/email": "workspace:*",
 		"@repo/redis": "workspace:*",
@@ -25,21 +24,23 @@
 		"@types/nodemailer": "^6.4.16",
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
+		"vine": "link:@types/vinejs/vine",
 		"vitest": "catalog:",
-		"vitest-config": "workspace:*",
-		"vine": "link:@types/vinejs/vine"
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "catalog:",
-		"@types/express-fileupload": "catalog:",
-		"@types/express": "catalog:",
+		"@repo/db": "workspace:*",
 		"@repo/email": "workspace:*",
 		"@repo/env": "workspace:*",
-		"@repo/db": "workspace:*",
+		"@types/express": "catalog:",
+		"@types/express-fileupload": "catalog:",
 		"bcryptjs": "catalog:",
 		"firebase-admin": "catalog:",
 		"jsonwebtoken": "catalog:",
 		"nodemailer": "catalog:",
-		"winston": "catalog:"
+		"winston": "catalog:",
+		"winston-daily-rotate-file": "^5.0.0",
+		"winston-transport": "^4.9.0"
 	}
 }

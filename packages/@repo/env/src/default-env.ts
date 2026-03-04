@@ -8,4 +8,5 @@ export const ENV = defineEnv({
 	SERVER_URL: z.string().optional().default("http://localhost:3000"),
 	CORS_URL: z.string().optional().default("http://localhost:3000"),
 	PORT: z.string().optional().default("3000"),
+	LOG_LEVEL: z.enum(["error", "warn", "info", "http", "debug"]).default("debug"),
 });
