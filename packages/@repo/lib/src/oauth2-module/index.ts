@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { logger } from "../logger-module/logger.js";
+import { logger } from "@repo/logger";
 
 type AuthorizationURLParams = {
 	authorizationURL: string;

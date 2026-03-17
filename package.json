@@ -11,6 +11,7 @@
 	"scripts": {
 		"build": "turbo build",
 		"start": "turbo start",
+		"startx": "node ./packages/cli/dist/index.mjs",
 		"dev": "turbo dev",
 		"backend": "turbo dev --filter=core-server -- ",
 		"cli": "turbo dev --filter=cli -- ",

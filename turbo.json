@@ -41,15 +41,21 @@
 			"cache": false,
 			"persistent": true
 		},
-
+		"cli": {
+			"cache": false,
+			"persistent": true,
+			"interactive": true
+		},
 		"dev": {
 			"cache": false,
-			"persistent": true
+			"persistent": true,
+			"env": ["NODE_ENV"],
+			"interactive": true
 		},
 		"start": {
 			"cache": false,
 			"persistent": true,
-			"env": ["NODE_ENV=production"]
+			"env": ["NODE_ENV"]
 		},
 		"format": {
 			"cache": false

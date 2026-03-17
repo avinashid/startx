@@ -3,7 +3,7 @@ import type { Infer, SchemaTypes } from "@vinejs/vine/types";
 import type { NextFunction, Request, Response } from "express";
 
 import { ErrorResponse } from "../error-handlers-module/index.js";
-import { logger } from "../logger-module/logger.js";
+import { logger } from "@repo/logger";
 
 type ExpressHandler<P = unknown, ResBody = unknown, ReqBody = unknown, Query = unknown> = (
 	req: Request<P, ResBody, ReqBody, Query>,

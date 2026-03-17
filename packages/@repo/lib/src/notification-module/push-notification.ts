@@ -1,9 +1,9 @@
 import { defineEnv } from "@repo/env";
+import { logger } from "@repo/logger";
 import firebaseAdmin from "firebase-admin";
 import path from "path";
 import z from "zod";
 
-import { logger } from "../logger-module/logger.js";
 import { __dirname } from "../utils.js";
 
 export type FcmPayload = {

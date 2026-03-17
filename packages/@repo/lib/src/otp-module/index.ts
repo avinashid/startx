@@ -3,7 +3,7 @@ import { AdminEmailTemplate } from "@repo/email";
 import { ENV } from "@repo/env";
 
 import { HashingModule } from "../hashing-module/index.js";
-import { logger } from "../logger-module/logger.js";
+import { logger } from "@repo/logger";
 import { SMTPMailService } from "../mail-module/nodemailer.js";
 import { Random } from "../utils.js";
 

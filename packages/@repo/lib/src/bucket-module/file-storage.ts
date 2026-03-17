@@ -1,9 +1,9 @@
 import { ENV } from "@repo/env";
+import { logger } from "@repo/logger";
 import type { UploadedFile } from "express-fileupload";
 import fs from "fs";
 import path from "path";
 
-import { logger } from "../logger-module/logger.js";
 import { Random } from "../utils.js";
 
 export class FileBasedBucket {

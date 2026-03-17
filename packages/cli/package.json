@@ -7,20 +7,24 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "tsdown --config-loader unrun",
-		"dev": "tsx watch src/index.ts"
+		"dev": "cross-env STARTX_ENV=development tsx src/index.ts"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
+		"cross-env": "^10.1.0",
 		"eslint-config": "workspace:*",
+		"tsdown-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"vitest-config": "workspace:*",
-		"tsdown-config": "workspace:*"
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"commander": "^14.0.0",
+		"@inquirer/prompts": "^8.3.0",
+		"@repo/lib": "workspace:*",
+		"@repo/env": "workspace:*",
 		"chokidar": "^4.0.3",
-		"@repo/lib": "workspace:*"
+		"commander": "^14.0.0",
+		"type-fest": "^5.4.4"
 	}
 }

@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type ClassValue, clsx } from 'clsx';
+import { type ClassValue, clsx } from "clsx";
 import {
+	differenceInDays,
+	differenceInYears,
 	format,
+	formatDistance,
+	isThisWeek,
 	isToday,
 	isYesterday,
-	isThisWeek,
-	differenceInDays,
-	formatDistance,
 	parseISO,
-	differenceInYears,
-} from 'date-fns';
-import { twMerge } from 'tailwind-merge';
+} from "date-fns";
+import { twMerge } from "tailwind-merge";
 
-import type { Store } from '../util/storage';
+import type { Store } from "../util/storage";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -42,29 +42,29 @@ export function getFormData(object: {
 }
 
 export function switchPath(pathname: string, tab: string) {
-	const fragments = pathname.split('/').filter((str) => str);
+	const fragments = pathname.split("/").filter(str => str);
 	fragments[2] = tab;
-	const path = `/${fragments.join('/')}`;
+	const path = `/${fragments.join("/")}`;
 	return path;
 }
 
 export function getRelativeDate(date?: string | Date) {
 	const now = new Date();
-	if (!date) return '';
+	if (!date) return "";
 	if (isToday(date)) {
-		return format(date, 'h:mm a');
+		return format(date, "h:mm a");
 	} else if (isYesterday(date)) {
-		return 'yesterday';
+		return "yesterday";
 	} else if (isThisWeek(date) && differenceInDays(now, date) <= 7) {
-		return format(date, 'EEEE'); // EEEE gives the full name of the day like Sunday, Monday
+		return format(date, "EEEE"); // EEEE gives the full name of the day like Sunday, Monday
 	} else {
-		return format(date, 'dd/MM/yy');
+		return format(date, "dd/MM/yy");
 	}
 }
 
 export function getRelativeDateWithTime(date?: string | Date) {
 	const now = new Date();
-	if (!date) return '';
+	if (!date) return "";
 	return formatDistance(new Date(date), now, { addSuffix: true });
 }
 
@@ -73,12 +73,12 @@ export function getRelativeProDate(dateString: string) {
 		const date = parseISO(dateString);
 		const now = new Date();
 		const yearsDifference = differenceInYears(now, date);
-		const dateFormat = yearsDifference >= 1 ? 'dd MMM yyyy, h:mm a' : 'dd MMM, h:mm a';
+		const dateFormat = yearsDifference >= 1 ? "dd MMM yyyy, h:mm a" : "dd MMM, h:mm a";
 		const formattedDate = format(date, dateFormat);
 		return formattedDate;
 	} catch (error) {
-		console.error('Error formatting date:', error);
-		return '';
+		console.error("Error formatting date:", error);
+		return "";
 	}
 }
 export function isValidId(str: string) {
@@ -88,54 +88,54 @@ export function isValidId(str: string) {
 
 export function getRelativeDateOnly(date?: string | Date) {
 	const now = new Date();
-	if (!date) return '';
+	if (!date) return "";
 	if (isToday(date)) {
-		return 'today';
+		return "today";
 	} else if (isYesterday(date)) {
-		return 'yesterday';
+		return "yesterday";
 	} else if (isThisWeek(date) && differenceInDays(now, date) <= 7) {
-		return format(date, 'EEEE'); // EEEE gives the full name of the day like Sunday, Monday
+		return format(date, "EEEE"); // EEEE gives the full name of the day like Sunday, Monday
 	} else {
-		return format(date, 'dd/MM/yy');
+		return format(date, "dd/MM/yy");
 	}
 }
 export type SocialMediaUrlMetaData = {
-	platform: 'youtube' | 'x' | 'instagram';
+	platform: "youtube" | "x" | "instagram";
 	url: string;
 	contentId: string;
 };
 export function getUrlMetaData(urlString: string): SocialMediaUrlMetaData | null {
 	const url = new URL(urlString);
 	let contentId: string;
-	let platform: 'youtube' | 'x' | 'instagram';
+	let platform: "youtube" | "x" | "instagram";
 	switch (url.origin) {
-		case 'https://youtu.be':
-			platform = 'youtube';
-			contentId = url.pathname.replace('/', '');
+		case "https://youtu.be":
+			platform = "youtube";
+			contentId = url.pathname.replace("/", "");
 			break;
-		case 'https://www.youtube.com':
-			platform = 'youtube';
-			contentId = url.searchParams.get('v') as string;
+		case "https://www.youtube.com":
+			platform = "youtube";
+			contentId = url.searchParams.get("v") as string;
 			break;
-		case 'https://x.com':
-			platform = 'x';
+		case "https://x.com":
+			platform = "x";
 			contentId = url.pathname
-				.split('/')
-				.filter((str) => str)
+				.split("/")
+				.filter(str => str)
 				.at(-1) as string;
 			break;
-		case 'https://www.instagram.com':
-			platform = 'instagram';
+		case "https://www.instagram.com":
+			platform = "instagram";
 			contentId = url.pathname
-				.split('/')
-				.filter((str) => str)
+				.split("/")
+				.filter(str => str)
 				.at(-1) as string;
 			break;
-		case 'https://instagram.com':
-			platform = 'instagram';
+		case "https://instagram.com":
+			platform = "instagram";
 			contentId = url.pathname
-				.split('/')
-				.filter((str) => str)
+				.split("/")
+				.filter(str => str)
 				.at(-1) as string;
 			break;
 		default:
@@ -188,7 +188,7 @@ export function memoizeAsync<T extends (...args: any[]) => Promise<any>>(fn: T):
 }
 export function memoizePersistentAsync<T extends (...args: any[]) => Promise<any>>(
 	fn: T,
-	store: Store,
+	store: Store
 ): T {
 	return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
 		const key = JSON.stringify(args);
@@ -197,7 +197,7 @@ export function memoizePersistentAsync<T extends (...args: any[]) => Promise<any
 			try {
 				return JSON.parse(cachedValue);
 			} catch (error) {
-				console.error('Error parsing cached value:', error);
+				console.error("Error parsing cached value:", error);
 				return await fn(...args);
 			}
 		} else {
@@ -209,8 +209,8 @@ export function memoizePersistentAsync<T extends (...args: any[]) => Promise<any
 }
 
 export function formatNumberWithKMB(num: number): string {
-	const formatter = new Intl.NumberFormat('en-US', {
-		notation: 'compact',
+	const formatter = new Intl.NumberFormat("en-US", {
+		notation: "compact",
 		minimumSignificantDigits: 1,
 		maximumSignificantDigits: 3,
 	});
@@ -219,14 +219,14 @@ export function formatNumberWithKMB(num: number): string {
 }
 export function currencyToNumber(formattedCurrency: string): number {
 	// Remove everything except digits, minus sign, and decimal point
-	const numericString = formattedCurrency.replace(/[^0-9.-]+/g, '');
+	const numericString = formattedCurrency.replace(/[^0-9.-]+/g, "");
 
 	// Convert the string back to a number
 	const parsedNumber = Number.parseFloat(numericString);
 
 	// Handle potential NaN if parsing fails
 	if (isNaN(parsedNumber)) {
-		throw new Error('Invalid currency format');
+		throw new Error("Invalid currency format");
 	}
 
 	return parsedNumber;
@@ -234,9 +234,9 @@ export function currencyToNumber(formattedCurrency: string): number {
 
 export function createLabels(e: string) {
 	return e
-		.replaceAll('_', ' ')
-		.replace(/\b\w/g, (char) => char.toUpperCase())
+		.replaceAll("_", " ")
+		.replace(/\b\w/g, char => char.toUpperCase())
 		.trim();
 }
 
-export { cva, type VariantProps } from 'class-variance-authority';
+export { cva, type VariantProps } from "class-variance-authority";

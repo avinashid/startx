@@ -28,6 +28,8 @@ function isZod(v: SpecEntry): v is ZodTypeAny {
 	return typeof v === "object" && v !== null && "parse" in v;
 }
 
+const tempEnv = new Map<string, string>();
+
 export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 	const rawEnv: Record<string, unknown> = {};
 	const zodShape: Record<string, ZodTypeAny> = {};
@@ -43,7 +45,11 @@ export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 					env: entry.env ?? (key as string),
 				};
 
-		const raw = process.env[normalized.env];
+		if (process.env[normalized.env]) {
+			tempEnv.set(normalized.env, process.env[normalized.env] ?? "");
+			delete process.env[normalized.env];
+		}
+		const raw = tempEnv.get(normalized.env);
 
 		rawEnv[key as string] = raw === undefined ? normalized.default : raw;
 

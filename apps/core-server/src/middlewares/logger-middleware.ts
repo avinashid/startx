@@ -1,4 +1,4 @@
-import { logger } from "@repo/lib/logger-module";
+import { logger } from "@repo/logger";
 import type { Request, Response } from "express";
 import morgan from "morgan";
 

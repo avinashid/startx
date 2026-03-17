@@ -1,4 +1,5 @@
-import { redisClient } from "@repo/redis";
+import { RedisStore } from "@repo/redis";
+
 import { TokenModule } from "../extra/token-module.js";
 export const constants = {
 	sessionDuration: 60 * 60 * 6,
@@ -17,102 +18,96 @@ export type SessionUser = {
 	accessToken: string;
 };
 
-function jsonParse<T>(value: string) {
-	try {
-		return JSON.parse(value) as T;
-	} catch (error) {
-		console.error(error);
-		throw error;
-	}
-}
+const userRedisStore = new RedisStore<SessionUser>({
+	namespace: "user-session",
+});
+
+const userRedisTokenStore = new RedisStore<{ accessToken: string; refreshToken: string }>({
+	namespace: "user-tokens",
+});
 
 export class UserSession {
 	static async getSessionUser(token: string) {
-		const session = await redisClient.get(accessTokenKey(token));
-		if (session) {
-			try {
-				const user = JSON.parse(session) as SessionUser;
-				return user;
-			} catch (error) {
-				console.log(error);
-			}
-		}
-		return session ? jsonParse<SessionUser>(session) : null;
+		return await userRedisStore.get(accessTokenKey(token));
 	}
+
 	static async startSession(payload: Omit<SessionUser, "accessToken">) {
 		await UserSession.endSession(payload.id);
+
 		const accessToken = TokenModule.signAccessToken({
 			userID: payload.id,
 			email: payload.email,
 		});
+
 		const refreshToken = TokenModule.signRefreshToken({
 			userID: payload.id,
 			email: payload.email,
 		});
 
-		await redisClient.setex(
-			accessTokenKey(accessToken),
-			constants.sessionDuration,
-			JSON.stringify({ ...payload, accessToken })
+		const sessionData: SessionUser = { ...payload, accessToken };
+
+		// store access token -> user
+		await userRedisStore.set(accessTokenKey(accessToken), sessionData, constants.sessionDuration);
+
+		// store user -> session (optional but useful)
+		await userRedisStore.set(payload.id, sessionData, constants.sessionDuration);
+
+		// store refresh token -> userId
+		await userRedisTokenStore.set(
+			refreshTokenKey(refreshToken),
+			{ accessToken, refreshToken },
+			constants.sessionDuration
 		);
-		await redisClient.setex(refreshTokenKey(refreshToken), constants.sessionDuration, payload.id);
-		await redisClient.setex(
+
+		// store user -> tokens
+		await userRedisTokenStore.set(
 			userTokensKey(payload.id),
-			constants.sessionDuration,
-			JSON.stringify({
-				accessToken,
-				refreshToken,
-			})
+			{ accessToken, refreshToken },
+			constants.sessionDuration
 		);
+
 		return { accessToken, refreshToken };
 	}
 
 	static async checkRefreshToken(refreshToken: string) {
-		const userId = await redisClient.get(refreshTokenKey(refreshToken));
-		return userId;
+		const tokens = await userRedisTokenStore.get(refreshTokenKey(refreshToken));
+		return tokens ?? null;
 	}
 
 	static async updateAccessToken(payload: Omit<SessionUser, "accessToken">) {
-		let accessToken: string;
-		const tokens = await UserSession.getTokens(payload.id);
-		if (tokens) {
-			accessToken = tokens.accessToken;
-		} else {
-			return null;
-		}
+		const tokens = await this.getTokens(payload.id);
+		if (!tokens) return null;
 
-		await redisClient.setex(
+		const accessToken = tokens.accessToken;
+
+		await userRedisStore.set(
 			accessTokenKey(accessToken),
-			constants.sessionDuration,
-			JSON.stringify({ ...payload, accessToken })
+			{ ...payload, accessToken },
+			constants.sessionDuration
 		);
+
 		return accessToken;
 	}
 
 	static async getTokens(userId: string) {
-		const tokens = await redisClient.get(userTokensKey(userId));
-		return tokens ? jsonParse<{ refreshToken: string; accessToken: string }>(tokens) : null;
+		return await userRedisTokenStore.get(userTokensKey(userId));
 	}
 
 	static async logout(accessToken: string) {
-		const payload = await redisClient.get(accessTokenKey(accessToken));
-		if (!payload) return null;
-		const user = jsonParse<SessionUser>(payload);
-		const tokens = await UserSession.getTokens(user.id);
-		if (tokens) {
-			await redisClient.del(refreshTokenKey(tokens.refreshToken));
-			await redisClient.del(accessTokenKey(accessToken));
-			await redisClient.del(userTokensKey(user.id));
-		}
-		return;
+		const session = await userRedisStore.get(accessTokenKey(accessToken));
+		if (!session) return null;
+
+		await this.endSession(session.id);
+		return null;
 	}
 
 	static async endSession(userId: string) {
-		const tokens = await UserSession.getTokens(userId);
-		if (tokens) {
-			await redisClient.del(refreshTokenKey(tokens.refreshToken));
-			await redisClient.del(accessTokenKey(tokens.accessToken));
-			await redisClient.del(userTokensKey(userId));
-		}
+		const tokens = await this.getTokens(userId);
+		if (!tokens) return;
+
+		await userRedisTokenStore.del(refreshTokenKey(tokens.refreshToken));
+		await userRedisStore.del(accessTokenKey(tokens.accessToken));
+		await userRedisTokenStore.del(userTokensKey(userId));
+		await userRedisStore.del(userId);
 	}
 }

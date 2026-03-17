@@ -78,6 +78,7 @@ export const baseConfig = defineConfig(
 			"prefer-const": "warn",
 
 			"id-denylist": "off",
+			"import-x/no-named-as-default": "off",
 
 			// TypeScript
 			"@typescript-eslint/await-thenable": "error",

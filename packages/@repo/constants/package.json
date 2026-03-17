@@ -1,7 +1,13 @@
 {
 	"name": "@repo/constants",
 	"version": "0.12.0",
-  "type": "module",
+	"type": "module",
+	"startx": {
+		"tags": [
+			"node",
+			"frontend"
+		]
+	},
 	"scripts": {
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",

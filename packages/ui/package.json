@@ -56,13 +56,13 @@
 		"react-icons": "^5.5.0",
 		"sonner": "^1.7.0",
 		"tailwind-merge": "^2.3.0",
-		"tailwindcss-animate": "^1.0.7",
-		"zod": "^3.23.8"
+		"tailwindcss-animate": "^1.0.7"
 	},
 	"exports": {
 		"./globals.css": "./src/globals.css",
 		"./postcss.config": "./postcss.config.mjs",
+		"./lucide": "./src/lucide.ts",
 		"./tailwind.config": "./tailwind.config.ts",
-		"./components/*": "./src/components/*"
+		"./*/*": "./src/components/*/*"
 	}
 }

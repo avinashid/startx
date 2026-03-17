@@ -1,5 +1,5 @@
 {
-	"name": "@repo/redis",
+	"name": "@repo/logger",
 	"version": "0.0.0",
 	"type": "module",
 	"private": true,
@@ -14,13 +14,17 @@
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",
+	"types": "./src/index.ts",
+
 	"devDependencies": {
 		"eslint-config": "workspace:*",
-		"typescript-config": "workspace:*"
+		"typescript-config": "workspace:*",
+		"vitest": "catalog:",
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"ioredis": "catalog:",
-		"@repo/env": "workspace:*",
-		"@repo/logger": "workspace:*"
+		"winston": "catalog:",
+		"dotenv": "catalog:",
+		"@repo/env": "workspace:*"
 	}
 }

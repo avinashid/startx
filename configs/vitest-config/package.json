@@ -11,6 +11,7 @@
 		"vite": "catalog:"
 	},
 	"exports": {
+		".": "./src/index.ts",
 		"./frontend": "./src/frontend.ts",
 		"./node": "./src/node.ts",
 		"./base": "./src/base.ts"

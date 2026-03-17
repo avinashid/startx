@@ -1,6 +1,6 @@
 import { ENV } from "@repo/env";
 import { ErrorResponse } from "@repo/lib/error-handlers-module";
-import { logger } from "@repo/lib/logger-module";
+import { logger } from "@repo/logger";
 import type { Request, Response } from "express";
 
 interface Error {

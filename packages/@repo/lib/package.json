@@ -30,8 +30,9 @@
 	},
 	"dependencies": {
 		"@aws-sdk/client-s3": "catalog:",
-		"@repo/db": "workspace:*",
 		"@repo/email": "workspace:*",
+		"@repo/db": "workspace:*",
+		"@repo/logger": "workspace:*",
 		"@repo/env": "workspace:*",
 		"@types/express": "catalog:",
 		"@types/express-fileupload": "catalog:",
@@ -39,8 +40,6 @@
 		"firebase-admin": "catalog:",
 		"jsonwebtoken": "catalog:",
 		"nodemailer": "catalog:",
-		"winston": "catalog:",
-		"winston-daily-rotate-file": "^5.0.0",
-		"winston-transport": "^4.9.0"
+		"yaml": "^2.8.2"
 	}
 }

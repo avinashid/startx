@@ -9,6 +9,7 @@
 		"ignoreUnknown": false,
 		"includes": [
 			"**",
+			"!**/node_modules/**",
 			"!**/.turbo",
 			"!**/components.d.ts",
 			"!**/coverage",
@@ -30,7 +31,7 @@
 		"lineWidth": 100,
 		"attributePosition": "auto"
 	},
-	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"assist": { "actions": { "source": { "organizeImports": "off" } } },
 	"linter": {
 		"enabled": false
 	},

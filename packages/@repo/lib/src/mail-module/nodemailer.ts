@@ -3,7 +3,7 @@ import type { Transporter } from "nodemailer";
 import * as nodemailer from "nodemailer";
 import z from "zod";
 
-import { logger } from "../logger-module/logger.js";
+import { logger } from "@repo/logger";
 
 const credentials = defineEnv({
 	SMTP_HOST: z.string(),

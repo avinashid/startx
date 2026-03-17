@@ -1,7 +1,14 @@
 {
 	"name": "core-server",
+	"description": "",
 	"version": "1.0.0",
 	"type": "module",
+	"startx": {
+		"tags": [
+			"node",
+			"backend"
+		]
+	},
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"dev:debug": "tsx watch --inspect src/index.ts",
@@ -22,7 +29,9 @@
 		"@repo/db": "workspace:^",
 		"@repo/email": "workspace:^",
 		"@repo/lib": "workspace:^",
+		"@repo/redis": "workspace:^",
 		"@repo/env": "workspace:^",
+		"@repo/logger": "workspace:^",
 		"cookie-parser": "catalog:",
 		"cors": "catalog:",
 		"country-state-city": "catalog:",

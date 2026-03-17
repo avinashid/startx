@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { logger } from "@repo/lib/logger-module";
+import { logger } from "@repo/logger";
 import { Command } from "commander";
 
+import { InitCommand } from "./commands/init";
 import { version } from "../../../package.json";
 
 const program = new Command();
@@ -13,7 +14,8 @@ program
 
 program.command("ping").action(() => {
 	logger.info("pong");
-	process.exit(1);
 });
+
+program.addCommand(InitCommand.command);
 
 program.parse(process.argv);

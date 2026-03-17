@@ -36,3 +36,4 @@ logs
 # Misc
 .DS_Store
 *.pem
+temp
