@@ -583,6 +583,9 @@ importers:
       '@repo/lib':
         specifier: workspace:*
         version: link:../@repo/lib
+      '@repo/logger':
+        specifier: workspace:*
+        version: link:../@repo/logger
       chokidar:
         specifier: ^4.0.3
         version: 4.0.3
