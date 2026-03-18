@@ -1,17 +1,15 @@
 import { defineEnv } from "@repo/env";
 import { fsTool } from "@repo/lib/file-system-module";
 import path from "path";
-import type { PackageJson } from "type-fest";
 import { fileURLToPath } from "url";
 import z from "zod";
 
-import type { PnpmWorkspace, StartXPackageInfo } from "../types";
+import type { PnpmWorkspace, StartXPackageJson } from "../types";
 
 export type RawPackageItem = {
 	type: "apps" | "configs" | "packages";
 	path: string;
 	name: string;
-	info?: StartXPackageInfo;
 };
 
 const ENV = defineEnv({
@@ -89,11 +87,7 @@ export class CliUtils {
 	}
 
 	static async parsePackageJson({ dir }: { dir: string }) {
-		const packageJson = await fsTool.readJSONFile<
-			PackageJson & {
-				startx: StartXPackageInfo;
-			}
-		>({
+		const packageJson = await fsTool.readJSONFile<StartXPackageJson>({
 			dir,
 			file: "package",
 		});

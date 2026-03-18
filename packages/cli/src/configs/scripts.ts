@@ -56,19 +56,19 @@ export const scripts: SCRIPT = {
 	"dev:debug": [
 		{
 			script: "tsx watch --inspect src/index.ts",
-			tags: ["app"],
+			tags: ["backend", "node"],
 		},
 	],
 	"bun:dev": [
 		{
 			script: "bun --watch src/index.ts",
-			tags: ["app"],
+			tags: ["backend", "node"],
 		},
 	],
 	"start": [
 		{
 			script: "node dist/index.mjs",
-			tags: ["app", "node"],
+			tags: ["backend", "node"],
 		},
 	],
 	"lint": [

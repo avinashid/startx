@@ -6,5 +6,8 @@
 		"tsconfig.common.json",
 		"tsconfig.frontend.json",
 		"tsconfig.node.json"
-	]
+	],
+	"startx": {
+		"isDev": true
+	}
 }

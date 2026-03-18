@@ -24,5 +24,13 @@
 	},
 	"dependencies": {
 		"dotenv": "catalog:"
+	},
+	"startx": {
+		"tags": [
+			"node"
+		],
+		"required": [
+			"typescript-config"
+		]
 	}
 }

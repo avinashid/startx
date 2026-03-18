@@ -1,3 +1,5 @@
+import type { PackageJson } from "type-fest";
+
 export type TAGS =
 	| "required"
 	| "common"
@@ -35,6 +37,10 @@ export type PnpmWorkspace = {
 	catalogs?: Record<string, Record<string, string>>;
 };
 
-export type StartXPackageInfo = {
-	tags: TAGS[];
+export type StartXPackageJson = PackageJson & {
+	startx?: {
+		tags?: TAGS[];
+		required?: string[];
+		isDev?: boolean;
+	};
 };

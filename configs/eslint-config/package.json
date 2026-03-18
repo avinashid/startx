@@ -42,5 +42,13 @@
 		"eslint": "catalog:",
 		"typescript-config": "workspace:*",
 		"vitest-config": "workspace:*"
+	},
+	"startx": {
+		"tags": [
+			"eslint"
+		],
+		"required": [
+			"typescript-config"
+		]
 	}
 }

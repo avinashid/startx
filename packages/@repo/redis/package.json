@@ -22,5 +22,13 @@
 		"ioredis": "catalog:",
 		"@repo/env": "workspace:*",
 		"@repo/logger": "workspace:*"
+	},
+	"startx": {
+		"tags": [
+			"node"
+		],
+		"required": [
+			"typescript-config"
+		]
 	}
 }

@@ -18,8 +18,6 @@
 		"./*": "./src/*/index.ts"
 	},
 	"devDependencies": {
-		"@repo/email": "workspace:*",
-		"@repo/redis": "workspace:*",
 		"@types/jsonwebtoken": "^9.0.7",
 		"@types/nodemailer": "^6.4.16",
 		"eslint-config": "workspace:*",
@@ -29,9 +27,9 @@
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
+		"@repo/redis": "workspace:*",
 		"@aws-sdk/client-s3": "catalog:",
-		"@repo/email": "workspace:*",
-		"@repo/db": "workspace:*",
+		"@repo/mail": "workspace:*",
 		"@repo/logger": "workspace:*",
 		"@repo/env": "workspace:*",
 		"@types/express": "catalog:",
@@ -41,5 +39,17 @@
 		"jsonwebtoken": "catalog:",
 		"nodemailer": "catalog:",
 		"yaml": "^2.8.2"
+	},
+	"startx": {
+		"tags": [
+			"node",
+			"backend"
+		],
+		"required": [
+			"typescript-config",
+			"@repo/env",
+			"@repo/logger",
+			"@repo/mail"
+		]
 	}
 }

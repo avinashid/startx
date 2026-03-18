@@ -90,15 +90,53 @@ export class FStool {
 		}
 	}
 
-	async copyDirectory({ from, to, dir }: { from: string; to: string; dir: string }) {
-		const source = path.resolve(this.root, dir, from);
-		const destination = path.resolve(this.root, dir, to);
+	async copyDirectory({
+		from,
+		to,
 
-		if (await this.pathExists(source)) {
-			await fs.cp(source, destination, { recursive: true });
+		recursive = true,
+		include,
+		exclude,
+	}: {
+		from: string;
+		to: string;
+		recursive?: boolean;
+		include?: RegExp;
+		exclude?: RegExp;
+	}) {
+		const source = path.resolve(this.root, from);
+		const destination = path.resolve(this.root, to);
+
+		if (!(await this.pathExists(source))) return;
+
+		await this.ensurePathExists({ dir: path.join(to) });
+
+		const entries = await fs.readdir(source, { withFileTypes: true });
+
+		for (const entry of entries) {
+			const srcPath = path.join(source, entry.name);
+			const destPath = path.join(destination, entry.name);
+
+			const shouldInclude =
+				(!include || include.test(entry.name)) && (!exclude || !exclude.test(entry.name));
+
+			if (entry.isDirectory()) {
+				if (recursive) {
+					await this.copyDirectory({
+						from: path.join(from, entry.name),
+						to: path.join(to, entry.name),
+						recursive,
+						include,
+						exclude,
+					});
+				}
+			} else if (entry.isFile()) {
+				if (shouldInclude) {
+					await fs.copyFile(srcPath, destPath);
+				}
+			}
 		}
 	}
-
 	async listDirectories({ dir }: { dir: string }) {
 		try {
 			const entries = await fs.readdir(path.resolve(this.root, dir), {

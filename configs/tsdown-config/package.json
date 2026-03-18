@@ -3,12 +3,14 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
-	"files": [
-		"dist"
-	],
 	"exports": "./src/config/tsdown.base.ts",
 	"scripts": {
 		"clean": "rimraf dist",
 		"deep:clean": "rimraf node_modules dist"
+	},
+	"startx": {
+		"isDev": true,
+		"tags": [],
+		"required": []
 	}
 }

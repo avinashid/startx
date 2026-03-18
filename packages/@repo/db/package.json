@@ -23,5 +23,14 @@
 		"drizzle-orm": "catalog:",
 		"pg": "catalog:",
 		"@repo/env": "workspace:*"
+	},
+	"startx": {
+		"tags": [
+			"node"
+		],
+		"required": [
+			"typescript-config",
+			"@repo/env"
+		]
 	}
 }

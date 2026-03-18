@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import { logger } from "@repo/logger";
+import axios from "axios";
 
 type AuthorizationURLParams = {
 	authorizationURL: string;
@@ -77,7 +76,9 @@ export class OauthClient {
 				body.append("client_secret", params.clientSecret);
 			}
 
-			const { data } = await axios.post(params.tokenURL, body, {
+			const { data } = await axios.post<
+				Record<"access_token" | "refresh_token" | "scope" | "id_token", string>
+			>(params.tokenURL, body, {
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",
 				},
@@ -86,7 +87,7 @@ export class OauthClient {
 					password: params.clientSecret,
 				},
 			});
-			return data as Record<"access_token" | "refresh_token" | "scope" | "id_token", string>;
+			return data;
 		} catch (error: any) {
 			if (error?.response?.data) {
 				logger.error(Error(JSON.stringify(error?.response?.data, null, 2)));

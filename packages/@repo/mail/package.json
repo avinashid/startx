@@ -1,5 +1,5 @@
 {
-	"name": "@repo/email",
+	"name": "@repo/mail",
 	"type": "module",
 	"version": "1.0.0",
 	"description": "",
@@ -24,5 +24,13 @@
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"typescript-config": "workspace:*"
+	},
+	"startx": {
+		"tags": [
+			"node"
+		],
+		"required": [
+			"typescript-config"
+		]
 	}
 }

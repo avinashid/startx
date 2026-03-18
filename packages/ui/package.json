@@ -64,5 +64,14 @@
 		"./lucide": "./src/lucide.ts",
 		"./tailwind.config": "./tailwind.config.ts",
 		"./*/*": "./src/components/*/*"
+	},
+	"startx": {
+		"tags": [
+			"react",
+			"frontend"
+		],
+		"required": [
+			"typescript-config"
+		]
 	}
 }

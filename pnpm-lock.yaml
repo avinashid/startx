@@ -228,9 +228,6 @@ importers:
       '@repo/db':
         specifier: workspace:^
         version: link:../../packages/@repo/db
-      '@repo/email':
-        specifier: workspace:^
-        version: link:../../packages/@repo/mail
       '@repo/env':
         specifier: workspace:^
         version: link:../../packages/@repo/env
@@ -240,6 +237,9 @@ importers:
       '@repo/logger':
         specifier: workspace:^
         version: link:../../packages/@repo/logger
+      '@repo/mail':
+        specifier: workspace:^
+        version: link:../../packages/@repo/mail
       '@repo/redis':
         specifier: workspace:^
         version: link:../../packages/@repo/redis
@@ -432,18 +432,18 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 'catalog:'
         version: 3.983.0
-      '@repo/db':
-        specifier: workspace:*
-        version: link:../db
-      '@repo/email':
-        specifier: workspace:*
-        version: link:../mail
       '@repo/env':
         specifier: workspace:*
         version: link:../env
       '@repo/logger':
         specifier: workspace:*
         version: link:../logger
+      '@repo/mail':
+        specifier: workspace:*
+        version: link:../mail
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../redis
       '@types/express':
         specifier: 'catalog:'
         version: 5.0.6
@@ -466,9 +466,6 @@ importers:
         specifier: ^2.8.2
         version: 2.8.2
     devDependencies:
-      '@repo/redis':
-        specifier: workspace:*
-        version: link:../redis
       '@types/jsonwebtoken':
         specifier: ^9.0.7
         version: 9.0.10
