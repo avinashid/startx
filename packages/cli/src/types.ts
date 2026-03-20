@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import type { PackageJson } from "type-fest";
 
 export type TAGS =
@@ -8,13 +9,22 @@ export type TAGS =
 	| "prettier"
 	| "vitest"
 	| "eslint"
+	| "tsdown"
 	| "node"
 	| "backend"
 	| "frontend"
 	| "react"
-	| "extra";
+	| "extra"
+	| "never"
+	| "root";
 
 export type SCRIPT = Record<string, Array<{ script: string; tags: TAGS[] }>>;
+
+export type WHITELIST_DEPS = Record<
+	string,
+	{ tags: TAGS[]; version: string; isDevDependency?: boolean }
+>;
+export type WHITELIST_FILES = Record<string, { tags: TAGS[] }>;
 
 export type PackageDef<T extends string> = {
 	source: string;
@@ -40,7 +50,8 @@ export type PnpmWorkspace = {
 export type StartXPackageJson = PackageJson & {
 	startx?: {
 		tags?: TAGS[];
-		required?: string[];
-		isDev?: boolean;
+		requiredDeps?: string[];
+		requiredDevDeps?: string[];
+		ignore?: string[];
 	};
 };

@@ -22,8 +22,14 @@
 		"tags": [
 			"common"
 		],
-		"required": [
+		"requiredDeps": [
+			"@repo/env"
+		],
+		"requiredDevDeps": [
 			"typescript-config"
+		],
+		"ignore": [
+			"vitest-config"
 		]
 	}
 }

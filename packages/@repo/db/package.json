@@ -28,9 +28,11 @@
 		"tags": [
 			"node"
 		],
-		"required": [
-			"typescript-config",
+		"requiredDeps": [
 			"@repo/env"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
 		]
 	}
 }

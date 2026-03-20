@@ -50,11 +50,13 @@
 			"node",
 			"backend"
 		],
-		"required": [
-			"typescript-config",
-			"tsdown-config",
+		"requiredDeps": [
 			"@repo/env",
 			"@repo/logger"
+		],
+		"requiredDevDeps": [
+			"typescript-config",
+			"tsdown-config"
 		]
 	}
 }

@@ -70,8 +70,11 @@
 			"react",
 			"frontend"
 		],
-		"required": [
+		"requiredDevDeps": [
 			"typescript-config"
+		],
+		"ignore": [
+			"vitest-config"
 		]
 	}
 }

@@ -3,7 +3,71 @@
 import type { SCRIPT } from "../types";
 
 export const scripts: SCRIPT = {
+	"dev": [
+		{
+			script: "turbo run dev",
+			tags: ["app", "root"],
+		},
+		{
+			script: "tsx watch src/index.ts",
+			tags: ["app"],
+		},
+	],
+	"dev:debug": [
+		{
+			script: "turbo run dev:debug",
+			tags: ["backend", "node", "root"],
+		},
+		{
+			script: "tsx watch --inspect src/index.ts",
+			tags: ["backend", "node"],
+		},
+	],
+	"bun:dev": [
+		{
+			script: "turbo run bun:dev",
+			tags: ["backend", "node", "root"],
+		},
+		{
+			script: "bun --watch src/index.ts",
+			tags: ["backend", "node"],
+		},
+	],
+	"start": [
+		{
+			script: "turbo run start",
+			tags: ["backend", "node", "root"],
+		},
+		{
+			script: "node dist/index.mjs",
+			tags: ["backend", "node"],
+		},
+	],
+	"lint": [
+		{
+			script: "turbo run eslint",
+			tags: ["common", "eslint", "root"],
+		},
+		{
+			script: "eslint .",
+			tags: ["common", "eslint"],
+		},
+	],
+	"lint:fix": [
+		{
+			script: "turbo run lint:fix",
+			tags: ["common", "eslint", "root"],
+		},
+		{
+			script: "eslint . src/**/*.ts --fix",
+			tags: ["common", "eslint"],
+		},
+	],
 	"clean": [
+		{
+			script: "turbo run clean",
+			tags: ["common", "root"],
+		},
 		{
 			script: "rimraf dist .turbo",
 			tags: ["common"],
@@ -11,11 +75,19 @@ export const scripts: SCRIPT = {
 	],
 	"deep:clean": [
 		{
+			script: "turbo run deep:clean",
+			tags: ["common", "root"],
+		},
+		{
 			script: "rimraf node_modules dist .turbo",
 			tags: ["common"],
 		},
 	],
 	"typecheck": [
+		{
+			script: "turbo run typecheck",
+			tags: ["common", "root"],
+		},
 		{
 			script: "tsc --noEmit",
 			tags: ["common"],
@@ -23,8 +95,12 @@ export const scripts: SCRIPT = {
 	],
 	"format": [
 		{
+			script: "turbo run format",
+			tags: ["common", "root"],
+		},
+		{
 			script: "biome format --write .",
-			tags: ["common", "biome"],
+			tags: ["common", "biome", "prettier"],
 		},
 		{
 			"script": "prettier --write .",
@@ -33,8 +109,12 @@ export const scripts: SCRIPT = {
 	],
 	"format:check": [
 		{
+			script: "turbo run format:check",
+			tags: ["common", "root"],
+		},
+		{
 			script: "biome ci .",
-			tags: ["common", "biome"],
+			tags: ["common", "biome", "prettier"],
 		},
 		{
 			"script": "prettier --check .",
@@ -43,44 +123,12 @@ export const scripts: SCRIPT = {
 	],
 	"test": [
 		{
+			script: "turbo run test",
+			tags: ["common", "vitest", "root"],
+		},
+		{
 			script: "vitest run",
 			tags: ["common", "vitest"],
-		},
-	],
-	"dev": [
-		{
-			script: "tsx watch src/index.ts",
-			tags: ["app"],
-		},
-	],
-	"dev:debug": [
-		{
-			script: "tsx watch --inspect src/index.ts",
-			tags: ["backend", "node"],
-		},
-	],
-	"bun:dev": [
-		{
-			script: "bun --watch src/index.ts",
-			tags: ["backend", "node"],
-		},
-	],
-	"start": [
-		{
-			script: "node dist/index.mjs",
-			tags: ["backend", "node"],
-		},
-	],
-	"lint": [
-		{
-			script: "eslint .",
-			tags: ["common", "eslint"],
-		},
-	],
-	"lint:fix": [
-		{
-			script: "eslint . src/**/*.ts --fix",
-			tags: ["common", "eslint"],
 		},
 	],
 } as const;

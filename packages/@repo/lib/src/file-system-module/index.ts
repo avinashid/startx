@@ -90,6 +90,11 @@ export class FStool {
 		}
 	}
 
+	async copyFile({ from, to }: { from: string; to: string }) {
+		await this.ensurePathExists({ dir: path.dirname(to) });
+		await fs.copyFile(path.resolve(this.root, from), path.resolve(this.root, to));
+	}
+
 	async copyDirectory({
 		from,
 		to,

@@ -22,5 +22,16 @@
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"format:check": "biome ci ."
+	},
+	"startx": {
+		"tags": [
+			"vitest"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		],
+		"ignore": [
+			"vitest-config"
+		]
 	}
 }

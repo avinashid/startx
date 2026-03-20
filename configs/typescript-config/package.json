@@ -8,6 +8,12 @@
 		"tsconfig.node.json"
 	],
 	"startx": {
-		"isDev": true
+		"tags": [
+			"common"
+		],
+		"ignore": [
+			"eslint-config",
+			"typescript-config"
+		]
 	}
 }

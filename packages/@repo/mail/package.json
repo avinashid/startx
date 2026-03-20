@@ -29,7 +29,7 @@
 		"tags": [
 			"node"
 		],
-		"required": [
+		"requiredDevDeps": [
 			"typescript-config"
 		]
 	}

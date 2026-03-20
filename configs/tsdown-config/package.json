@@ -9,8 +9,13 @@
 		"deep:clean": "rimraf node_modules dist"
 	},
 	"startx": {
-		"isDev": true,
-		"tags": [],
-		"required": []
+		"tags": [
+			"tsdown"
+		],
+		"ignore": [
+			"eslint-config",
+			"typescript-config",
+			"vitest-config"
+		]
 	}
 }

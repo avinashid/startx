@@ -19,7 +19,6 @@
 	"devDependencies": {
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"vitest": "catalog:",
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
@@ -31,9 +30,11 @@
 		"tags": [
 			"node"
 		],
-		"required": [
-			"typescript-config",
+		"requiredDeps": [
 			"@repo/env"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
 		]
 	}
 }

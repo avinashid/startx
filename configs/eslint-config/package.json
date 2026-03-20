@@ -47,8 +47,11 @@
 		"tags": [
 			"eslint"
 		],
-		"required": [
+		"requiredDevDeps": [
 			"typescript-config"
+		],
+		"ignore": [
+			"eslint-config"
 		]
 	}
 }

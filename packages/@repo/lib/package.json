@@ -23,7 +23,6 @@
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
 		"vine": "link:@types/vinejs/vine",
-		"vitest": "catalog:",
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
@@ -45,11 +44,14 @@
 			"node",
 			"backend"
 		],
-		"required": [
-			"typescript-config",
+		"requiredDeps": [
 			"@repo/env",
 			"@repo/logger",
-			"@repo/mail"
+			"@repo/mail",
+			"@repo/redis"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
 		]
 	}
 }

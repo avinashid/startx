@@ -9,7 +9,7 @@
 
 		"build": {
 			"cache": true,
-			"inputs": ["src/**", "tsconfig*.json", "package.json"],
+			"inputs": ["src/**", "tsdown.config.ts", "eslint.config.*", "tsconfig*.json", "package.json"],
 			"outputs": ["dist/**"],
 			"dependsOn": ["lint", "^build"]
 		},
@@ -25,17 +25,6 @@
 			"inputs": ["src/**", "test/**", "vitest.config.*", "package.json"],
 			"outputs": ["coverage/**", "*.xml"]
 		},
-		"test:dev": {
-			"cache": false,
-			"inputs": ["src/**", "test/**", "vitest.config.*", "package.json"],
-			"outputs": ["coverage/**", "*.xml"],
-			"interactive": true
-		},
-
-		"check-types": {
-			"cache": true,
-			"dependsOn": ["^check-types"]
-		},
 
 		"watch": {
 			"cache": false,
@@ -49,13 +38,21 @@
 		"dev": {
 			"cache": false,
 			"persistent": true,
-			"env": ["NODE_ENV"],
+			"interactive": true
+		},
+		"dev:debug": {
+			"cache": false,
+			"persistent": true,
+			"interactive": true
+		},
+		"bun:dev": {
+			"cache": false,
+			"persistent": true,
 			"interactive": true
 		},
 		"start": {
 			"cache": false,
-			"persistent": true,
-			"env": ["NODE_ENV"]
+			"persistent": true
 		},
 		"format": {
 			"cache": false

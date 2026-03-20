@@ -4,8 +4,10 @@ import { Command } from "commander";
 import path from "path";
 import z from "zod";
 
+import { FileCheck } from "../configs/files";
 import type { StartXPackageJson, TAGS } from "../types";
 import { CliUtils, type RawPackageItem } from "../utils/cli-utils";
+import { FileHandler } from "../utils/file-handler";
 import { CommonInquirer } from "../utils/inquirer";
 
 type InitOptions = {
@@ -58,13 +60,39 @@ export class InitCommand {
 			packages,
 			tags: prefs.tags,
 		});
-
-		await this.installPackages({
-			apps,
-			packages: packagePrefs.selectedPackages,
-			directory: prefs.workspace,
-			tags: prefs.tags,
+		await this.installWorkspace({
+			name: prefs.projectName,
+			tags: packagePrefs.tags,
+			dir: {
+				workspace: prefs.workspace,
+				template: prefs.template,
+			},
 		});
+		for (const pkg of [...packagePrefs.selectedPackages, ...apps]) {
+			let appDeps: Record<string, string> = {};
+
+			if (pkg.type === "apps") {
+				const packages = packagePrefs.selectedPackages.filter(e =>
+					pkg.packageJson?.startx?.tags?.every(t => e.packageJson?.startx?.tags?.includes(t))
+				);
+
+				appDeps = Object.fromEntries(
+					packages
+						.map(e => e.packageJson?.name)
+						.filter((name): name is string => !!name)
+						.map(name => [name, "workspace:^"])
+				);
+			}
+			await this.installPackage({
+				packages: pkg,
+				directory: {
+					workspace: prefs.workspace,
+					template: prefs.template,
+				},
+				tags: packagePrefs.tags,
+				dependencies: appDeps,
+			});
+		}
 	}
 
 	private static async getPrefs(props: {
@@ -142,6 +170,7 @@ export class InitCommand {
 		return {
 			projectName: props.projectName,
 			workspace,
+			template: directory.template,
 			selectedProjects,
 			tags: Array.from(tags.values()),
 		};
@@ -199,10 +228,15 @@ export class InitCommand {
 		const requiredPackages = new Set<string>();
 
 		for (const pkg of [...selectedPackageObjects, ...props.apps]) {
-			const required = pkg.packageJson?.startx?.required;
-			if (required?.length) {
-				for (const dep of required) {
+			const requiredDeps = pkg.packageJson?.startx?.requiredDeps || [];
+			const requiredDevDeps = pkg.packageJson?.startx?.requiredDevDeps || [];
+			if (requiredDeps?.length || requiredDevDeps?.length) {
+				for (const dep of [...requiredDeps, ...requiredDevDeps]) {
 					requiredPackages.add(dep);
+					const requiredPackageInfo = props.packages.find(e => e.name === dep);
+					if (requiredPackageInfo) {
+						requiredPackageInfo.packageJson?.startx?.tags?.forEach(e => appTags.add(e));
+					}
 				}
 			}
 		}
@@ -221,18 +255,98 @@ export class InitCommand {
 		};
 	}
 
-	private static async installPackages(props: {
-		apps: PackageWithJson[];
-		packages: PackageWithJson[];
-		directory: string;
+	private static async installPackage(props: {
+		packages: PackageWithJson;
+		directory: {
+			workspace: string;
+			template: string;
+		};
 		tags: TAGS[];
+		dependencies: Record<string, string>;
 	}) {
-		const firstApp = props.apps[0];
-		if (firstApp)
-			await fsTool.copyDirectory({
-				from: path.join(firstApp.path),
-				include: /\.ts$/,
-				to: props.directory,
-			});
+		const { packageJson, isWorkspace } = FileHandler.handlePackageJson({
+			app: props.packages.packageJson!,
+			tags: props.tags,
+			name: props.packages.name,
+		});
+
+		if (isWorkspace) throw new Error("Can't install workspace as package.");
+
+		let iDirectory = path.join(props.directory.workspace, props.packages.type);
+		let iTemplate = path.join(props.directory.template, props.packages.type);
+		if (props.packages.packageJson?.name?.startsWith("@repo")) {
+			const repoName = props.packages.packageJson.name.split("/")[1];
+			iDirectory = path.join(iDirectory, "@repo", repoName);
+			iTemplate = path.join(iTemplate, "@repo", repoName);
+		} else {
+			iDirectory = path.join(iDirectory, props.packages.name);
+			iTemplate = path.join(iTemplate, props.packages.name);
+		}
+
+		await fsTool.writeJSONFile({
+			dir: iDirectory,
+			file: "package",
+			content: packageJson,
+		});
+
+		const files = await fsTool.listFiles({ dir: iTemplate });
+		for (const file of files) {
+			const checked = FileCheck[file];
+			if (checked && !checked.tags.every(e => props.tags.includes(e))) continue;
+			try {
+				await fsTool.copyFile({
+					from: path.join(iTemplate, file),
+					to: path.join(iDirectory, file),
+				});
+			} catch (error) {
+				logger.error(`Failed to copy file ${file}:`, error);
+			}
+		}
+
+		// Installing src
+		await fsTool.copyDirectory({
+			from: path.join(iTemplate, "src"),
+			to: path.join(iDirectory, "src"),
+			exclude: !props.tags.includes("vitest") ? /\.test\.tsx?$/ : undefined,
+		});
+		logger.info(`Successfully installed ${props.packages.name}`);
+	}
+
+	private static async installWorkspace(props: {
+		name: string;
+		tags: TAGS[];
+		dir: {
+			workspace: string;
+			template: string;
+		};
+	}) {
+		props.tags.push("root");
+		const rawPackage = await CliUtils.parsePackageJson({ dir: props.dir.template });
+		if (!rawPackage) throw new Error("Failed to parse package.json");
+		const { packageJson } = FileHandler.handlePackageJson({
+			app: rawPackage,
+			tags: props.tags,
+			name: props.name,
+		});
+
+		await fsTool.writeJSONFile({
+			dir: props.dir.workspace,
+			file: "package",
+			content: packageJson,
+		});
+
+		const files = await fsTool.listFiles({ dir: props.dir.template });
+		for (const file of files) {
+			const checked = FileCheck[file];
+			if (checked && !checked.tags.every(e => props.tags.includes(e))) continue;
+			try {
+				await fsTool.copyFile({
+					from: path.join(props.dir.template, file),
+					to: path.join(props.dir.workspace, file),
+				});
+			} catch (error) {
+				logger.error(`Failed to copy file ${file}:`, error);
+			}
+		}
 	}
 }
