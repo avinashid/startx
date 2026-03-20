@@ -62,7 +62,7 @@ export class InitCommand {
 		});
 		await this.installWorkspace({
 			name: prefs.projectName,
-			tags: packagePrefs.tags,
+			tags: [...packagePrefs.tags, "app"],
 			dir: {
 				workspace: prefs.workspace,
 				template: prefs.template,
@@ -70,8 +70,9 @@ export class InitCommand {
 		});
 		for (const pkg of [...packagePrefs.selectedPackages, ...apps]) {
 			let appDeps: Record<string, string> = {};
-
+			const tags = packagePrefs.tags;
 			if (pkg.type === "apps") {
+				tags.push("app");
 				const packages = packagePrefs.selectedPackages.filter(e =>
 					pkg.packageJson?.startx?.tags?.every(t => e.packageJson?.startx?.tags?.includes(t))
 				);
@@ -89,7 +90,7 @@ export class InitCommand {
 					workspace: prefs.workspace,
 					template: prefs.template,
 				},
-				tags: packagePrefs.tags,
+				tags,
 				dependencies: appDeps,
 			});
 		}
@@ -151,10 +152,6 @@ export class InitCommand {
 		});
 
 		const selectedProjects = props.projects.filter(e => selectedAppNames.includes(e.name));
-
-		if (selectedProjects.length) {
-			tags.set("app", "app");
-		}
 
 		const formatter: string | string[] = await CommonInquirer.choose({
 			message: "Select formatter",

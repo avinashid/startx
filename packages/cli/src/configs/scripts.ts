@@ -33,6 +33,16 @@ export const scripts: SCRIPT = {
 			tags: ["backend", "node"],
 		},
 	],
+	"build": [
+		{
+			script: "turbo run build",
+			tags: ["app", "root"],
+		},
+		{
+			script: "tsx watch src/index.ts",
+			tags: ["app"],
+		},
+	],
 	"start": [
 		{
 			script: "turbo run start",
