@@ -13,7 +13,8 @@
 		],
 		"ignore": [
 			"eslint-config",
-			"typescript-config"
+			"typescript-config",
+			"vitest-config"
 		]
 	}
 }

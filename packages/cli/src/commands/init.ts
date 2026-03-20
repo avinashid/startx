@@ -152,6 +152,10 @@ export class InitCommand {
 
 		const selectedProjects = props.projects.filter(e => selectedAppNames.includes(e.name));
 
+		if (selectedProjects.length) {
+			tags.set("app", "app");
+		}
+
 		const formatter: string | string[] = await CommonInquirer.choose({
 			message: "Select formatter",
 			options: ["prettier + biome", "prettier"],
@@ -320,7 +324,7 @@ export class InitCommand {
 			template: string;
 		};
 	}) {
-		props.tags.push("root");
+		const rootTags = ["root", ...props.tags] as TAGS[];
 		const rawPackage = await CliUtils.parsePackageJson({ dir: props.dir.template });
 		const startXRawPackage = await CliUtils.parsePackageJson({
 			dir: props.dir.template,
@@ -332,7 +336,7 @@ export class InitCommand {
 		rawPackage.devDependencies = startXRawPackage?.devDependencies || {};
 		const { packageJson } = FileHandler.handlePackageJson({
 			app: rawPackage,
-			tags: props.tags,
+			tags: rootTags,
 			name: props.name,
 		});
 

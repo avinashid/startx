@@ -32,7 +32,6 @@ export class FileHandler {
 		const isWorkspace = !!props.app.devDependencies?.turbo;
 
 		const tags = isWorkspace ? [...props.tags, "root"] : [...props.tags];
-
 		const workspaceAttr: Record<string, unknown> = isWorkspace
 			? {
 					version: "1.0.0",
@@ -81,6 +80,7 @@ export class FileHandler {
 
 		// Adding rest
 		for (const [key, value] of Object.entries(DepCheck)) {
+			if (!value.tags.every(tag => tags.includes(tag))) continue;
 			const isDev = value.isDevDependency;
 			if (isDev && !devDependencies[key]) {
 				devDependencies[key] = value.version;
