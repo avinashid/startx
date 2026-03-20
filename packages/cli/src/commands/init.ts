@@ -323,7 +323,7 @@ export class InitCommand {
 		props.tags.push("root");
 		const rawPackage = await CliUtils.parsePackageJson({ dir: props.dir.template });
 		const startXRawPackage = await CliUtils.parsePackageJson({
-			dir: props.dir.workspace,
+			dir: props.dir.template,
 			file: "startx",
 		});
 

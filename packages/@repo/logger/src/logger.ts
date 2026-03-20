@@ -44,29 +44,36 @@ const customPrintFormat = format.printf((info: Logform.TransformableInfo) => {
 
 interface LoggerInput {
 	logName: string;
+	enableFileLogging?: boolean;
 }
 
-const createWLogger = ({ logName }: LoggerInput) => {
+const createWLogger = ({ logName, enableFileLogging = true }: LoggerInput) => {
+	const baseTransports = [
+		new transports.Console({
+			format: format.combine(upperCaseLevel(), format.colorize({ all: true }), customPrintFormat),
+		}),
+	];
+	const fileTransports = enableFileLogging
+		? [
+				new transports.File({
+					level: "error",
+					filename: path.join(LOG_DIR, logName, `${logName}-Error.log`),
+					format: customPrintFormat,
+				}),
+				new transports.File({
+					filename: path.join(LOG_DIR, logName, `${logName}-Combined.log`),
+					format: customPrintFormat,
+				}),
+			]
+		: [];
 	return createLogger({
 		level: ENV.LOG_LEVEL,
 		format: format.combine(format.timestamp(), format.errors({ stack: true })),
-		transports: [
-			new transports.Console({
-				format: format.combine(upperCaseLevel(), format.colorize({ all: true }), customPrintFormat),
-			}),
-			new transports.File({
-				level: "error",
-				filename: path.join(LOG_DIR, logName, `${logName}-Error.log`),
-				format: customPrintFormat,
-			}),
-			new transports.File({
-				filename: path.join(LOG_DIR, logName, `${logName}-Combined.log`),
-				format: customPrintFormat,
-			}),
-		],
+		transports: [...baseTransports, ...fileTransports],
 	});
 };
 
 export const logger = createWLogger({
 	logName: "globalLog",
+	enableFileLogging: false,
 });
