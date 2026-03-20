@@ -2,6 +2,9 @@
 import type { WHITELIST_FILES } from "../types";
 
 export const FileCheck: WHITELIST_FILES = {
+	"startx.json": {
+		tags: ["never"],
+	},
 	".npmignore": {
 		tags: ["never"],
 	},

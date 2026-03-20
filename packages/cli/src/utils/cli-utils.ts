@@ -86,10 +86,10 @@ export class CliUtils {
 		return packages;
 	}
 
-	static async parsePackageJson({ dir }: { dir: string }) {
+	static async parsePackageJson({ dir, file = "package" }: { dir: string; file?: string }) {
 		const packageJson = await fsTool.readJSONFile<StartXPackageJson>({
 			dir,
-			file: "package",
+			file,
 		});
 		return packageJson;
 	}

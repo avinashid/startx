@@ -1,0 +1,22 @@
+{
+	"name": "startx",
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"prettier": "catalog:",
+		"rimraf": "catalog:",
+		"turbo": "catalog:",
+		"typescript": "catalog:",
+		"tsdown": "catalog:",
+		"unrun": "catalog:",
+		"vitest": "catalog:",
+		"tsx": "catalog:",
+		"@types/node": "catalog:"
+	},
+	"dependencies": {
+		"zod": "catalog:",
+		"@vinejs/vine": "catalog:",
+		"axios": "catalog:",
+		"date-fns": "catalog:",
+		"nanoid": "catalog:"
+	}
+}

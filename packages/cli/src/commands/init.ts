@@ -322,7 +322,14 @@ export class InitCommand {
 	}) {
 		props.tags.push("root");
 		const rawPackage = await CliUtils.parsePackageJson({ dir: props.dir.template });
+		const startXRawPackage = await CliUtils.parsePackageJson({
+			dir: props.dir.workspace,
+			file: "startx",
+		});
+
 		if (!rawPackage) throw new Error("Failed to parse package.json");
+		rawPackage.dependencies = startXRawPackage?.dependencies || {};
+		rawPackage.devDependencies = startXRawPackage?.devDependencies || {};
 		const { packageJson } = FileHandler.handlePackageJson({
 			app: rawPackage,
 			tags: props.tags,
