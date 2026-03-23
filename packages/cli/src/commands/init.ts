@@ -346,7 +346,7 @@ export class InitCommand {
 		const files = await fsTool.listFiles({ dir: props.dir.template });
 		for (const file of files) {
 			const checked = FileCheck[file];
-			if (checked && !checked.tags.every(e => props.tags.includes(e))) continue;
+			if (checked && !checked.tags.every(e => rootTags.includes(e))) continue;
 			try {
 				await fsTool.copyFile({
 					from: path.join(props.dir.template, file),

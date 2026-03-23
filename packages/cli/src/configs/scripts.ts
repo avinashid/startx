@@ -16,17 +16,17 @@ export const scripts: SCRIPT = {
 	"dev:debug": [
 		{
 			script: "turbo run dev:debug",
-			tags: ["backend", "node", "root"],
+			tags: ["backend", "node", "app", "root"],
 		},
 		{
 			script: "tsx watch --inspect src/index.ts",
-			tags: ["backend", "node"],
+			tags: ["backend", "node", "app"],
 		},
 	],
 	"bun:dev": [
 		{
 			script: "turbo run bun:dev",
-			tags: ["backend", "node", "root"],
+			tags: ["backend", "node", "app", "root"],
 		},
 		{
 			script: "bun --watch src/index.ts",
@@ -46,7 +46,7 @@ export const scripts: SCRIPT = {
 	"start": [
 		{
 			script: "turbo run start",
-			tags: ["backend", "node", "root"],
+			tags: ["backend", "app", "node", "root"],
 		},
 		{
 			script: "node dist/index.mjs",
