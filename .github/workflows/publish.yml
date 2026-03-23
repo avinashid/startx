@@ -26,7 +26,12 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      # 👇 Your chaos step
+      - name: Install dependencies
+        run: pnpm install --filter=cli --frozen-lockfile
+
+      - name: Build
+        run: pnpm build --filter=cli
+
       - name: Clean root package.json
         run: |
           node -e "
@@ -36,12 +41,6 @@ jobs:
           delete pkg.devDependencies;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
-
-      - name: Install dependencies
-        run: pnpm install --filter=cli --frozen-lockfile
-
-      - name: Build
-        run: pnpm build --filter=cli
 
       - name: Publish to npm
         run: pnpm publish --no-git-checks
