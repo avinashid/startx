@@ -30,7 +30,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "bun --watch src/index.ts",
-			tags: ["backend", "node"],
+			tags: ["backend", "node", "app"],
 		},
 	],
 	"build": [
@@ -50,7 +50,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "node dist/index.mjs",
-			tags: ["backend", "node"],
+			tags: ["backend", "node", "app"],
 		},
 	],
 	"lint": [
