@@ -5,6 +5,7 @@ export default defineConfig({
 	...baseConfig,
 	platform: "node",
 	external: ["sharp"],
+	inlineOnly: false,
 	noExternal: [/(.*)/],
 	outputOptions: {
 		codeSplitting: false,
