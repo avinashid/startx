@@ -26,11 +26,11 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Install dependencies
-        run: pnpm install --filter=cli --frozen-lockfile
+      - name: Install CLI
+        run: pnpm install --filter ./packages/cli... --frozen-lockfile
 
-      - name: Build
-        run: pnpm build --filter=cli
+      - name: Build only CLI
+        run: pnpm --filter ./packages/cli... build
 
       - name: Clean root package.json
         run: |
