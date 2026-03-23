@@ -6,7 +6,6 @@ export default defineConfig({
 	platform: "node",
 	external: ["sharp"],
 	noExternal: [/(.*)/],
-	inlineOnly: false,
 	outputOptions: {
 		codeSplitting: false,
 		preserveModules: false,

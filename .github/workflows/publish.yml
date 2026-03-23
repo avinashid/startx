@@ -27,7 +27,7 @@ jobs:
         run: corepack enable
 
       - name: Install CLI
-        run: pnpm install --filter ./packages/cli... --frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build only CLI
         run: pnpm --filter ./packages/cli... build
