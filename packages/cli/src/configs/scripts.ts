@@ -39,7 +39,7 @@ export const scripts: SCRIPT = {
 			tags: ["app", "root"],
 		},
 		{
-			script: "tsx watch src/index.ts",
+			script: "tsdown --config-loader unrun",
 			tags: ["app"],
 		},
 	],
