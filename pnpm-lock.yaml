@@ -186,6 +186,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.2.0
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.2(jiti@2.6.1)
       prettier:
         specifier: 'catalog:'
         version: 3.8.1
@@ -207,6 +210,37 @@ importers:
       unrun:
         specifier: 'catalog:'
         version: 0.2.27
+
+  apps/cli:
+    dependencies:
+      '@inquirer/prompts':
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@25.2.0)
+      '@repo/logger':
+        specifier: workspace:*
+        version: link:../../packages/@repo/logger
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      commander:
+        specifier: ^14.0.0
+        version: 14.0.3
+      type-fest:
+        specifier: ^5.4.4
+        version: 5.4.4
+    devDependencies:
+      eslint-config:
+        specifier: workspace:*
+        version: link:../../configs/eslint-config
+      tsdown-config:
+        specifier: workspace:*
+        version: link:../../configs/tsdown-config
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../configs/vitest-config
 
   apps/core-server:
     dependencies:
@@ -277,6 +311,46 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../configs/typescript-config
+
+  apps/startx-cli:
+    dependencies:
+      '@inquirer/prompts':
+        specifier: ^8.3.0
+        version: 8.3.0(@types/node@25.2.0)
+      '@repo/env':
+        specifier: workspace:*
+        version: link:../../packages/@repo/env
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/@repo/lib
+      '@repo/logger':
+        specifier: workspace:*
+        version: link:../../packages/@repo/logger
+      chokidar:
+        specifier: ^4.0.3
+        version: 4.0.3
+      commander:
+        specifier: ^14.0.0
+        version: 14.0.3
+      type-fest:
+        specifier: ^5.4.4
+        version: 5.4.4
+    devDependencies:
+      cross-env:
+        specifier: ^10.1.0
+        version: 10.1.0
+      eslint-config:
+        specifier: workspace:*
+        version: link:../../configs/eslint-config
+      tsdown-config:
+        specifier: workspace:*
+        version: link:../../configs/tsdown-config
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../configs/vitest-config
 
   configs/eslint-config:
     dependencies:
@@ -546,46 +620,6 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
-
-  packages/cli:
-    dependencies:
-      '@inquirer/prompts':
-        specifier: ^8.3.0
-        version: 8.3.0(@types/node@25.2.0)
-      '@repo/env':
-        specifier: workspace:*
-        version: link:../@repo/env
-      '@repo/lib':
-        specifier: workspace:*
-        version: link:../@repo/lib
-      '@repo/logger':
-        specifier: workspace:*
-        version: link:../@repo/logger
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
-      commander:
-        specifier: ^14.0.0
-        version: 14.0.3
-      type-fest:
-        specifier: ^5.4.4
-        version: 5.4.4
-    devDependencies:
-      cross-env:
-        specifier: ^10.1.0
-        version: 10.1.0
-      eslint-config:
-        specifier: workspace:*
-        version: link:../../configs/eslint-config
-      tsdown-config:
-        specifier: workspace:*
-        version: link:../../configs/tsdown-config
-      typescript-config:
-        specifier: workspace:*
-        version: link:../../configs/typescript-config
-      vitest-config:
-        specifier: workspace:*
-        version: link:../../configs/vitest-config
 
   packages/ui:
     dependencies:
@@ -6418,10 +6452,6 @@ packages:
     resolution: {integrity: sha512-4dbzIzqvjtgiM5rw1k5rEHtBANKmdudhGyBEajN01fEyhaAIhsoKNy6y7+IN93IfpFtwY9iqi7kD+xwKhQsNJA==}
     engines: {node: '>=8'}
 
-  type-fest@5.4.3:
-    resolution: {integrity: sha512-AXSAQJu79WGc79/3e9/CR77I/KQgeY1AhNvcShIH4PTcGYyC4xv6H4R4AUOwkPS5799KlVDAu8zExeCrkGquiA==}
-    engines: {node: '>=20'}
-
   type-fest@5.4.4:
     resolution: {integrity: sha512-JnTrzGu+zPV3aXIUhnyWJj4z/wigMsdYajGLIYakqyOW1nPllzXEJee0QQbHj+CTIQtXGlAjuK0UY+2xTyjVAw==}
     engines: {node: '>=20'}
@@ -10232,7 +10262,7 @@ snapshots:
 
   dot-prop@10.1.0:
     dependencies:
-      type-fest: 5.4.3
+      type-fest: 5.4.4
 
   dotenv@17.3.1: {}
 
@@ -12775,10 +12805,6 @@ snapshots:
   type-fest@0.6.0: {}
 
   type-fest@0.8.1: {}
-
-  type-fest@5.4.3:
-    dependencies:
-      tagged-tag: 1.0.0
 
   type-fest@5.4.4:
     dependencies:

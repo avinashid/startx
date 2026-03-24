@@ -24,7 +24,7 @@
 		"@repo/logger": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node",
 			"backend"
 		],

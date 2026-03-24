@@ -10,27 +10,31 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "tsx watch src/index.ts",
-			tags: ["runnable", "node", "backend"],
+			tags: ["runnable", "node", "backend", "dev"],
+		},
+		{
+			script: "email dev --port 3014 --dir ./src",
+			tags: ["node", "mail"],
 		},
 	],
 	"dev:debug": [
 		{
 			script: "turbo run dev:debug",
-			tags: ["backend", "node", "runnable", "root"],
+			tags: ["node", "runnable", "root"],
 		},
 		{
 			script: "tsx watch --inspect src/index.ts",
-			tags: ["backend", "node", "runnable"],
+			tags: ["backend", "node", "runnable", "dev"],
 		},
 	],
 	"bun:dev": [
 		{
 			script: "turbo run bun:dev",
-			tags: ["backend", "node", "runnable", "root"],
+			tags: ["node", "runnable", "root"],
 		},
 		{
 			script: "bun --watch src/index.ts",
-			tags: ["backend", "node", "runnable"],
+			tags: ["backend", "node", "runnable", "dev"],
 		},
 	],
 	"build": [
@@ -43,6 +47,16 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "node"],
 		},
 	],
+	"cli": [
+		{
+			script: "turbo run cli",
+			tags: ["runnable", "node", "cli", "root"],
+		},
+		{
+			script: "tsx src/index.ts",
+			tags: ["runnable", "node", "cli", "commander"],
+		},
+	],
 	"start": [
 		{
 			script: "turbo run start",
@@ -50,7 +64,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "node dist/index.mjs",
-			tags: ["backend", "node", "runnable"],
+			tags: ["node", "runnable"],
 		},
 	],
 	"lint": [

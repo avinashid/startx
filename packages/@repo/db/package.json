@@ -25,9 +25,13 @@
 		"@repo/env": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node",
 			"backend"
+		],
+		"tags": [
+			"db",
+			"drizzle"
 		],
 		"requiredDeps": [
 			"@repo/env"

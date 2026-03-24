@@ -81,6 +81,7 @@ export class FileHandler {
 		// Adding rest
 		for (const [key, value] of Object.entries(DepCheck)) {
 			if (!value.tags.every(tag => tags.includes(tag))) continue;
+			if (isWorkspace && !value.tags.includes("root")) continue;
 			const isDev = value.isDevDependency;
 			if (isDev && !devDependencies[key]) {
 				devDependencies[key] = value.version;

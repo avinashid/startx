@@ -19,7 +19,7 @@
 		"eslint-config": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node"
 		],
 		"requiredDeps": [

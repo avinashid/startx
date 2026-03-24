@@ -12,9 +12,13 @@ export type TAGS =
 	| "tsdown"
 	| "node"
 	| "backend"
+	| "dev"
 	| "frontend"
+	| "cli"
+	| "commander"
 	| "react"
 	| "extra"
+	| "mail"
 	| "never"
 	| "root";
 
@@ -50,8 +54,9 @@ export type PnpmWorkspace = {
 export type StartXPackageJson = PackageJson & {
 	startx?: {
 		mode?: "silent" | "standalone";
-		tags?: TAGS[];
-		iTags?: TAGS[];
+		tags?: TAGS[]; // self tags (can be used to identify this package)
+		iTags?: TAGS[]; // install tags (must be available to install packages)
+		gTags?: TAGS[]; // global tags (to be pushed globally if installed)
 		requiredDeps?: string[];
 		requiredDevDeps?: string[];
 		ignore?: string[];

@@ -9,7 +9,7 @@
 		"deep:clean": "rimraf node_modules dist"
 	},
 	"startx": {
-		"tags": [
+		"gTags": [
 			"tsdown"
 		],
 		"iTags": [

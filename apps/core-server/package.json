@@ -46,9 +46,12 @@
 		"typescript-config": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"gTags": [
 			"node",
 			"backend"
+		],
+		"tags": [
+			"dev"
 		],
 		"requiredDeps": [
 			"@repo/env",

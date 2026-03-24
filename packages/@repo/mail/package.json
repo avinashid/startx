@@ -26,9 +26,12 @@
 		"typescript-config": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node",
 			"backend"
+		],
+		"tags": [
+			"mail"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

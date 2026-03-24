@@ -40,7 +40,7 @@
 		"yaml": "^2.8.2"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node",
 			"backend"
 		],

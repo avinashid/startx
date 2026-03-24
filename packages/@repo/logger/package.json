@@ -27,7 +27,7 @@
 		"@repo/env": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"node",
 			"backend"
 		],

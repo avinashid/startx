@@ -44,7 +44,7 @@
 		"vitest-config": "workspace:*"
 	},
 	"startx": {
-		"tags": [
+		"gTags": [
 			"eslint"
 		],
 		"iTags": [

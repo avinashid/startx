@@ -64,7 +64,7 @@
 		"./*/*": "./src/components/*/*"
 	},
 	"startx": {
-		"tags": [
+		"iTags": [
 			"react",
 			"frontend"
 		],

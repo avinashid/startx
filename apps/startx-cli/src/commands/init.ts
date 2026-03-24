@@ -6,7 +6,7 @@ import z from "zod";
 
 import { FileCheck } from "../configs/files";
 import type { StartXPackageJson, TAGS } from "../types";
-import { CliUtils, type RawPackageItem } from "../utils/cli-utils";
+import { CliUtils } from "../utils/cli-utils";
 import { FileHandler } from "../utils/file-handler";
 import { CommonInquirer } from "../utils/inquirer";
 
@@ -28,42 +28,43 @@ export class InitCommand {
 		.action(InitCommand.run.bind(InitCommand));
 
 	private static async run(projectName: string | undefined, options: InitOptions) {
-		const packageList = await CliUtils.getPackageList();
+		const packageList: PackageWithJson[] = await Promise.all(
+			(await CliUtils.getPackageList()).map(async e => ({
+				...e,
+				packageJson: await CliUtils.parsePackageJson({ dir: e.path }),
+			}))
+		);
+
 		const prefs = await InitCommand.getPrefs({
 			projectName,
 			options,
-			projects: packageList.filter(e => e.type === "apps"),
+			projects: packageList.filter(e => {
+				if (e.type !== "apps") return false;
+				if (e.packageJson?.startx?.mode === "silent") return false;
+				return true;
+			}),
 		});
 
-		const [selectedApps, packages] = await Promise.all([
-			Promise.all(
-				prefs.selectedProjects.map(async e => ({
+		const packages = await Promise.all(
+			packageList
+				.filter(e => e.type !== "apps")
+				.map(async e => ({
 					...e,
 					packageJson: await CliUtils.parsePackageJson({ dir: e.path }),
 				}))
-			),
-			Promise.all(
-				packageList
-					.filter(e => e.type !== "apps")
-					.map(async e => ({
-						...e,
-						packageJson: await CliUtils.parsePackageJson({ dir: e.path }),
-					}))
-			),
-		]);
+		);
 
 		const config = await this.getConfigPrefs({
-			selectedApps,
-			packages: packages,
+			selectedApps: prefs.selectedApps,
+			packages,
 		});
 
 		const packagePrefs = await this.getPackagesPrefs({
-			selectedApps,
+			selectedApps: prefs.selectedApps,
 			selectedPackages: config.selectedConfigs,
 			packages,
 			tags: config.tags,
 		});
-
 		await this.installWorkspace({
 			name: prefs.projectName,
 			tags: [...packagePrefs.tags, "runnable"],
@@ -72,41 +73,50 @@ export class InitCommand {
 				template: prefs.directory.template,
 			},
 		});
-		for (const pkg of packagePrefs.selectedPackages.concat(selectedApps)) {
-			let appDeps = new Map<string, string>();
-			const tags = packagePrefs.tags;
-			if (pkg.packageJson?.startx?.mode === "standalone") tags.push("runnable");
-			if (pkg.type === "apps") {
-				tags.push("runnable");
-				packagePrefs.selectedPackages
-					.filter(
-						e =>
-							e.packageJson?.startx?.mode !== "standalone" &&
-							e.packageJson?.startx?.tags?.every(e => pkg.packageJson?.startx?.tags?.includes(e))
-					)
-					.forEach(e => appDeps.set(e.packageJson?.name || e.name, "workspace:^"));
-			}
-			await this.installPackage({
-				packages: pkg,
-				directory: {
-					workspace: prefs.directory.workspace,
-					template: prefs.directory.template,
-				},
-				tags,
-				dependencies: Object.fromEntries(appDeps),
-			});
-		}
+
+		await Promise.all(
+			packagePrefs.selectedPackages.concat(prefs.selectedApps).map(async pkg => {
+				const appDeps = new Map<string, string>();
+				const tags = new Set(packagePrefs.tags);
+
+				if (pkg.packageJson?.startx?.mode === "standalone") tags.add("runnable");
+
+				if (pkg.type === "apps") {
+					tags.add("runnable");
+
+					packagePrefs.selectedPackages
+						.filter(
+							e =>
+								e.packageJson?.startx?.mode !== "standalone" &&
+								e.packageJson?.startx?.iTags?.every(tag =>
+									pkg.packageJson?.startx?.tags?.includes(tag)
+								)
+						)
+						.forEach(e => appDeps.set(e.packageJson?.name || e.name, "workspace:^"));
+				}
+
+				await this.installPackage({
+					packages: pkg,
+					directory: {
+						workspace: prefs.directory.workspace,
+						template: prefs.directory.template,
+					},
+					tags: Array.from(tags),
+					dependencies: Object.fromEntries(appDeps),
+				});
+			})
+		);
 	}
 
 	private static async getPrefs(props: {
 		projectName?: string;
 		directory?: string;
 		options: InitOptions;
-		projects: RawPackageItem[];
+		projects: PackageWithJson[];
 	}) {
 		if (!props.projectName) {
 			props.projectName = await CommonInquirer.getText({
-				message: "Project naming",
+				message: "Project name",
 				name: "projectName",
 				schema: z.string().min(2).trim(),
 			});
@@ -137,7 +147,7 @@ export class InitCommand {
 			required: true,
 		});
 
-		const selectedProjects = props.projects.filter(e => selectedAppNames.includes(e.name));
+		const selectedApps = props.projects.filter(e => selectedAppNames.includes(e.name));
 
 		return {
 			projectName: props.projectName,
@@ -145,7 +155,7 @@ export class InitCommand {
 				workspace,
 				template: directory.template,
 			},
-			selectedProjects,
+			selectedApps,
 		};
 	}
 
@@ -157,7 +167,7 @@ export class InitCommand {
 		const configs = new Map<string, PackageWithJson>();
 		// Add additional tags from apps
 		props.selectedApps
-			.flatMap(app => app.packageJson?.startx?.tags || [])
+			.flatMap(app => app.packageJson?.startx?.gTags || [])
 			.forEach(tag => tags.add(tag));
 
 		// Add required configs from apps
@@ -166,8 +176,8 @@ export class InitCommand {
 				...(app.packageJson?.startx?.requiredDeps || []),
 				...(app.packageJson?.startx?.requiredDevDeps || []),
 			])
-			.forEach(tag => {
-				const config = props.packages.find(e => e.packageJson?.name === tag);
+			.forEach(pkg => {
+				const config = props.packages.find(e => e.packageJson?.name === pkg);
 				if (config) configs.set(config.name, config);
 			});
 
@@ -225,9 +235,14 @@ export class InitCommand {
 				const config = props.packages.find(e => e.packageJson?.name === pkg);
 				if (config) {
 					configs.set(config.name, config);
-					config.packageJson?.startx?.tags?.forEach(t => tags.add(t));
 				}
 			});
+		});
+
+		// Include all tags
+		Array.from(configs.values()).forEach(e => {
+			const gTags = e.packageJson?.startx?.gTags || [];
+			gTags.forEach(tag => tags.add(tag));
 		});
 
 		return {
@@ -250,7 +265,7 @@ export class InitCommand {
 				return false;
 			}
 			if (packages.has(pkg.name)) return false;
-			if (!pkg.packageJson?.startx?.tags?.every(t => appTags.has(t))) return false;
+			if (!pkg.packageJson?.startx?.iTags?.every(t => appTags.has(t))) return false;
 			return true;
 		});
 		if (!availablePackages.length)
@@ -279,9 +294,14 @@ export class InitCommand {
 				const config = props.packages.find(e => e.packageJson?.name === tag);
 				if (config) {
 					packages.set(config.name, config);
-					config.packageJson?.startx?.tags?.forEach(t => appTags.add(t));
 				}
 			});
+		});
+
+		// Include all tags
+		Array.from(packages.values()).forEach(e => {
+			const gTags = e.packageJson?.startx?.gTags || [];
+			gTags.forEach(tag => appTags.add(tag));
 		});
 
 		return {
@@ -299,9 +319,10 @@ export class InitCommand {
 		tags: TAGS[];
 		dependencies: Record<string, string>;
 	}) {
+		const tags = new Set(props.tags.concat(props.packages.packageJson?.startx?.tags || []));
 		const { packageJson, isWorkspace } = FileHandler.handlePackageJson({
 			app: props.packages.packageJson!,
-			tags: props.tags,
+			tags: Array.from(tags),
 			name: props.packages.name,
 		});
 

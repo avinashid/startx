@@ -1,20 +1,21 @@
 {
 	"name": "startx",
-	"version": "0.4.0",
+	"description": "",
+	"version": "0.6.0",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
 	},
 	"bin": {
-		"startx": "./packages/cli/dist/index.mjs"
+		"startx": "./apps/startx-cli/dist/index.mjs"
 	},
 	"scripts": {
 		"dev": "turbo dev",
 		"build": "turbo build",
 		"start": "turbo start",
-		"startx": "node ./packages/cli/dist/index.mjs",
+		"startx": "node ./apps/startx-cli/dist/index.mjs",
 		"backend": "turbo dev --filter=core-server -- ",
-		"cli": "turbo dev --filter=cli -- ",
+		"cli": "turbo cli --filter=startx-cli -- ",
 		"lint": "turbo lint",
 		"typecheck": "turbo typecheck",
 		"clean": "turbo clean",
@@ -22,6 +23,7 @@
 		"format": "turbo format"
 	},
 	"devDependencies": {
+		"eslint": "catalog:",
 		"@biomejs/biome": "catalog:",
 		"prettier": "catalog:",
 		"rimraf": "catalog:",

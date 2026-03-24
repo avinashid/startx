@@ -10,6 +10,10 @@ export const DepCheck: WHITELIST_DEPS = {
 		tags: ["node", "prettier", "root"],
 		version: "catalog:",
 	},
+	"eslint": {
+		tags: ["node", "eslint", "root"],
+		version: "catalog:",
+	},
 	"vitest": {
 		tags: ["node", "vitest", "root"],
 		version: "catalog:",
