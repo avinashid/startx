@@ -6,139 +6,139 @@ export const scripts: SCRIPT = {
 	"dev": [
 		{
 			script: "turbo run dev",
-			tags: ["app", "root"],
+			tags: ["runnable", "root"],
 		},
 		{
 			script: "tsx watch src/index.ts",
-			tags: ["app"],
+			tags: ["runnable", "node", "backend"],
 		},
 	],
 	"dev:debug": [
 		{
 			script: "turbo run dev:debug",
-			tags: ["backend", "node", "app", "root"],
+			tags: ["backend", "node", "runnable", "root"],
 		},
 		{
 			script: "tsx watch --inspect src/index.ts",
-			tags: ["backend", "node", "app"],
+			tags: ["backend", "node", "runnable"],
 		},
 	],
 	"bun:dev": [
 		{
 			script: "turbo run bun:dev",
-			tags: ["backend", "node", "app", "root"],
+			tags: ["backend", "node", "runnable", "root"],
 		},
 		{
 			script: "bun --watch src/index.ts",
-			tags: ["backend", "node", "app"],
+			tags: ["backend", "node", "runnable"],
 		},
 	],
 	"build": [
 		{
 			script: "turbo run build",
-			tags: ["app", "root"],
+			tags: ["runnable", "root"],
 		},
 		{
 			script: "tsdown --config-loader unrun",
-			tags: ["app"],
+			tags: ["runnable", "node"],
 		},
 	],
 	"start": [
 		{
 			script: "turbo run start",
-			tags: ["backend", "app", "node", "root"],
+			tags: ["backend", "runnable", "node", "root"],
 		},
 		{
 			script: "node dist/index.mjs",
-			tags: ["backend", "node", "app"],
+			tags: ["backend", "node", "runnable"],
 		},
 	],
 	"lint": [
 		{
 			script: "turbo run eslint",
-			tags: ["common", "eslint", "root"],
+			tags: ["node", "eslint", "root"],
 		},
 		{
 			script: "eslint .",
-			tags: ["common", "eslint"],
+			tags: ["node", "eslint"],
 		},
 	],
 	"lint:fix": [
 		{
 			script: "turbo run lint:fix",
-			tags: ["common", "eslint", "root"],
+			tags: ["node", "eslint", "root"],
 		},
 		{
 			script: "eslint . src/**/*.ts --fix",
-			tags: ["common", "eslint"],
+			tags: ["node", "eslint"],
 		},
 	],
 	"clean": [
 		{
 			script: "turbo run clean",
-			tags: ["common", "root"],
+			tags: ["root"],
 		},
 		{
-			script: "rimraf dist .turbo",
-			tags: ["common"],
+			script: "rimraf dist .turbo dist",
+			tags: [],
 		},
 	],
 	"deep:clean": [
 		{
 			script: "turbo run deep:clean",
-			tags: ["common", "root"],
+			tags: ["root"],
 		},
 		{
 			script: "rimraf node_modules dist .turbo",
-			tags: ["common"],
+			tags: ["node"],
 		},
 	],
 	"typecheck": [
 		{
 			script: "turbo run typecheck",
-			tags: ["common", "root"],
+			tags: ["node", "root"],
 		},
 		{
 			script: "tsc --noEmit",
-			tags: ["common"],
+			tags: ["node"],
 		},
 	],
 	"format": [
 		{
 			script: "turbo run format",
-			tags: ["common", "root"],
+			tags: ["node", "root"],
 		},
 		{
 			script: "biome format --write .",
-			tags: ["common", "biome", "prettier"],
+			tags: ["node", "biome", "prettier"],
 		},
 		{
 			"script": "prettier --write .",
-			"tags": ["common", "prettier"],
+			"tags": ["node", "prettier"],
 		},
 	],
 	"format:check": [
 		{
 			script: "turbo run format:check",
-			tags: ["common", "root"],
+			tags: ["node", "root"],
 		},
 		{
 			script: "biome ci .",
-			tags: ["common", "biome", "prettier"],
+			tags: ["node", "biome", "prettier"],
 		},
 		{
 			"script": "prettier --check .",
-			"tags": ["common", "prettier"],
+			"tags": ["node", "prettier"],
 		},
 	],
 	"test": [
 		{
 			script: "turbo run test",
-			tags: ["common", "vitest", "root"],
+			tags: ["node", "vitest", "root"],
 		},
 		{
 			script: "vitest run",
-			tags: ["common", "vitest"],
+			tags: ["node", "vitest"],
 		},
 	],
 } as const;

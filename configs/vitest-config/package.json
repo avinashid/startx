@@ -2,11 +2,8 @@
 	"name": "vitest-config",
 	"version": "1.5.0",
 	"type": "module",
-	"peerDependencies": {
-		"vite": "catalog:",
-		"vitest": "catalog:"
-	},
 	"devDependencies": {
+		"vitest": "catalog:",
 		"typescript-config": "workspace:*",
 		"vite": "catalog:"
 	},
@@ -26,6 +23,9 @@
 	"startx": {
 		"tags": [
 			"vitest"
+		],
+		"iTags": [
+			"node"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

@@ -20,9 +20,6 @@ export const FileCheck: WHITELIST_FILES = {
 	"biome.json": {
 		tags: ["biome"],
 	},
-	"package.json": {
-		tags: ["never"],
-	},
 	"pnpm-lock.yaml": {
 		tags: ["never"],
 	},
@@ -38,13 +35,17 @@ export const FileCheck: WHITELIST_FILES = {
 	".env": {
 		tags: ["never"],
 	},
+	"tsdown.config.ts": {
+		tags: ["tsdown"],
+	},
+	// Handled manually
 	"eslint.config.ts": {
 		tags: ["never"],
 	},
 	"vitest.config.ts": {
 		tags: ["never"],
 	},
-	"tsdown.config.ts": {
-		tags: ["tsdown"],
+	"package.json": {
+		tags: ["never"],
 	},
 };

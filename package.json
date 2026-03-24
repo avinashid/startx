@@ -1,6 +1,6 @@
 {
 	"name": "startx",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
@@ -29,7 +29,6 @@
 		"typescript": "catalog:",
 		"tsdown": "catalog:",
 		"unrun": "catalog:",
-		"vitest": "catalog:",
 		"tsx": "catalog:",
 		"@types/node": "catalog:"
 	},

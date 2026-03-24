@@ -4,7 +4,7 @@ import type { PackageJson } from "type-fest";
 export type TAGS =
 	| "required"
 	| "common"
-	| "app"
+	| "runnable"
 	| "biome"
 	| "prettier"
 	| "vitest"
@@ -49,7 +49,9 @@ export type PnpmWorkspace = {
 
 export type StartXPackageJson = PackageJson & {
 	startx?: {
+		mode?: "silent" | "standalone";
 		tags?: TAGS[];
+		iTags?: TAGS[];
 		requiredDeps?: string[];
 		requiredDevDeps?: string[];
 		ignore?: string[];

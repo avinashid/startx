@@ -8,7 +8,6 @@
 		"typescript": "catalog:",
 		"tsdown": "catalog:",
 		"unrun": "catalog:",
-		"vitest": "catalog:",
 		"tsx": "catalog:",
 		"@types/node": "catalog:"
 	},

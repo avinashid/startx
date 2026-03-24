@@ -29,6 +29,7 @@
 		"type-fest": "^5.4.4"
 	},
 	"startx": {
+		"mode": "standalone",
 		"tags": [
 			"node"
 		],

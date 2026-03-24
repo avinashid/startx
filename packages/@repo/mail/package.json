@@ -27,7 +27,8 @@
 	},
 	"startx": {
 		"tags": [
-			"node"
+			"node",
+			"backend"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

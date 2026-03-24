@@ -47,6 +47,9 @@
 		"tags": [
 			"eslint"
 		],
+		"iTags": [
+			"node"
+		],
 		"requiredDevDeps": [
 			"typescript-config"
 		],

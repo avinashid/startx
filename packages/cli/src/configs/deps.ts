@@ -3,38 +3,38 @@ import type { WHITELIST_DEPS } from "../types";
 /* eslint-disable @typescript-eslint/naming-convention */
 export const DepCheck: WHITELIST_DEPS = {
 	"@biomejs/biome": {
-		tags: ["common", "biome", "root"],
+		tags: ["node", "biome", "root"],
 		version: "catalog:",
 	},
 	"prettier": {
-		tags: ["common", "prettier", "root"],
+		tags: ["node", "prettier", "root"],
 		version: "catalog:",
 	},
 	"vitest": {
-		tags: ["common", "vitest", "root"],
+		tags: ["node", "vitest", "root"],
 		version: "catalog:",
 	},
 	"tsdown": {
-		tags: ["common", "tsdown", "root"],
+		tags: ["node", "tsdown", "root"],
 		version: "catalog:",
 	},
 	"@types/node": {
-		tags: ["common", "node", "root"],
+		tags: ["node", "root"],
 		version: "catalog:",
 		isDevDependency: true,
 	},
 	"typescript-config": {
-		tags: ["common"],
+		tags: ["node"],
 		version: "workspace:^",
 		isDevDependency: true,
 	},
 	"eslint-config": {
-		tags: ["common", "eslint"],
+		tags: ["node", "eslint"],
 		version: "workspace:^",
 		isDevDependency: true,
 	},
 	"vitest-config": {
-		tags: ["common", "vitest"],
+		tags: ["node", "vitest"],
 		version: "workspace:^",
 		isDevDependency: true,
 	},

@@ -28,7 +28,8 @@
 	},
 	"startx": {
 		"tags": [
-			"node"
+			"node",
+			"backend"
 		],
 		"requiredDeps": [
 			"@repo/env"

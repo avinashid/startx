@@ -11,6 +11,10 @@
 		"tags": [
 			"common"
 		],
+		"iTags": [
+			"node"
+		],
+		"mode": "silent",
 		"ignore": [
 			"eslint-config",
 			"typescript-config",

@@ -20,7 +20,7 @@
 	},
 	"startx": {
 		"tags": [
-			"common"
+			"node"
 		],
 		"requiredDeps": [
 			"@repo/env"
