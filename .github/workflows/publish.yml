@@ -30,7 +30,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build only CLI
-        run: pnpm --filter ./packages/cli... build
+        run: pnpm --filter startx-cli build
 
       - name: Clean root package.json
         run: |
