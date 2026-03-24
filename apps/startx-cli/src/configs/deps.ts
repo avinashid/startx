@@ -22,6 +22,10 @@ export const DepCheck: WHITELIST_DEPS = {
 		tags: ["node", "tsdown", "root"],
 		version: "catalog:",
 	},
+	"tsdown-config": {
+		tags: ["node", "tsdown", "runnable"],
+		version: "catalog:",
+	},
 	"@types/node": {
 		tags: ["node", "root"],
 		version: "catalog:",
