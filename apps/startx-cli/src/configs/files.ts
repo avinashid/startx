@@ -38,12 +38,11 @@ export const FileCheck: WHITELIST_FILES = {
 	"tsdown.config.ts": {
 		tags: ["tsdown"],
 	},
-	// Handled manually
 	"eslint.config.ts": {
-		tags: ["never"],
+		tags: ["eslint", "node"],
 	},
 	"vitest.config.ts": {
-		tags: ["never"],
+		tags: ["vitest", "node"],
 	},
 	"package.json": {
 		tags: ["never"],

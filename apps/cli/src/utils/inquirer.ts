@@ -131,7 +131,7 @@ export class CommonInquirer {
 			const answer = await checkbox({
 				message,
 				choices,
-				validate: (input: string[]) => {
+				validate: input => {
 					if (required && input.length === 0) {
 						return "You must select at least one option.";
 					}

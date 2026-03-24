@@ -49,7 +49,7 @@ export const scripts: SCRIPT = {
 	],
 	"cli": [
 		{
-			script: "turbo run cli",
+			script: "turbo run cli -- ",
 			tags: ["runnable", "node", "cli", "root"],
 		},
 		{

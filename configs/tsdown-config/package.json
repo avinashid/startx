@@ -6,7 +6,10 @@
 	"exports": "./src/config/tsdown.base.ts",
 	"scripts": {
 		"clean": "rimraf dist",
-		"deep:clean": "rimraf node_modules dist"
+		"deep:clean": "rimraf node_modules dist",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci ."
 	},
 	"startx": {
 		"gTags": [

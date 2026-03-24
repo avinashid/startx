@@ -16,7 +16,8 @@
 	"exports": "./src/index.ts",
 	"devDependencies": {
 		"typescript-config": "workspace:*",
-		"eslint-config": "workspace:*"
+		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*"
 	},
 	"startx": {
 		"iTags": [

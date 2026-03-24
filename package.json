@@ -1,7 +1,7 @@
 {
 	"name": "startx",
 	"description": "",
-	"version": "0.6.1",
+	"version": "0.7.0",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
@@ -24,6 +24,7 @@
 	},
 	"devDependencies": {
 		"eslint": "catalog:",
+		"vitest": "catalog:",
 		"@biomejs/biome": "catalog:",
 		"prettier": "catalog:",
 		"rimraf": "catalog:",

@@ -210,6 +210,9 @@ importers:
       unrun:
         specifier: 'catalog:'
         version: 0.2.27
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/cli:
     dependencies:
@@ -219,15 +222,9 @@ importers:
       '@repo/logger':
         specifier: workspace:*
         version: link:../../packages/@repo/logger
-      chokidar:
-        specifier: ^4.0.3
-        version: 4.0.3
       commander:
         specifier: ^14.0.0
         version: 14.0.3
-      type-fest:
-        specifier: ^5.4.4
-        version: 5.4.4
     devDependencies:
       eslint-config:
         specifier: workspace:*
@@ -311,6 +308,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../configs/vitest-config
 
   apps/startx-cli:
     dependencies:
@@ -393,9 +393,6 @@ importers:
       globals:
         specifier: ^15.9.0
         version: 15.15.0
-      typescript-eslint:
-        specifier: ^8.54.0
-        version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
     devDependencies:
       '@types/eslint-config-prettier':
         specifier: ^6.11.3
@@ -418,6 +415,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../typescript-config
+      typescript-eslint:
+        specifier: ^8.54.0
+        version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
       vitest-config:
         specifier: workspace:*
         version: link:../vitest-config
@@ -446,6 +446,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../../configs/vitest-config
 
   packages/@repo/db:
     dependencies:
@@ -468,6 +471,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../../configs/vitest-config
 
   packages/@repo/env:
     dependencies:
@@ -585,9 +591,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.4(react@19.2.4)
-      typescript-config:
-        specifier: workspace:*
-        version: link:../../../configs/typescript-config
     devDependencies:
       '@react-email/preview-server':
         specifier: 'catalog:'
@@ -601,6 +604,12 @@ importers:
       react-email:
         specifier: 'catalog:'
         version: 5.2.8
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:^
+        version: link:../../../configs/vitest-config
 
   packages/@repo/redis:
     dependencies:
@@ -620,6 +629,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../../configs/vitest-config
 
   packages/ui:
     dependencies:
@@ -735,6 +747,9 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../configs/vitest-config
 
 packages:
 

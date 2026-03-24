@@ -5,9 +5,17 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
 		"build": "tsdown --config-loader unrun",
-		"cli": "tsx src/index.ts"
+		"cli": "tsx src/index.ts",
+		"start": "node dist/index.mjs",
+		"lint": "eslint .",
+		"lint:fix": "eslint . src/**/*.ts --fix",
+		"clean": "rimraf dist .turbo dist",
+		"deep:clean": "rimraf node_modules dist .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "vitest run"
 	},
 	"keywords": [],
 	"author": "",
@@ -21,9 +29,7 @@
 	"dependencies": {
 		"@inquirer/prompts": "^8.3.0",
 		"@repo/logger": "workspace:*",
-		"chokidar": "^4.0.3",
-		"commander": "^14.0.0",
-		"type-fest": "^5.4.4"
+		"commander": "^14.0.0"
 	},
 	"startx": {
 		"gTags": [

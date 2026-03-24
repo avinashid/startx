@@ -17,6 +17,7 @@
 	"devDependencies": {
 		"@types/pg": "catalog:",
 		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*",
 		"typescript-config": "workspace:*"
 	},
 	"dependencies": {

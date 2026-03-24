@@ -10,7 +10,9 @@
 		"./extend": "./src/configs/extend.ts"
 	},
 	"scripts": {
-		"clean": "rimraf dist .turbo",
+		"lint": "eslint .",
+		"lint:fix": "eslint . src/**/*.ts --fix",
+		"clean": "rimraf dist .turbo dist",
 		"deep:clean": "rimraf node_modules dist .turbo",
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
@@ -30,10 +32,10 @@
 		"eslint-plugin-react-hooks": "^5.0.0",
 		"eslint-plugin-unicorn": "^55.0.0",
 		"eslint-plugin-unused-imports": "^4.0.0",
-		"globals": "^15.9.0",
-		"typescript-eslint": "^8.54.0"
+		"globals": "^15.9.0"
 	},
 	"devDependencies": {
+		"typescript-eslint": "^8.54.0",
 		"@types/eslint-config-prettier": "^6.11.3",
 		"@types/eslint-plugin-jsx-a11y": "^6.10.1",
 		"@typescript-eslint/eslint-plugin": "^8.0.0",

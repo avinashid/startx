@@ -4,6 +4,7 @@
 		"@biomejs/biome": "catalog:",
 		"prettier": "catalog:",
 		"eslint": "catalog:",
+		"vitest": "catalog:",
 		"rimraf": "catalog:",
 		"turbo": "catalog:",
 		"typescript": "catalog:",

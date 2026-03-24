@@ -31,7 +31,8 @@
 			"typescript-config"
 		],
 		"ignore": [
-			"vitest-config"
+			"vitest-config",
+			"eslint-config"
 		]
 	}
 }

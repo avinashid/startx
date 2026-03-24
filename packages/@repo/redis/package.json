@@ -16,6 +16,7 @@
 	"exports": "./src/index.ts",
 	"devDependencies": {
 		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*",
 		"typescript-config": "workspace:*"
 	},
 	"dependencies": {

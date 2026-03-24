@@ -320,6 +320,10 @@ export class InitCommand {
 		dependencies: Record<string, string>;
 	}) {
 		const tags = new Set(props.tags.concat(props.packages.packageJson?.startx?.tags || []));
+		if (props.packages.packageJson?.startx?.ignore?.find(e => e === "eslint-config"))
+			tags.delete("eslint");
+		if (props.packages.packageJson?.startx?.ignore?.find(e => e === "vitest-config"))
+			tags.delete("vitest");
 		const { packageJson, isWorkspace } = FileHandler.handlePackageJson({
 			app: props.packages.packageJson!,
 			tags: Array.from(tags),
@@ -348,7 +352,7 @@ export class InitCommand {
 		const files = await fsTool.listFiles({ dir: iTemplate });
 		for (const file of files) {
 			const checked = FileCheck[file];
-			if (checked && !checked.tags.every(e => props.tags.includes(e))) continue;
+			if (checked && !checked.tags.every(e => tags.has(e))) continue;
 			try {
 				await fsTool.copyFile({
 					from: path.join(iTemplate, file),
@@ -363,7 +367,7 @@ export class InitCommand {
 		await fsTool.copyDirectory({
 			from: path.join(iTemplate, "src"),
 			to: path.join(iDirectory, "src"),
-			exclude: !props.tags.includes("vitest") ? /\.test\.tsx?$/ : undefined,
+			exclude: !tags.has("vitest") ? /\.test\.tsx?$/ : undefined,
 		});
 		logger.info(`Successfully installed ${props.packages.name}`);
 	}

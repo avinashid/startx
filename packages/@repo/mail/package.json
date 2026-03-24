@@ -14,7 +14,9 @@
 		"@react-email/preview-server": "catalog:",
 		"@types/react": "catalog:",
 		"@types/react-dom": "catalog:",
-		"react-email": "catalog:"
+		"react-email": "catalog:",
+		"typescript-config": "workspace:*",
+		"vitest-config": "workspace:^"
 	},
 	"dependencies": {
 		"@react-email/components": "catalog:",
@@ -22,8 +24,7 @@
 		"@react-email/tailwind": "catalog:",
 		"eslint-config": "workspace:*",
 		"react": "catalog:",
-		"react-dom": "catalog:",
-		"typescript-config": "workspace:*"
+		"react-dom": "catalog:"
 	},
 	"startx": {
 		"iTags": [

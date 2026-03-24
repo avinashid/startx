@@ -24,7 +24,8 @@
 		"postcss": "^8.4.49",
 		"postcss-load-config": "^6",
 		"tailwindcss": "catalog:",
-		"typescript-config": "workspace:*"
+		"typescript-config": "workspace:*",
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^3.9.1",
