@@ -207,9 +207,6 @@ importers:
       unrun:
         specifier: 'catalog:'
         version: 0.2.27
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   apps/core-server:
     dependencies:
@@ -356,10 +353,6 @@ importers:
   configs/typescript-config: {}
 
   configs/vitest-config:
-    dependencies:
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
     devDependencies:
       typescript-config:
         specifier: workspace:*
@@ -367,6 +360,9 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/@repo/constants:
     devDependencies:
@@ -411,9 +407,6 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
-      vitest:
-        specifier: 'catalog:'
-        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vitest-config:
         specifier: workspace:*
         version: link:../../../configs/vitest-config
@@ -705,15 +698,9 @@ importers:
       tailwindcss:
         specifier: 'catalog:'
         version: 4.1.18
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
       typescript-config:
         specifier: workspace:*
         version: link:../../configs/typescript-config
-      vite:
-        specifier: 'catalog:'
-        version: 7.3.1(@types/node@25.2.0)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
 packages:
 
