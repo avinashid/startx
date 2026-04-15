@@ -1,3 +1,3 @@
-import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
 
-export const extend = defineConfig;
+export const extend = tseslint.config;

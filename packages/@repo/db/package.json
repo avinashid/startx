@@ -11,11 +11,13 @@
 		"format:check": "biome ci .",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"db:push": "drizzle-kit push",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",
 	"devDependencies": {
 		"@types/pg": "catalog:",
+		"drizzle-kit": "catalog:",
 		"eslint-config": "workspace:*",
 		"vitest-config": "workspace:*",
 		"typescript-config": "workspace:*"
@@ -30,8 +32,10 @@
 			"node",
 			"backend"
 		],
+		"gTags": [
+			"db"
+		],
 		"tags": [
-			"db",
 			"drizzle"
 		],
 		"requiredDeps": [

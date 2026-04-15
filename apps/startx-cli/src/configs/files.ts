@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import type { WHITELIST_FILES } from "../types";
 
 export const FileCheck: WHITELIST_FILES = {
@@ -11,11 +10,11 @@ export const FileCheck: WHITELIST_FILES = {
 	".npmrc": {
 		tags: ["never"],
 	},
-	".prettierignore": {
-		tags: ["prettier"],
-	},
 	".prettier.js": {
 		tags: ["prettier"],
+	},
+	".prettierignore": {
+		tags: ["biome"],
 	},
 	"biome.json": {
 		tags: ["biome"],

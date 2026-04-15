@@ -1,4 +1,4 @@
-import { baseConfig } from "eslint-config/base";
+import { frontendConfig } from "eslint-config/frontend";
 import { extend } from "eslint-config/extend";
 
-export default extend(baseConfig);
+export default extend(frontendConfig);

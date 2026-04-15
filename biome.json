@@ -28,7 +28,7 @@
 		"indentStyle": "tab",
 		"indentWidth": 2,
 		"lineEnding": "lf",
-		"lineWidth": 100,
+		"lineWidth": 120,
 		"attributePosition": "auto"
 	},
 	"assist": { "actions": { "source": { "organizeImports": "off" } } },

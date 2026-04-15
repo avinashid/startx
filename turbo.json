@@ -65,6 +65,15 @@
 		},
 		"deep:clean": {
 			"cache": false
+		},
+		"db:push": {
+			"cache": false,
+			"interactive": true
+		},
+		"db:studio": {
+			"cache": false,
+			"interactive": false,
+			"persistent": true
 		}
 	}
 }

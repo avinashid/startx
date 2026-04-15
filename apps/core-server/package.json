@@ -52,7 +52,7 @@
 			"backend"
 		],
 		"tags": [
-			"dev"
+			"express"
 		],
 		"requiredDeps": [
 			"@repo/env",

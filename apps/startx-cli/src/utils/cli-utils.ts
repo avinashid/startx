@@ -6,84 +6,94 @@ import z from "zod";
 
 import type { PnpmWorkspace, StartXPackageJson } from "../types";
 
-export type RawPackageItem = {
+export type PackageItem = {
 	type: "apps" | "configs" | "packages";
 	path: string;
+	relativePath: string;
 	name: string;
+	packageJson: StartXPackageJson;
 };
 
 const ENV = defineEnv({
 	STARTX_ENV: z.enum(["development", "production", "test", "staging"]).default("production"),
 });
+
 export class CliUtils {
 	static getDirectory() {
 		const __filename = fileURLToPath(import.meta.url);
 		let template = path.dirname(__filename);
 		const workspace = process.cwd();
+
 		if (ENV.STARTX_ENV === "development") {
 			template = path.resolve(template, "../../../../");
-		} else template = path.resolve(template, "../../../");
+		} else {
+			template = path.resolve(template, "../../../");
+		}
 
 		return {
 			template,
 			workspace,
 		};
 	}
-	static async getPackageList() {
-		const packages: RawPackageItem[] = [];
+
+	static async getPackageList(): Promise<PackageItem[]> {
 		const cliDirectory = this.getDirectory().template;
-		const safeListDir = async (dir: string): Promise<string[]> => {
+
+		const fetchPackages = async (
+			subPath: string,
+			type: "apps" | "configs" | "packages",
+			namePrefix = "",
+			filterFn?: (name: string) => boolean
+		): Promise<PackageItem[]> => {
+			const dirPath = path.join(cliDirectory, ...subPath.split("/"));
+
 			try {
-				return await fsTool.listDirectories({ dir });
+				let names = await fsTool.listDirectories({ dir: dirPath });
+				if (filterFn) names = names.filter(filterFn);
+
+				const packages = await Promise.all(
+					names.map(async name => {
+						const pkgPath = path.join(dirPath, name);
+						const relativePath = path.relative(cliDirectory, pkgPath);
+						const pkgName = namePrefix ? `${namePrefix}${name}` : name;
+						let packageJson;
+
+						try {
+							packageJson = await this.parsePackageJson({ dir: pkgPath });
+						} catch {
+							packageJson = null;
+						}
+
+						if (!packageJson) {
+							console.error(`Ignoring this package failed to read package.json: ${pkgName}`);
+							return null;
+						}
+
+						return {
+							type,
+							path: pkgPath,
+							relativePath,
+							name: pkgName,
+							packageJson,
+						};
+					})
+				);
+
+				return packages.filter((pkg): pkg is PackageItem => pkg !== null);
 			} catch (error) {
-				console.error("Error listing directory:", error);
+				console.error(`Error reading directory ${dirPath}:`, error);
 				return [];
 			}
 		};
 
-		const [availableApps, availableConfigs, availablePackages, availableRepoPackages] =
-			await Promise.all([
-				safeListDir(path.join(cliDirectory, "apps")),
-				safeListDir(path.join(cliDirectory, "configs")),
-				safeListDir(path.join(cliDirectory, "packages")),
-				safeListDir(path.join(cliDirectory, "packages", "@repo")),
-			]);
+		const results = await Promise.all([
+			fetchPackages("apps", "apps"),
+			fetchPackages("configs", "configs"),
+			fetchPackages("packages", "packages", "", name => name !== "@repo"),
+			fetchPackages("packages/@repo", "packages", "@repo/"),
+		]);
 
-		// 2. Map Apps
-		availableApps.forEach(name => {
-			packages.push({
-				type: "apps",
-				path: path.join(cliDirectory, "apps", name),
-				name,
-			});
-		});
-
-		availableConfigs.forEach(name => {
-			packages.push({
-				type: "configs",
-				path: path.join(cliDirectory, "configs", name),
-				name,
-			});
-		});
-
-		availablePackages.forEach(name => {
-			if (name === "@repo") return;
-			packages.push({
-				type: "packages",
-				path: path.join(cliDirectory, "packages", name),
-				name,
-			});
-		});
-
-		availableRepoPackages.forEach(name => {
-			packages.push({
-				type: "packages",
-				path: path.join(cliDirectory, "packages", "@repo", name),
-				name: `@repo/${name}`,
-			});
-		});
-
-		return packages;
+		return results.flat();
 	}
 
 	static async parsePackageJson({ dir, file = "package" }: { dir: string; file?: string }) {
@@ -93,6 +103,7 @@ export class CliUtils {
 		});
 		return packageJson;
 	}
+
 	static async parsePnpmWorkspace({ dir }: { dir: string }) {
 		const yaml = await fsTool.readYamlFile({
 			file: "pnpm-workspace",

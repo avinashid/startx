@@ -33,7 +33,7 @@ module.exports = {
 	 * https://prettier.io/docs/en/options.html#quotes
 	 */
 
-	doubleQuote: true,
+	singleQuote: false,
 
 	/**
 	 * https://prettier.io/docs/en/options.html#quote-props
@@ -48,5 +48,5 @@ module.exports = {
 	/**
 	 * https://prettier.io/docs/en/options.html#print-width
 	 */
-	printWidth: 100,
+	printWidth: 120,
 };

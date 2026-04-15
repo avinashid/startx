@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 import type { SCRIPT } from "../types";
 
 export const scripts: SCRIPT = {
@@ -10,7 +8,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "tsx watch src/index.ts",
-			tags: ["runnable", "node", "backend", "dev"],
+			tags: ["runnable", "node", "backend", "express"],
 		},
 		{
 			script: "email dev --port 3014 --dir ./src",
@@ -24,7 +22,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "tsx watch --inspect src/index.ts",
-			tags: ["backend", "node", "runnable", "dev"],
+			tags: ["backend", "node", "runnable", "express"],
 		},
 	],
 	"bun:dev": [
@@ -34,7 +32,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "bun --watch src/index.ts",
-			tags: ["backend", "node", "runnable", "dev"],
+			tags: ["backend", "node", "runnable", "express"],
 		},
 	],
 	"build": [
@@ -44,7 +42,7 @@ export const scripts: SCRIPT = {
 		},
 		{
 			script: "tsdown --config-loader unrun",
-			tags: ["runnable", "node"],
+			tags: ["runnable", "node", "tsdown"],
 		},
 	],
 	"cli": [
@@ -105,6 +103,26 @@ export const scripts: SCRIPT = {
 		{
 			script: "rimraf node_modules dist .turbo",
 			tags: ["node"],
+		},
+	],
+	"db:push": [
+		{
+			script: "drizzle-kit push",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:push",
+			tags: ["db", "root"],
+		},
+	],
+	"db:studio": [
+		{
+			script: "drizzle-kit studio",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:studio",
+			tags: ["db", "root"],
 		},
 	],
 	"typecheck": [

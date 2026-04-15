@@ -1,6 +1,6 @@
 import { ENV } from "@repo/env";
 import { logger } from "@repo/logger";
-import { AdminEmailTemplate } from "@repo/mail";
+import { EmailTemplate } from "@repo/mail";
 import { RedisStore } from "@repo/redis";
 
 import { HashingModule } from "../hashing-module/index.js";
@@ -41,13 +41,10 @@ export class OTPModule {
 			logger?.info("otp: test-mode - OTP generated", { email: normalizedEmail, otp: otpStr });
 			return;
 		}
-		const html = await AdminEmailTemplate.getOtpEmail({ otp: otpStr });
-		await SMTPMailService.sendMail(
-			normalizedEmail,
-			`OTP for ${normalizedEmail}`,
-			`Your OTP is ${otpStr}`,
-			html
-		);
+		const html = await EmailTemplate("VerifyEmailOtp", {
+			verificationCode: otpStr,
+		});
+		await SMTPMailService.sendMail(normalizedEmail, `OTP for ${normalizedEmail}`, `Your OTP is ${otpStr}`, html);
 	}
 
 	static async verifyMailOTP(email: string, otp: string, deleteOtp = false): Promise<boolean> {
@@ -67,11 +64,7 @@ export class OTPModule {
 		if (deleteOtp) {
 			await redisOtpStore.del(normalizedEmail);
 		} else {
-			await redisOtpStore.set(
-				normalizedEmail,
-				{ ...rows, status: "verified" },
-				this.otpExpirationMs
-			);
+			await redisOtpStore.set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationMs);
 		}
 		return true;
 	}

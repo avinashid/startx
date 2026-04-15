@@ -13,12 +13,7 @@ import {
 	Text,
 } from "@react-email/components";
 import React from "react";
-
-export default function VerifyEmailOtp({
-	verificationCode = "596853",
-}: {
-	verificationCode: string;
-}) {
+export function VerifyEmailOtp({ verificationCode = "596853" }: { verificationCode: string }) {
 	return (
 		<Html>
 			<Head>
@@ -57,9 +52,8 @@ export default function VerifyEmailOtp({
 						<Hr />
 						<Section style={lowerSection}>
 							<Text style={cautionText}>
-								This OTP is valid for 10 minutes. Please do not share this code with anyone for
-								security reasons. If you did not request this, please ignore this email or contact
-								our support team immediately.
+								This OTP is valid for 10 minutes. Please do not share this code with anyone for security reasons. If you
+								did not request this, please ignore this email or contact our support team immediately.
 							</Text>
 						</Section>
 					</Section>

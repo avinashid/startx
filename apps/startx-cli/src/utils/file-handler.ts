@@ -5,9 +5,7 @@ import type { StartXPackageJson, TAGS } from "../types";
 
 export class FileHandler {
 	private static objSorter(obj: Record<string, unknown>, sorter: string[] = []) {
-		const cleaned = Object.fromEntries(
-			Object.entries(obj).filter(([, v]) => v !== null && v !== undefined)
-		);
+		const cleaned = Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== null && v !== undefined));
 
 		const sortedEntries: Array<[string, unknown]> = [];
 
@@ -63,6 +61,13 @@ export class FileHandler {
 		const devDependencies = filterDeps(props.app.devDependencies as Record<string, string>);
 
 		// Removing all workspace dependencies
+		for (const [key, value] of Object.entries(dependencies)) {
+			if (value.includes("workspace:")) {
+				delete dependencies[key];
+			}
+		}
+
+		// Removing all workspace dev dependencies
 		for (const [key, value] of Object.entries(devDependencies)) {
 			if (value.includes("workspace:")) {
 				delete devDependencies[key];

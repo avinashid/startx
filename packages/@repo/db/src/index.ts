@@ -7,7 +7,7 @@ import z from "zod";
 
 import * as schema from "./schema/index.js";
 
-export const env = defineEnv({
+const env = defineEnv({
 	DATABASE_URL: z.string(),
 });
 export const client = new Pg.Pool({

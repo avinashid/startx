@@ -1,7 +1,7 @@
 {
 	"name": "startx",
 	"description": "",
-	"version": "0.7.2",
+	"version": "0.8.0",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
@@ -20,7 +20,8 @@
 		"typecheck": "turbo typecheck",
 		"clean": "turbo clean",
 		"test": "turbo test",
-		"format": "turbo format"
+		"format": "turbo format",
+		"db:push": "turbo db:push"
 	},
 	"devDependencies": {
 		"eslint": "catalog:",

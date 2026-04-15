@@ -2,25 +2,37 @@
 import type { PackageJson } from "type-fest";
 
 export type TAGS =
-	| "required"
+	// Always installs
 	| "common"
+	// Used for apps
 	| "runnable"
+	// Formatter tags
 	| "biome"
 	| "prettier"
-	| "vitest"
 	| "eslint"
+	// Testing tags
+	| "vitest"
+	// Build tags
 	| "tsdown"
+	// Backend tags
 	| "node"
 	| "backend"
-	| "dev"
+	| "express"
+	// Frontend tags
 	| "frontend"
+	| "react"
+	// Cli tags
 	| "cli"
 	| "commander"
-	| "react"
-	| "extra"
+	// Mail
 	| "mail"
+	// Never installs or ignore
 	| "never"
-	| "root";
+	// For handling workspace only files and scripts
+	| "root"
+	// Database tags
+	| "db"
+	| "drizzle";
 
 export type SCRIPT = Record<string, Array<{ script: string; tags: TAGS[] }>>;
 

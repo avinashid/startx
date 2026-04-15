@@ -2,12 +2,14 @@
 	"extends": "typescript-config/tsconfig.frontend.json",
 	"compilerOptions": {
 		"rootDir": ".",
-		"types": ["node"],
+		"types": ["node", "react"],
 		"baseUrl": "src",
 		"jsx": "react",
 		"tsBuildInfoFile": "dist/typecheck.tsbuildinfo",
 		"experimentalDecorators": true,
-		"emitDecoratorMetadata": true
+		"emitDecoratorMetadata": true,
+		"moduleResolution": "nodenext",
+		"module": "nodenext"
 	},
 	"include": ["src/**/*.ts", "src/**/*.tsx"]
 }
