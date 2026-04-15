@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
 import { defineEnv } from "@repo/env";
 import { logger } from "@repo/logger";
 import { Redis } from "ioredis";

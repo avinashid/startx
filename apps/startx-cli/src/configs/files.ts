@@ -10,7 +10,7 @@ export const FileCheck: WHITELIST_FILES = {
 	".npmrc": {
 		tags: ["never"],
 	},
-	".prettier.js": {
+	".prettier.cjs": {
 		tags: ["prettier"],
 	},
 	".prettierignore": {

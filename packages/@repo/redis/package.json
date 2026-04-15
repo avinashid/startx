@@ -31,6 +31,10 @@
 		],
 		"requiredDevDeps": [
 			"typescript-config"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/logger"
 		]
 	}
 }

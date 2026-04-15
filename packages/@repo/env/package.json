@@ -29,9 +29,7 @@
 			"node",
 			"backend"
 		],
-		"requiredDeps": [
-			"@repo/env"
-		],
+		"requiredDeps": [],
 		"requiredDevDeps": [
 			"typescript-config"
 		]
