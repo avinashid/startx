@@ -30,9 +30,7 @@ export class InitCommand {
 			selectedApps: prefs.selectedApps,
 			packages: nonAppPackages,
 		});
-
 		const packagePrefs = await this.getPackagesPrefs({
-			selectedApps: prefs.selectedApps,
 			selectedPackages: config.selectedConfigs,
 			packages: nonAppPackages,
 			tags: config.gTags,
@@ -63,7 +61,7 @@ export class InitCommand {
 					packagePrefs.selectedPackages
 						.filter(depPkg => {
 							if (depPkg.type !== "packages") return false;
-							if (depPkg.packageJson?.startx?.mode !== "standalone") return false;
+							if (depPkg.packageJson?.startx?.mode === "standalone") return false;
 							const sharesTags = depPkg.packageJson?.startx?.iTags?.every(tag =>
 								pkg.packageJson?.startx?.gTags?.includes(tag)
 							);
@@ -129,6 +127,7 @@ export class InitCommand {
 		const configs = new Map<string, PackageItem>();
 		// Selected apps globals tags and dependencies resolver
 		this.getGlobalTags({ pkgs: props.selectedApps }).forEach(tag => gTags.add(tag));
+
 		this.getPackageDeps({
 			allPkgs: props.packages,
 			pkgs: props.selectedApps,
@@ -185,7 +184,6 @@ export class InitCommand {
 	private static async getPackagesPrefs(props: {
 		tags: TAGS[];
 		packages: PackageItem[];
-		selectedApps: PackageItem[];
 		selectedPackages: PackageItem[];
 	}) {
 		const gTags = new Set<TAGS>(props.tags);
@@ -245,16 +243,11 @@ export class InitCommand {
 			app: props.pkg.packageJson,
 			tags: Array.from(tags),
 			name: props.pkg.name,
+			dependencies: props.dependencies,
 		});
 
 		if (isWorkspace) {
 			throw new Error(`Cannot install workspace as a package: ${props.pkg.name}`);
-		}
-		if (Object.keys(props.dependencies).length > 0) {
-			packageJson.dependencies = {
-				...(packageJson.dependencies as object),
-				...props.dependencies,
-			};
 		}
 
 		const iDirectory = path.join(props.directory.workspace, props.pkg.relativePath);
@@ -320,6 +313,7 @@ export class InitCommand {
 				if (config) deps.set(config.name, config);
 			});
 		});
+		props.pkgs.forEach(pkg => deps.delete(pkg.name));
 		return Array.from(deps.values());
 	}
 	private static getGlobalTags(props: { pkgs: PackageItem[]; gTags?: TAGS[] }) {

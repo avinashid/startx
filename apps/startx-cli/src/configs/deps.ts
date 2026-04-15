@@ -1,30 +1,35 @@
 import type { WHITELIST_DEPS } from "../types";
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const DepCheck: WHITELIST_DEPS = {
 	"@biomejs/biome": {
 		tags: ["node", "biome", "root"],
 		version: "catalog:",
+		isDevDependency: true,
 	},
 	"prettier": {
 		tags: ["node", "prettier", "root"],
 		version: "catalog:",
+		isDevDependency: true,
 	},
 	"eslint": {
 		tags: ["node", "eslint", "root"],
 		version: "catalog:",
+		isDevDependency: true,
 	},
 	"vitest": {
 		tags: ["node", "vitest", "root"],
 		version: "catalog:",
+		isDevDependency: true,
 	},
 	"tsdown": {
+		isDevDependency: true,
 		tags: ["node", "tsdown", "root"],
 		version: "catalog:",
 	},
 	"tsdown-config": {
 		tags: ["node", "tsdown", "runnable"],
 		version: "workspace:^",
+		isDevDependency: true,
 	},
 	"@types/node": {
 		tags: ["node", "root"],

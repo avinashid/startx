@@ -74,7 +74,7 @@ export class FileHandler {
 			}
 		}
 
-		// Adding required
+		// Adding props required dependencies
 		if (props.dependencies) {
 			for (const [key, value] of Object.entries(props.dependencies)) {
 				if (!dependencies[key]) {
@@ -83,6 +83,10 @@ export class FileHandler {
 			}
 		}
 
+		// Adding required dev & devDeps
+		props.app.startx?.requiredDevDeps?.forEach(e => (devDependencies[e] = "workspace:^"));
+		props.app.startx?.requiredDeps?.forEach(e => (dependencies[e] = "workspace:^"));
+
 		// Adding rest
 		for (const [key, value] of Object.entries(DepCheck)) {
 			if (!value.tags.every(tag => tags.includes(tag))) continue;
@@ -90,7 +94,7 @@ export class FileHandler {
 			const isDev = value.isDevDependency;
 			if (isDev && !devDependencies[key]) {
 				devDependencies[key] = value.version;
-			} else if (!dependencies[key]) {
+			} else if (!isDev && !dependencies[key]) {
 				dependencies[key] = value.version;
 			}
 		}

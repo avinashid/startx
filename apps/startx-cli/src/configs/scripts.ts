@@ -67,7 +67,7 @@ export const scripts: SCRIPT = {
 	],
 	"lint": [
 		{
-			script: "turbo run eslint",
+			script: "turbo run lint",
 			tags: ["node", "eslint", "root"],
 		},
 		{
