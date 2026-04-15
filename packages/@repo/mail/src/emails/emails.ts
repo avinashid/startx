@@ -1,1 +1,2 @@
-export * from "./admin/OtpEmail.js";
+import VerifyEmailOtp from "./admin/OtpEmail.js";
+export { VerifyEmailOtp };

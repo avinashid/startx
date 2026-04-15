@@ -13,7 +13,7 @@ import {
 	Text,
 } from "@react-email/components";
 import React from "react";
-export function VerifyEmailOtp({ verificationCode = "596853" }: { verificationCode: string }) {
+export default function VerifyEmailOtp({ verificationCode = "596853" }: { verificationCode: string }) {
 	return (
 		<Html>
 			<Head>
