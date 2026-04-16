@@ -1,0 +1,48 @@
+{
+	"name": "@db/drizzle",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"db:push": "drizzle-kit push",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"@types/pg": "catalog:",
+		"drizzle-kit": "catalog:",
+		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*",
+		"typescript-config": "workspace:*"
+	},
+	"dependencies": {
+		"drizzle-orm": "catalog:",
+		"pg": "catalog:",
+		"@repo/env": "workspace:*"
+	},
+	"startx": {
+		"iTags": [
+			"node",
+			"backend"
+		],
+		"gTags": [
+			"db"
+		],
+		"tags": [
+			"drizzle"
+		],
+		"requiredDeps": [
+			"@repo/env"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

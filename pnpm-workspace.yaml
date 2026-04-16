@@ -1,7 +1,7 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "packages/@repo/*"
+  - "packages/*/*"
   - "configs/*"
 
 catalog:
@@ -23,6 +23,7 @@ catalog:
   axios: ^1.13.6
   date-fns: ^4.1.0
   nanoid: ^5.1.6
+  xlsx: ^0.18.5
 
   # testing
   vitest: ^4.0.18
@@ -66,9 +67,11 @@ catalog:
   drizzle-orm: ^0.45.1
   drizzle-kit: ^0.31.10
   pg: ^8.19.0
+  better-sqlite3: ^12.9.0
 
   # db types
   "@types/pg": ^8.10.0
+  "@types/better-sqlite3": ^7.6.13
 
   # lib
   "@aws-sdk/client-s3": ^3.39.0

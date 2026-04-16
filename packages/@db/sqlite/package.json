@@ -1,8 +1,9 @@
 {
-	"name": "@repo/constants",
-	"version": "0.12.0",
+	"name": "@db/sqlite",
+	"version": "0.0.0",
+	"private": true,
 	"type": "module",
-
+	"exports": "./src/index.ts",
 	"scripts": {
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",
@@ -13,24 +14,34 @@
 		"lint:fix": "eslint . --fix",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
-	"exports": "./src/index.ts",
 	"devDependencies": {
 		"typescript-config": "workspace:*",
-		"eslint-config": "workspace:*",
-		"vitest-config": "workspace:*"
+		"vitest-config": "workspace:*",
+		"@types/better-sqlite3": "catalog:",
+		"eslint-config": "workspace:*"
+	},
+	"dependencies": {
+		"better-sqlite3": "catalog:",
+		"xlsx": "catalog:",
+		"@repo/env": "workspace:*",
+		"@repo/logger": "workspace:*"
 	},
 	"startx": {
 		"iTags": [
-			"node"
+			"node",
+			"backend"
+		],
+		"gTags": [
+			"db"
+		],
+		"tags": [
+			"sqlite"
 		],
 		"requiredDeps": [
-			"@repo/env"
+			"@repo/logger"
 		],
 		"requiredDevDeps": [
 			"typescript-config"
-		],
-		"ignore": [
-			"vitest-config"
 		]
 	}
 }

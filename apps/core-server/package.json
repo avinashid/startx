@@ -20,8 +20,8 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"@repo/constants": "workspace:^",
-		"@repo/db": "workspace:^",
+		"constants": "workspace:^",
+		"@db/drizzle": "workspace:^",
 		"@repo/mail": "workspace:^",
 		"@repo/lib": "workspace:^",
 		"@repo/redis": "workspace:^",
@@ -56,7 +56,8 @@
 		],
 		"requiredDeps": [
 			"@repo/env",
-			"@repo/logger"
+			"@repo/logger",
+			"@repo/lib"
 		],
 		"requiredDevDeps": [
 			"typescript-config",

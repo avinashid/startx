@@ -1,37 +1,37 @@
-type ServerEvent = {
-	server: Array<() => void>;
-	db: Array<() => void>;
-	redis: Array<() => void>;
+import { IEvent } from "@repo/lib/events";
+import { logger } from "@repo/logger";
+type ServerEventMap = {
+	server: string;
+	db: string;
+	redis: string;
 };
 
-export class ServerEvents {
-	static events: ServerEvent = {
-		server: [],
-		db: [],
-		redis: [],
-	};
+const serverBus = new IEvent<ServerEventMap>();
 
+export class ServerEvents {
 	static onServerReady(fn: () => void) {
-		ServerEvents.events.server.push(fn);
+		serverBus.on("server", fn);
 	}
 
-	static emitServerReady() {
-		ServerEvents.events.server.forEach(fn => fn());
+	static emitServerReady(message?: string) {
+		serverBus.emit("server", message ?? "Server ready");
 	}
 
 	static onDBReady(fn: () => void) {
-		ServerEvents.events.db.push(fn);
+		serverBus.on("db", fn);
 	}
 
-	static emitDBReady() {
-		ServerEvents.events.db.forEach(fn => fn());
+	static emitDBReady(message?: string) {
+		serverBus.emit("db", message ?? "Database ready");
 	}
 
 	static onRedisReady(fn: () => void) {
-		ServerEvents.events.redis.push(fn);
+		serverBus.on("redis", fn);
 	}
 
-	static emitRedisReady() {
-		ServerEvents.events.redis.forEach(fn => fn());
+	static emitRedisReady(message?: string) {
+		serverBus.emit("redis", message ?? "Redis ready");
 	}
 }
+
+serverBus.onEvery(e => logger.info(`${e.event}: ${e.payload}`));
