@@ -1,0 +1,48 @@
+{
+	"name": "aix",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*",
+		"typescript-config": "workspace:*"
+	},
+	"dependencies": {
+		"@repo/env": "workspace:*",
+		"@repo/lib": "workspace:*",
+		"tiktoken": "catalog:",
+		"quicktype-core": "catalog:",
+		"openai": "catalog:",
+		"quickjs-emscripten": "catalog:"
+	},
+	"startx": {
+		"iTags": [
+			"node"
+		],
+		"gTags": [
+			"ai"
+		],
+		"tags": [
+			"aix"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/lib"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

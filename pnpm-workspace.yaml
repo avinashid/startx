@@ -83,5 +83,12 @@ catalog:
   winston-daily-rotate-file: ^5.0.0
   jsonwebtoken: ^9.0.3
 
+	# aix
+  tiktoken:	^1.0.22
+  quickjs-emscripten: ^0.32.0
+  quicktype-core: ^23.2.6
+  openai: ^6.34.0
+
+
   # redis
   ioredis: ^5.10.0
