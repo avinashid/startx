@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@inquirer/prompts": "^8.3.0",
 		"@repo/logger": "workspace:*",
+		"@repo/lib": "workspace:*",
 		"commander": "^14.0.0"
 	},
 	"startx": {
@@ -40,7 +41,8 @@
 			"commander"
 		],
 		"requiredDeps": [
-			"@repo/logger"
+			"@repo/logger",
+			"@repo/lib"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

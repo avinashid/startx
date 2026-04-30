@@ -1,12 +1,10 @@
 {
 	"extends": "typescript-config/tsconfig.node.json",
 	"compilerOptions": {
-		// "baseUrl": "./src",
-		"moduleResolution": "bundler",
-		"module": "esnext",
-		"target": "es2022",
-		"resolveJsonModule": true
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["./src/*"]
+		}
 	},
-
 	"include": ["src/**/*.ts"]
 }

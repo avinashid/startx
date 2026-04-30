@@ -1,12 +1,14 @@
 import { Command } from "commander";
+import { commands } from "./commands/index.js";
+import packageJson from "../../../package.json" with { type: "json" };
 
-import { InitCommand } from "./commands/ping";
-import { version, name, description } from "../../../package.json";
+const { version, name, description } = packageJson;
 
 const program = new Command();
 
 program.name(name).description(description).version(version);
 
-program.addCommand(InitCommand.command);
-
+for (const cmd of commands) {
+	program.addCommand(cmd.command);
+}
 program.parse(process.argv);
