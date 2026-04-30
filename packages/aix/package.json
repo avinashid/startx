@@ -1,8 +1,8 @@
 {
-	"name": "@repo/env",
+	"name": "aix",
 	"version": "0.0.0",
-	"type": "module",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",
@@ -14,23 +14,38 @@
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",
-	"types": "./src/index.ts",
-
 	"devDependencies": {
+		"@types/pg": "catalog:",
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"dotenv": "catalog:",
-		"dotenv-expand": "catalog:"
+		"@repo/env": "workspace:*",
+		"@repo/lib": "workspace:*",
+		"@repo/logger": "workspace:*",
+		"@toon-format/toon": "^2.1.0",
+		"js-tiktoken": "catalog:",
+		"jsonrepair": "^3.14.0",
+		"openai": "catalog:",
+		"pg": "catalog:",
+		"quickjs-emscripten": "catalog:",
+		"quicktype-core": "catalog:"
 	},
 	"startx": {
 		"iTags": [
-			"node",
-			"backend"
+			"node"
 		],
-		"requiredDeps": [],
+		"gTags": [
+			"ai"
+		],
+		"tags": [
+			"aix"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/lib"
+		],
 		"requiredDevDeps": [
 			"typescript-config"
 		]

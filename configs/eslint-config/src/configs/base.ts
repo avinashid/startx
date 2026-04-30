@@ -54,6 +54,16 @@ export const baseConfig = tseslint.config(
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
+		// ADDED: Settings block to correctly resolve TypeScript imports
+		settings: {
+			"import-x/resolver": {
+				typescript: {
+					alwaysTryTypes: true,
+					project: true,
+				},
+				node: true,
+			},
+		},
 		rules: {
 			// Core Rules
 			"no-void": ["error", { allowAsStatement: true }],
@@ -81,22 +91,27 @@ export const baseConfig = tseslint.config(
 			// Naming Conventions (Relaxed for APIs and strict for standard code)
 			"@typescript-eslint/naming-convention": [
 				"warn",
-				{ selector: "default", format: ["camelCase"] },
-				{ selector: "import", format: ["camelCase", "PascalCase"] },
+				{ "selector": "default", "format": ["camelCase"] },
+				{ "selector": "import", "format": ["camelCase", "PascalCase"] },
 				{
-					selector: "variable",
-					format: ["camelCase", "snake_case", "UPPER_CASE", "PascalCase"],
-					leadingUnderscore: "allow",
+					"selector": "variable",
+					"format": ["camelCase", "snake_case", "UPPER_CASE", "PascalCase"],
+					"leadingUnderscore": "allow",
 				},
 				{
-					selector: "parameter",
-					format: ["camelCase"],
-					leadingUnderscore: "allow",
+					"selector": "parameter",
+					"format": ["camelCase"],
+					"leadingUnderscore": "allow",
 				},
-				{ selector: "typeLike", format: ["PascalCase"] },
 				{
-					selector: ["objectLiteralProperty", "typeProperty"],
-					format: null, // Critical: Allows API payloads with snake_case or headers
+					"selector": "classProperty",
+					"format": ["camelCase"],
+					"leadingUnderscore": "allow",
+				},
+				{ "selector": "typeLike", "format": ["PascalCase"] },
+				{
+					"selector": ["objectLiteralProperty", "typeProperty"],
+					"format": null,
 				},
 			],
 

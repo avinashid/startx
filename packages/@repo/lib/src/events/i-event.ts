@@ -1,4 +1,4 @@
-type IEventWithPayload<T extends Record<string, unknown>> = {
+export type IEventWithPayload<T extends Record<string, unknown>> = {
 	[K in keyof T]: { event: K; payload: T[K] };
 }[keyof T];
 
