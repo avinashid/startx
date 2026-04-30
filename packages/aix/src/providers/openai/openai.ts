@@ -1,51 +1,61 @@
 import OpenAI from "openai";
+import type { ChatCompletionCreateParamsBase } from "openai/resources/chat/completions.mjs";
 import { AiInterface, type AiInterfaceConstructor } from "../ai-interface.js";
-import type { AiChatMessage, AiResource } from "../types.js";
-
 export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 	constructor(props: AiInterfaceConstructor) {
 		super(props);
 		this.ai = new OpenAI({ apiKey: props.credentials.apiKey, baseURL: props.credentials.baseUrl });
 	}
 	ai: OpenAI;
-	async handleMessage(message?: string): Promise<{
-		messages: AiChatMessage[];
-		resources: AiResource[];
-	}> {
-		if (message) {
-			this.chats.addMessage({ role: "user", content: message, timestamp: new Date() });
-		}
-
-		const tools = this.tools.getTools().map(tool => ({
-			type: "function" as const,
-			function: {
-				name: tool.name,
-				description: tool.description,
-				parameters: tool.input_schema.toJSONSchema(),
-			} as const,
-		}));
-
-		const getCompletion = async (retries = 3): Promise<OpenAI.Chat.ChatCompletion> => {
+	async listModels(): Promise<any> {
+		return await this.ai.models.list();
+	}
+	async handleAi() {
+		const getCompletion = async (retries = 1): Promise<OpenAI.Chat.ChatCompletion> => {
 			try {
+				const tools = this.tools.getActiveTools().map(tool => ({
+					type: "function" as const,
+					function: {
+						name: tool.name,
+						description: tool.description,
+						parameters: tool.input_schema.toJSONSchema(),
+					} as const,
+				}));
+
+				const hasAnyTools =
+					tools.length > 0
+						? ({
+								tools,
+								tool_choice: this.preferences.toolOnly ? "required" : "auto",
+							} as const)
+						: {};
+
+				const messages = this.chats.getMessages();
 				const response = await this.ai.chat.completions.create({
 					model: this.model,
-					messages: this.chats.getMessages(),
-					tools,
-					tool_choice: !this.preferences.toolOnly ? "auto" : "required",
+					messages: messages.map(e => ({
+						role: e.role,
+						content: e.content,
+					})) as unknown as ChatCompletionCreateParamsBase["messages"],
 					temperature: this.preferences.temperature,
+					...hasAnyTools,
 				});
+				if (response.usage) {
+					this.event.emit("token", {
+						input: response.usage.prompt_tokens,
+						output: response.usage.completion_tokens,
+					});
+				}
 				return response;
 			} catch (error) {
+				const err = error as Error;
 				this.event.emit("log", {
 					type: "error",
-					message: (error as any).message,
-					meta: { error },
-					stack: (error as any).stack,
+					message: err.message,
+					meta: err.cause as Record<string, unknown>,
+					stack: err.stack,
 				});
-				if (retries <= 0) throw error;
-
-				await new Promise(r => setTimeout(r, 500));
-				return await getCompletion(retries - 1);
+				throw error;
 			}
 		};
 
@@ -58,25 +68,22 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 					type: "warn",
 					message: `⚠️ No choices returned in response: ${JSON.stringify(response, null, 2)}`,
 				});
-				console.warn();
-				return {
-					messages: this.chats.getMessages(),
-					resources: [],
-				};
+				return;
 			}
 
 			const message = choice.message;
-
+			this.chats.addMessage({
+				role: "assistant",
+				content: message.content || "",
+				tool_calls: message.tool_calls,
+				timestamp: new Date(),
+			});
 			if (message.content) {
-				this.chats.addMessage({
-					role: "assistant",
-					content: message.content,
-					timestamp: new Date(),
-				});
-				return {
-					messages: this.chats.getMessages(),
-					resources: [],
-				};
+				return;
+			}
+
+			if (!message.tool_calls?.length) {
+				return;
 			}
 
 			if (message.tool_calls?.length) {
@@ -91,20 +98,21 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 									type: "error",
 									message: `Tool: ${toolCall.function.name}⚠️ Failed to parse tool arguments: ${toolCall.function.arguments}`,
 									meta: { err },
-									stack: (err as any).stack,
+									// stack: (err as any).stack,
 								});
 								continue;
 							}
 							const result = await this.callTool({
 								args: toolArgs as Record<string, unknown>,
 								name: toolCall.function.name,
+								toolCallId: toolCall.id,
 							});
 
 							if (result.isCompleted) {
-								return {
-									messages: this.chats.getMessages(),
-									resources: this.chats.getResources(),
-								};
+								return;
+							}
+							if (result.isError) {
+								return;
 							}
 							break;
 						}
@@ -117,6 +125,7 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 						}
 					}
 				}
+
 				response = await getCompletion();
 				continue;
 			}
@@ -124,10 +133,7 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 				type: "warn",
 				message: `⚠️ No content returned in response: ${JSON.stringify(response, null, 2)}`,
 			});
-			return {
-				messages: this.chats.getMessages(),
-				resources: [],
-			};
+			return;
 		}
 	}
 }

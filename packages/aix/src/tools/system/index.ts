@@ -2,12 +2,6 @@ import * as vm from "node:vm";
 import { z } from "zod";
 import { ITool } from "../i-tool.js";
 
-export type TInternal = {
-	sessionId: string;
-	vars: Record<string, unknown>;
-	toolData: Record<string, unknown>;
-};
-
 export const SystemInternalTools: ITool[] = [
 	new ITool({
 		title: "end_response",
@@ -78,27 +72,27 @@ export const SystemInternalTools: ITool[] = [
 		},
 	}),
 
-	new ITool({
-		title: "continue_response",
-		description:
-			"Call this tool if some parts of job is done and there is next action to be taken make sure it doesn't involve user interaction.",
-		schema: z.object({
-			note: z.string().describe("Please provide a proper note of the next execution"),
-		}),
-		run: ({ note }: { note: string }) => {
-			try {
-				return [
-					{
-						type: "text",
-						text: `${note}`,
-					},
-				];
-			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : String(err);
-				return [{ type: "text", text: `Error fetching forecast: ${message}` }];
-			}
-		},
-	}),
+	// new ITool({
+	// 	title: "continue_response",
+	// 	description:
+	// 		"Call this tool if some parts of job is done and there is next action to be taken make sure it doesn't involve user interaction.",
+	// 	schema: z.object({
+	// 		note: z.string().describe("Please provide a proper note of the next execution"),
+	// 	}),
+	// 	run: ({ note }: { note: string }) => {
+	// 		try {
+	// 			return [
+	// 				{
+	// 					type: "text",
+	// 					text: `${note}`,
+	// 				},
+	// 			];
+	// 		} catch (err: unknown) {
+	// 			const message = err instanceof Error ? err.message : String(err);
+	// 			return [{ type: "text", text: `Error fetching forecast: ${message}` }];
+	// 		}
+	// 	},
+	// }),
 
 	new ITool({
 		title: "error_response",
@@ -185,54 +179,80 @@ export const SystemInternalTools: ITool[] = [
 			}
 		},
 	}),
-
 	new ITool({
-		title: "variable_resolver",
+		title: "execute_javascript",
 		description: `
-        Write JavaScript logic using {{message.VARIABLE_NAME}} as the dataset variable.
-        Use this if you've actual variable name in format {{variable_name}} specifically.
-        You can use top‑level statements (const, loops, etc.).
-        **You must include a return statement** in your operation.
-        ❗ Only call this tool if a variable in {{...}} format actually exists in the message.
-        If no such variable exists, DO NOT call this tool.
-        When performing operation make everything **case insensitive** so that 10mg or 10 mg or 10Mg are all considered the same.
-        Always handle variable that has null or undefined values.
-        When isCompleted is true return proper markdown formatting for easier reading to the user.
-        Example:
-          const filtered = {{message.VARIABLE_NAME}}.filter(x => x.active);
-          return filtered.map(x => x.name);
-    `,
+    Executes JavaScript code in a sandboxed VM. Use this tool for ANY JavaScript execution, including mathematical calculations, logical operations, data processing, and resolving variables provided in the user's prompt.
+
+    CRITICAL INSTRUCTIONS:
+    1. SYNTAX FOR VARIABLES: If referencing dataset variables from the prompt, you MUST use the exact format: {{vars.VARIABLE_NAME}}. Only use this syntax if a variable actually exists in the prompt.
+    2. RETURN STATEMENT: Your code is executed in an async IIFE and MUST include a top-level 'return' statement with the final result.
+    3. RESILIENCE: Always handle potential null, undefined, or edge cases gracefully.
+    4. COMPLETION FLAG ('isCompleted'):
+       - Set to TRUE if this execution fully resolves the user's query. If true, your script MUST return a cleanly formatted Markdown string ready to be shown to the user.
+       - Set to FALSE if you only need to extract/calculate intermediate data for your own further reasoning.
+
+    EXAMPLE 1 (Math):
+    return Math.sqrt(144) + 5;
+
+    EXAMPLE 2 (Variables):
+    const data = {{vars.MEDICATIONS}} || [];
+    const filtered = data.filter(item => item && item.dose && item.dose.toLowerCase().replace(' ', '') === '10mg');
+    return filtered.map(item => \`- \${item.name}\`).join('\\n');
+
+		Mark isCompleted as true if this operation fully resolves the user's request (script must return formatted Markdown).
+  `.trim(),
 		schema: z.object({
 			operation: z
 				.string()
 				.describe(
-					"JS function body using {{message.VARIABLE_NAME}}. Must include return and VARIABLE_NAME. When is completed is true make sure to add proper formatting."
+					"Valid JavaScript code. MUST contain a 'return' statement. Do not include markdown code blocks (```javascript) in this string."
 				),
-			isCompleted: z.boolean().describe("True if the operation would fulfill user request. False otherwise"),
+			isCompleted: z
+				.boolean()
+				.describe(
+					"Set to true if this operation fully resolves the user's request (script must return formatted Markdown). Set to false if extracting intermediate data."
+				),
 		}),
 		run: async ({ isCompleted, operation }, internal) => {
 			try {
 				const contextObj: Record<string, unknown> = {};
 				let resolvedOp = operation;
 
-				for (const [key, value] of Object.entries(internal?.vars || {})) {
-					const sanitized = ("VAR_" + key).replace(/[^a-zA-Z0-9_]/g, "_").toUpperCase();
+				resolvedOp = resolvedOp
+					.replace(/^```javascript\n/, "")
+					.replace(/^```js\n/, "")
+					.replace(/\n```$/, "");
 
-					contextObj[sanitized] = value;
-					const placeholder = new RegExp(`\\{\\{message\\.${key}\\}\\}`, "g");
+				for (const [key, value] of internal?.vars.entries() || []) {
+					const sanitized = key;
+
+					// Attempt to parse stringified JSON data before injecting into the VM
+					let contextValue = value.data;
+					if (typeof contextValue === "string") {
+						try {
+							contextValue = JSON.parse(contextValue);
+						} catch {
+							// Leave as string if not valid JSON
+						}
+					}
+
+					contextObj[sanitized] = contextValue;
+
+					const placeholder = new RegExp(`\\{\\{vars\\.${key}\\}\\}`, "g");
 					resolvedOp = resolvedOp.replace(placeholder, sanitized);
 				}
 
 				const context = vm.createContext(contextObj);
 
 				const script = new vm.Script(`
-          (async () => {
-            ${resolvedOp}
-          })();
-        `);
+        (async () => {
+          ${resolvedOp}
+        })();
+      `);
 
 				const result = (await script.runInContext(context)) as unknown;
-				const textResult = JSON.stringify(result).length > 3 ? result : "No data found";
+				const textResult = JSON.stringify(result)?.length > 3 ? result : "No data found";
 
 				if (isCompleted) {
 					return [
@@ -247,24 +267,14 @@ export const SystemInternalTools: ITool[] = [
 							_meta: {
 								return: {
 									isCompleted: true,
-									isError: true,
+									isError: false,
 								},
 							},
 						},
 					];
 				}
 
-				return [
-					{
-						type: "resource_link",
-						uri: "user_message",
-						name: "User message",
-						_meta: {
-							message: "operation on variable successful you can use this data to complete user query.",
-						},
-					},
-					{ type: "text", text: JSON.stringify(textResult, null, 2) },
-				];
+				return [{ type: "text", text: JSON.stringify(textResult, null, 2) }];
 			} catch (err: unknown) {
 				const message = err instanceof Error ? err.message : String(err);
 				return [

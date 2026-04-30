@@ -89,16 +89,14 @@ export type ToolConnector =
 
 export type TInternal =
 	| {
-			sessionId?: string;
-			vars?: Map<
+			vars: Map<
 				string,
 				{
 					data: string;
-					schemaType: string;
 					schema: object;
 				}
 			>;
-			system?: Record<string, string>;
+			system?: Record<string, string | number | boolean>;
 			toolData?: Record<string, unknown>;
 	  }
 	| undefined;

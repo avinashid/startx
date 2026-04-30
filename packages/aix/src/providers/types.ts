@@ -1,4 +1,5 @@
-export type AiProvider = "groq" | "openAi" | "cloudflare" | "gemini" | "anthropic";
+export type AiProvider = "groq" | "openAi" | "cloudflare" | "gemini" | "anthropic" | "cerebras";
+export type AiProviderModelType = "text-completion" | "image-generation" | "audio-generation";
 
 export type AiChatRole = "user" | "system" | "assistant";
 
@@ -12,6 +13,15 @@ export type AiChatMessage =
 			role: "tool";
 			content: string;
 			tool_call_id: string;
+			timestamp: Date;
+	  }
+	| {
+			role: "assistant";
+			content: string;
+			tool_calls: Array<{
+				type: "function" | "custom";
+				id: string;
+			}>;
 			timestamp: Date;
 	  };
 

@@ -1,8 +1,8 @@
-import { get_encoding } from "tiktoken";
+import { getEncoding } from "js-tiktoken";
 
 // We get the encoding for a specific model, 'cl100k_base' is used by gpt-4, gpt-3.5-turbo, etc.
 // It's best practice to instantiate the encoder once and reuse it.
-const enc = get_encoding("cl100k_base");
+const enc = getEncoding("cl100k_base");
 
 export class Tokenizer {
 	/**
@@ -38,13 +38,5 @@ export class Tokenizer {
 		const tokens = enc.encode(text);
 		// The result from encode() is a Uint32Array, so we convert it to a standard number array.
 		return Array.from(tokens);
-	}
-
-	/**
-	 * It's good practice to free the encoder when it's no longer needed,
-	 * especially in serverless environments or scripts that will terminate.
-	 */
-	static cleanup(): void {
-		enc.free();
 	}
 }

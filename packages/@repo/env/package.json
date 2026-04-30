@@ -22,7 +22,8 @@
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"dotenv": "catalog:"
+		"dotenv": "catalog:",
+		"dotenv-expand": "catalog:"
 	},
 	"startx": {
 		"iTags": [

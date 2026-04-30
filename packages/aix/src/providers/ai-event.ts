@@ -1,4 +1,4 @@
-import type { ToolReturn } from "@/tools/types.js";
+import type { ToolReturn } from "../tools/types.js";
 
 export type AiEventType = {
 	"ai.think.partial": string;
@@ -13,5 +13,9 @@ export type AiEventType = {
 		message: string;
 		stack?: string;
 		meta?: Record<string, unknown>;
+	};
+	"token": {
+		input: number;
+		output: number;
 	};
 };

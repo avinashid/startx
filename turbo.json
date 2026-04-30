@@ -32,7 +32,6 @@
 		},
 		"cli": {
 			"cache": false,
-			"persistent": true,
 			"interactive": true
 		},
 		"dev": {
