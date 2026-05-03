@@ -1,10 +1,10 @@
 {
 	"name": "startx",
 	"devDependencies": {
-		"@biomejs/biome": "catalog:",
-		"prettier": "catalog:",
 		"eslint": "catalog:",
 		"vitest": "catalog:",
+		"@biomejs/biome": "catalog:",
+		"prettier": "catalog:",
 		"rimraf": "catalog:",
 		"turbo": "catalog:",
 		"typescript": "catalog:",

@@ -1,0 +1,57 @@
+{
+	"name": "queue-worker",
+	"description": "",
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "tsx watch src/index.ts",
+		"dev:debug": "tsx watch --inspect src/index.ts",
+		"bun:dev": "bun --watch src/index.ts",
+		"build": "tsdown --config-loader unrun",
+		"start": "node dist/index.mjs",
+		"lint": "eslint .",
+		"lint:fix": "eslint . src/**/*.ts --fix",
+		"clean": "rimraf dist .turbo dist",
+		"deep:clean": "rimraf node_modules dist .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"constants": "workspace:^",
+		"@db/drizzle": "workspace:^",
+		"@repo/mail": "workspace:^",
+		"@repo/lib": "workspace:^",
+		"@repo/redis": "workspace:^",
+		"@repo/env": "workspace:^",
+		"@repo/logger": "workspace:^",
+		"@repo/queue": "workspace:*"
+	},
+	"devDependencies": {
+		"eslint-config": "workspace:*",
+		"vitest-config": "workspace:*",
+		"tsdown-config": "workspace:*",
+		"typescript-config": "workspace:*"
+	},
+	"startx": {
+		"gTags": [
+			"node",
+			"backend"
+		],
+		"tags": [
+			"express"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/logger",
+			"@repo/lib",
+			"@repo/redis",
+			"@repo/queue"
+		],
+		"requiredDevDeps": [
+			"typescript-config",
+			"tsdown-config"
+		]
+	}
+}

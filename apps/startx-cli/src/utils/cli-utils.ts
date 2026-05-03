@@ -86,11 +86,13 @@ export class CliUtils {
 			}
 		};
 
+		const extraPackages = ["@repo", "@db"];
 		const results = await Promise.all([
 			fetchPackages("apps", "apps"),
 			fetchPackages("configs", "configs"),
-			fetchPackages("packages", "packages", "", name => name !== "@repo"),
+			fetchPackages("packages", "packages", "", name => !extraPackages.includes(name)),
 			fetchPackages("packages/@repo", "packages", "@repo/"),
+			fetchPackages("packages/@db", "packages", "@db/"),
 		]);
 
 		return results.flat();

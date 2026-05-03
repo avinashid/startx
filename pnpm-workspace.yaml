@@ -90,5 +90,8 @@ catalog:
   quicktype-core: ^23.2.6
   openai: ^6.34.0
 
+  # bullmq
+  bullmq: ^5.76.4
+
   # redis
-  ioredis: ^5.10.0
+  ioredis: ^5.10.1

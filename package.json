@@ -1,7 +1,7 @@
 {
 	"name": "startx",
 	"description": "",
-	"version": "0.9.9",
+	"version": "1.0.0",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
@@ -16,6 +16,7 @@
 		"startx": "node ./apps/startx-cli/dist/index.mjs",
 		"backend": "turbo dev --filter=core-server -- ",
 		"cli": "turbo cli --filter=cli -- ",
+		"startx:cli": "turbo cli --filter=startx-cli -- ",
 		"lint": "turbo lint",
 		"typecheck": "turbo typecheck",
 		"clean": "turbo clean",

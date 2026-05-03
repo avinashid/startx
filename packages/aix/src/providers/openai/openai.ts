@@ -38,6 +38,7 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 						content: e.content,
 					})) as unknown as ChatCompletionCreateParamsBase["messages"],
 					temperature: this.preferences.temperature,
+					max_completion_tokens: this.preferences.maxCompletionTokens,
 					...hasAnyTools,
 				});
 				if (response.usage) {

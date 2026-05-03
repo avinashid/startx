@@ -1,0 +1,50 @@
+{
+	"name": "@repo/queue",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"watch:dev": "pnpm watch",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"watch": "tsc -p tsconfig.build.json --watch"
+	},
+	"exports": "./src/index.ts",
+	"devDependencies": {
+		"@types/pg": "catalog:",
+		"eslint-config": "workspace:*",
+		"typescript-config": "workspace:*",
+		"vitest-config": "workspace:*"
+	},
+	"dependencies": {
+		"@repo/env": "workspace:*",
+		"@repo/lib": "workspace:*",
+		"@repo/logger": "workspace:*",
+		"@repo/redis": "workspace:*",
+		"bullmq": "catalog:"
+	},
+	"startx": {
+		"iTags": [
+			"node"
+		],
+		"gTags": [
+			"ai"
+		],
+		"tags": [
+			"aix"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/lib",
+			"@repo/logger",
+			"@repo/redis"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

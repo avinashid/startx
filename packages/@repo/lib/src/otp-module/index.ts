@@ -44,7 +44,12 @@ export class OTPModule {
 		const html = await EmailTemplate("VerifyEmailOtp", {
 			verificationCode: otpStr,
 		});
-		await SMTPMailService.sendMail(normalizedEmail, `OTP for ${normalizedEmail}`, `Your OTP is ${otpStr}`, html);
+		await SMTPMailService.sendMail({
+			to: email,
+			subject: "Verify your email",
+			text: `Your verification code is: ${otpStr}`,
+			html,
+		});
 	}
 
 	static async verifyMailOTP(email: string, otp: string, deleteOtp = false): Promise<boolean> {

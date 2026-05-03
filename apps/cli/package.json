@@ -29,8 +29,12 @@
 	"dependencies": {
 		"@inquirer/prompts": "^8.3.0",
 		"@repo/logger": "workspace:*",
+		"@repo/mail": "workspace:*",
 		"@repo/lib": "workspace:*",
-		"commander": "^14.0.0"
+		"@repo/env": "workspace:*",
+		"commander": "^14.0.0",
+		"@repo/queue": "workspace:*",
+		"aix": "workspace:*"
 	},
 	"startx": {
 		"gTags": [

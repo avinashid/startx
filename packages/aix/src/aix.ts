@@ -386,6 +386,7 @@ export class Aix {
 		schema: Z;
 		title?: string;
 		description?: string;
+		preference?: Partial<AiInterfaceConstructor["preferences"]>;
 	}): Promise<{ data: z.infer<Z>; token: { input: number; output: number } }> => {
 		try {
 			const toolName = props.title || "structure_response";
@@ -412,7 +413,8 @@ export class Aix {
 				credentials: props.credentials,
 				conversations: [],
 				preferences: {
-					name: "structurer",
+					...props.preference,
+					name: "structure_response_ai",
 					type: "worker",
 					toolOnly: true,
 					temperature: 0.1,
@@ -421,7 +423,7 @@ export class Aix {
 			});
 
 			ai.onEvery(e => {
-				console.log(e);
+				logger.info(e);
 			});
 
 			await ai.tools.attachTools({
@@ -432,9 +434,17 @@ export class Aix {
 
 			const response = await ai.handleUserMessage(props.message);
 			const messages = response.messages;
-			console.log(JSON.stringify(messages));
-			const data = JSON.parse(messages[messages.length - 1].content) as z.infer<Z>;
+			const lastMessage = messages[messages.length - 1];
 
+			if (!lastMessage || !lastMessage.content) {
+				throw new Error("AI returned an empty response. Try increasing the token limit.");
+			}
+			let data: z.infer<Z>;
+			try {
+				data = JSON.parse(lastMessage.content) as z.infer<Z>;
+			} catch (error) {
+				throw new Error(`Failed to parse AI response as JSON. Raw output: ${lastMessage.content}`);
+			}
 			return {
 				data,
 				token: response.token || { input: 0, output: 0 },
