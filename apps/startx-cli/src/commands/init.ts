@@ -225,6 +225,7 @@ export class InitCommand {
 
 	private static async installPackage(props: {
 		pkg: PackageItem;
+		packageName?: string;
 		directory: {
 			workspace: string;
 			template: string;
@@ -242,7 +243,7 @@ export class InitCommand {
 		const { packageJson, isWorkspace } = FileHandler.handlePackageJson({
 			app: props.pkg.packageJson,
 			tags: Array.from(tags),
-			name: props.pkg.name,
+			name: props.packageName || props.pkg.packageJson.name || props.pkg.name,
 			dependencies: props.dependencies,
 		});
 
