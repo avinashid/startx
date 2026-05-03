@@ -19,6 +19,7 @@ export interface AiInterfaceConstructor<T extends AiProvider = AiProvider> {
 		type: "manager" | "worker";
 		toolOnly: boolean;
 		temperature?: number;
+		maxCompletionTokens?: number;
 		seed?: number;
 	};
 	whitelistedTools?: string[];
@@ -192,9 +193,7 @@ export abstract class AiInterface<AI, P extends AiProvider> {
 			isError: res.isError,
 		};
 	};
-	private async syncModels() {
-		//  const models = await this.ai.
-	}
+
 	// Events
 	protected event: IEvent<AiEventType> = new IEvent();
 	public on<K extends keyof AiEventType>(event: K, handler: (payload: AiEventType[K]) => void) {

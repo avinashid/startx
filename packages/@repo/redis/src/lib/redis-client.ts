@@ -2,16 +2,17 @@ import { defineEnv } from "@repo/env";
 import { logger } from "@repo/logger";
 import { Redis } from "ioredis";
 import z from "zod";
-export const connection = defineEnv({
+const connection = defineEnv({
 	REDIS_HOST: z.string().min(1),
-	REDIS_PORT: z.number(),
+	REDIS_PORT: z.coerce.number(),
 	REDIS_USERNAME: z.string(),
 	REDIS_PASSWORD: z.string(),
+	REDIS_DB: z.coerce.number().optional(),
 });
 
 let client: Redis | null = null;
 
-export function getRedis() {
+export function getRedis(props?: { db?: number }) {
 	if (!client) {
 		client = new Redis({
 			host: connection.REDIS_HOST,
@@ -20,6 +21,7 @@ export function getRedis() {
 			password: connection.REDIS_PASSWORD,
 			lazyConnect: true,
 			maxRetriesPerRequest: null,
+			db: props?.db ?? connection.REDIS_DB ?? 0,
 		});
 
 		client.on("connect", () => {

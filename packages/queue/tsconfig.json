@@ -1,11 +1,7 @@
 {
 	"extends": "typescript-config/tsconfig.node.json",
 	"compilerOptions": {
-		"baseUrl": ".",
-		"jsx": "react",
-		"paths": {
-			"@/*": ["./src/*"]
-		}
+		"baseUrl": "./src"
 	},
 	"include": ["src/**/*.ts"]
 }
