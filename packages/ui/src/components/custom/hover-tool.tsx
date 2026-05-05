@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ClassNameValue } from "tailwind-merge";
 
-import { cn } from "../lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const HoverTool = ({

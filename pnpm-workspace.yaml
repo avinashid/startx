@@ -10,7 +10,7 @@ catalog:
   eslint: ^9.39.2
   tsdown: ^0.20.1
   unrun: ^0.2.27
-  vite: ^7.3.1
+  vite: ^8.0.0
   rimraf: ^6.1.2
   turbo: ^2.8.1
   tsx: ^4.21.0
@@ -33,10 +33,16 @@ catalog:
   "@types/node": ^25.1.0
 
   # frontend
+  isbot: ^5.1.36
   react: ^19.2.4
   react-dom: ^19.2.4
+  react-router: ^7.14.0
+  '@react-router/node': ^7.14.0
+  '@react-router/serve': ^7.14.0
+  '@react-router/dev': ^7.14.0
   lucide-react: ^0.563.0
-  tailwindcss: ^4.1.18
+  tailwindcss: ^4.2.2
+  '@tailwindcss/vite': ^4.2.2
   react-email: ^5.2.11
   "@react-email/preview-server": ^5.2.11
   "@react-email/components": ^1.0.8
@@ -77,8 +83,7 @@ catalog:
   "@aws-sdk/client-s3": ^3.39.0
   bcryptjs: ^3.0.3
   nodemailer: ^8.0.1
-  dotenv: ^17.3.1
-  dotenv-expand: ^13.0.0
+  '@dotenvx/dotenvx': ^1.64.0
   firebase-admin: ^13.7.0
   winston: ^3.19.0
   winston-daily-rotate-file: ^5.0.0

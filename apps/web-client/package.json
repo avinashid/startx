@@ -1,0 +1,37 @@
+{
+	"name": "web-client",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"build": "react-router build",
+		"dev": "react-router dev",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"start": "react-router-serve ./build/server/index.js",
+		"typecheck": "react-router typegen && tsc",
+		"test": "vitest run",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@react-router/node": "catalog:",
+		"@react-router/serve": "catalog:",
+		"react-router": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"isbot": "catalog:",
+		"@dotenvx/dotenvx": "catalog:"
+	},
+	"devDependencies": {
+		"@react-router/dev": "catalog:",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"@tailwindcss/vite": "catalog:",
+		"tailwindcss": "catalog:",
+		"vite": "catalog:",
+		"eslint-config": "workspace:*",
+		"typescript-config": "workspace:^"
+	}
+}

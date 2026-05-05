@@ -15,7 +15,7 @@ export const frontendConfig = tseslint.config(
 
 	// 1. Frontend Ignores
 	{
-		ignores: ["**/coverage/**", "**/storybook-static/**", "**/*.snap", "**/*.d.ts"],
+		ignores: ["**/coverage/**", "**/storybook-static/**", "**/*.snap", "**/*.d.ts", "**/.react-router/**"],
 	},
 
 	// 2. Browser/React Globals & Settings

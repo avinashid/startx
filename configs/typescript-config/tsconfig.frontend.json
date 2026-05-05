@@ -9,6 +9,6 @@
 		"incremental": false,
 		"jsx": "react-jsx",
 		"allowSyntheticDefaultImports": true,
-		"lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+		"lib": ["esnext", "dom", "dom.iterable", "scripthost", "es2022"]
 	}
 }

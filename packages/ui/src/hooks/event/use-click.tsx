@@ -1,10 +1,6 @@
-/* eslint-disable id-denylist */
-import { type RefObject, useEffect } from 'react';
+import { type RefObject, useEffect } from "react";
 
-function useOutsideClick<T extends HTMLElement>(
-	ref: RefObject<T | null>,
-	callback: () => void,
-): void {
+function useOutsideClick<T extends HTMLElement>(ref: RefObject<T | null>, callback: () => void): void {
 	useEffect(() => {
 		const handleClickOrTouch = (event: Event) => {
 			if (ref.current && !ref.current.contains(event.target as Node)) {
@@ -12,10 +8,10 @@ function useOutsideClick<T extends HTMLElement>(
 			}
 		};
 
-		document.addEventListener('mousedown', handleClickOrTouch);
+		document.addEventListener("mousedown", handleClickOrTouch);
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOrTouch);
+			document.removeEventListener("mousedown", handleClickOrTouch);
 		};
 	}, [ref, callback]);
 }
@@ -28,10 +24,10 @@ function useInsideClick<T extends HTMLElement>(ref: RefObject<T>, callback: () =
 			}
 		};
 
-		document.addEventListener('mousedown', handleClickOrTouch);
+		document.addEventListener("mousedown", handleClickOrTouch);
 
 		return () => {
-			document.removeEventListener('mousedown', handleClickOrTouch);
+			document.removeEventListener("mousedown", handleClickOrTouch);
 		};
 	}, [ref, callback]);
 }

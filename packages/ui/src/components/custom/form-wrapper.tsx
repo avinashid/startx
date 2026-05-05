@@ -11,40 +11,16 @@ import {
 	useFieldArray,
 } from "react-hook-form";
 import type { ClassNameValue } from "tailwind-merge";
-import type { z } from "zod";
 
-import { cn } from "../lib/utils";
+import { cn } from "@repo/ui/lib/utils";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "../ui/command";
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "../ui/form";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "../ui/field";
+import { Form, FormField } from "../ui/form";
 import { Input, type InputProps } from "../ui/input";
-import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectLabel,
-	SelectTrigger,
-	SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 
 type SimpleFormFieldProps = {
@@ -61,12 +37,12 @@ type RelationSelectOption = {
 	}>;
 };
 
-type FormSelectFieldProps<
-	TFieldValues extends FieldValues,
-	TName extends FieldPath<TFieldValues>,
-> = Omit<ControllerProps<TFieldValues, TName>, "render"> & {
-	label?: ReactNode; // The label for the field
-	options: Array<SelectOption | RelationSelectOption>; // List of options to display in the select
+type FormSelectFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = Omit<
+	ControllerProps<TFieldValues, TName>,
+	"render"
+> & {
+	label?: ReactNode;
+	options: Array<SelectOption | RelationSelectOption>;
 	className?: ClassNameValue;
 	placeholder?: ReactNode;
 	onChange?: (value: string) => void;
@@ -97,31 +73,28 @@ export const FormSelectField = <
 	}): Array<SelectOption | RelationSelectOption> => {
 		if (!defaultValue) return [...options];
 
-		// Check if defaultValue exists in either flat options or nested group options
 		const valueExists = options.some(opt => {
 			if ("options" in opt) {
-				// Check nested options in RelationSelectOption group
 				return opt.options.some(nestedOpt => nestedOpt.value === defaultValue);
 			}
-			// Check regular SelectOption
 			return opt.value === defaultValue;
 		});
 
 		if (!valueExists) {
-			// Prepend the default value as a new option
 			return [{ label: defaultValue, value: defaultValue }, ...options];
 		}
 
 		return [...options];
 	};
+
 	return (
 		<FormField
 			control={control}
 			name={name}
-			render={({ field }) => (
-				<FormItem className={cn("flex flex-col", className)}>
-					<FormLabel className="self-start">{label}</FormLabel>
-					<FormControl>
+			render={({ field, fieldState }) => (
+				<Field data-invalid={!!fieldState.error} className={cn("flex flex-col", className)}>
+					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
+					<FieldContent>
 						<Select
 							disabled={disabled}
 							onValueChange={value => {
@@ -155,42 +128,43 @@ export const FormSelectField = <
 								})}
 							</SelectContent>
 						</Select>
-					</FormControl>
-					<FormMessage />
-				</FormItem>
+					</FieldContent>
+					<FieldError errors={[fieldState.error]} />
+				</Field>
 			)}
 		/>
 	);
 };
+
 export const FormTextField = <
 	TFieldValues extends FieldValues = FieldValues,
 	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >(
 	props: Omit<
-		SimpleFormFieldProps &
-			ControllerProps<TFieldValues, TName> &
-			InputProps &
-			React.RefAttributes<HTMLInputElement>,
+		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
 	>
 ) => {
+	const { label, description, control, name, ...rest } = props;
+
 	return (
 		<FormField
-			control={props.control}
-			name={props.name}
-			render={({ field }) => (
-				<FormItem className="flex flex-col">
-					<Label className="self-start">{props.label}</Label>
-					<FormControl>
-						<Input {...field} {...props} />
-					</FormControl>
-					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
-					<FormMessage />
-				</FormItem>
+			control={control}
+			name={name}
+			render={({ field, fieldState }) => (
+				<Field data-invalid={!!fieldState.error} className="flex flex-col">
+					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
+					<FieldContent>
+						<Input {...field} {...rest} />
+					</FieldContent>
+					{description ? <FieldDescription>{description}</FieldDescription> : null}
+					<FieldError errors={[fieldState.error]} />
+				</Field>
 			)}
 		/>
 	);
 };
+
 export const FormTextAreaField = <
 	TFieldValues extends FieldValues = FieldValues,
 	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
@@ -203,56 +177,57 @@ export const FormTextAreaField = <
 		"render"
 	>
 ) => {
+	const { label, description, control, name, ...rest } = props;
+
 	return (
 		<FormField
-			control={props.control}
-			name={props.name}
-			render={({ field }) => (
-				<FormItem className="flex flex-col ">
-					{props.label ? <Label className="self-start">{props.label}</Label> : null}
-					<FormControl>
-						<Textarea {...field} {...props} ref={field.ref} />
-					</FormControl>
-					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
-					<FormMessage />
-				</FormItem>
+			control={control}
+			name={name}
+			render={({ field, fieldState }) => (
+				<Field data-invalid={!!fieldState.error} className="flex flex-col">
+					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
+					<FieldContent>
+						<Textarea {...field} {...rest} ref={field.ref} />
+					</FieldContent>
+					{description ? <FieldDescription>{description}</FieldDescription> : null}
+					<FieldError errors={[fieldState.error]} />
+				</Field>
 			)}
 		/>
 	);
 };
+
 export const FormNumberField = <
 	TFieldValues extends FieldValues = FieldValues,
 	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >(
 	props: Omit<
-		SimpleFormFieldProps &
-			ControllerProps<TFieldValues, TName> &
-			InputProps &
-			React.RefAttributes<HTMLInputElement>,
+		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
 	>
 ) => {
+	const { label, description, control, name, ...rest } = props;
+
 	return (
 		<FormField
-			control={props.control}
-			name={props.name}
-			render={({ field }) => (
-				<FormItem className="flex flex-col">
-					<FormLabel className="self-start">{props.label}</FormLabel>
-					<FormControl>
+			control={control}
+			name={name}
+			render={({ field, fieldState }) => (
+				<Field data-invalid={!!fieldState.error} className="flex flex-col">
+					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
+					<FieldContent>
 						<Input
 							inputMode="numeric"
 							{...field}
 							onChange={e => {
-								if (!isNaN(Number(e.currentTarget.value)))
-									field.onChange(Number(e.currentTarget.value));
+								if (!isNaN(Number(e.currentTarget.value))) field.onChange(Number(e.currentTarget.value));
 							}}
-							{...props}
+							{...rest}
 						/>
-					</FormControl>
-					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
-					<FormMessage />
-				</FormItem>
+					</FieldContent>
+					{description ? <FieldDescription>{description}</FieldDescription> : null}
+					<FieldError errors={[fieldState.error]} />
+				</Field>
 			)}
 		/>
 	);
@@ -260,24 +235,21 @@ export const FormNumberField = <
 
 export type FormWrapperProps<T extends FieldValues> = {
 	onSubmit: (data: T) => void;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	formData: UseFormReturn<T, unknown, any>;
 	children: React.ReactNode;
 	className?: string;
 };
-
-type MultipleFormItemProps<T extends z.ZodType, K extends ArrayPath<z.infer<T>>> = {
-	control: Control<z.infer<T>>;
-	name: K;
+type MultipleFormItemProps<TFieldValues extends FieldValues, TName extends ArrayPath<TFieldValues>> = {
+	control: Control<TFieldValues>;
+	name: TName;
 	label?: string;
-	addMoreBtn?: React.ReactNode;
+	addMoreBtn?: ReactNode;
 	className?: ClassNameValue;
 	wrapperClassName?: ClassNameValue;
-	children: (field: { id: string; index: number; remove: () => void }) => React.ReactNode;
-	defaultValue: z.infer<T>[K][number];
+	children: (field: { id: string; index: number; remove: () => void }) => ReactNode;
+	defaultValue: TFieldValues[TName] extends Array<infer U> ? U : never;
 };
-
-export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infer<T>>>({
+export const MultipleFormItem = <TFieldValues extends FieldValues, TName extends ArrayPath<TFieldValues>>({
 	control,
 	name,
 	addMoreBtn,
@@ -286,7 +258,7 @@ export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infe
 	wrapperClassName,
 	className,
 	defaultValue,
-}: MultipleFormItemProps<T, K>) => {
+}: MultipleFormItemProps<TFieldValues, TName>) => {
 	const { fields, append, remove } = useFieldArray({
 		control,
 		name,
@@ -294,7 +266,7 @@ export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infe
 
 	return (
 		<div className="multiple-form-item">
-			{label ? <p className="mt-6 text-sm ">{label}</p> : null}
+			{label ? <p className="mt-6 text-sm">{label}</p> : null}
 			<div className={cn(wrapperClassName)}>
 				{fields.map((field, index) => (
 					<div key={field.id} className={cn("flex flex-col gap-2 max-w-xl", className)}>
@@ -302,14 +274,14 @@ export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infe
 					</div>
 				))}
 				{addMoreBtn ? (
-					<div onClick={() => append(defaultValue)}>{addMoreBtn}</div>
+					<Button onClick={() => append(defaultValue as any)}>{addMoreBtn}</Button>
 				) : (
 					<Button
 						className="w-1/3 mt-4 flex gap-1"
 						variant="outline"
 						type="button"
 						size={"sm"}
-						onClick={() => append(defaultValue)}
+						onClick={() => append(defaultValue as any)}
 					>
 						<Plus />
 						<span>Add {label?.toLowerCase() ?? "item"}</span>
@@ -319,7 +291,6 @@ export const MultipleFormItem = <T extends z.ZodType, K extends ArrayPath<z.infe
 		</div>
 	);
 };
-
 export function FormWrapper<T extends FieldValues>(props: FormWrapperProps<T>) {
 	return (
 		<Form {...props.formData}>
@@ -343,25 +314,22 @@ export const FormDefaultDateField = <
 	TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >(
 	props: Omit<
-		SimpleFormFieldProps &
-			ControllerProps<TFieldValues, TName> &
-			InputProps &
-			React.RefAttributes<HTMLInputElement>,
+		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
 	>
 ) => {
+	const { label, description, control, name, ...rest } = props;
+
 	const safeFormat = (date: Date | string | undefined | null) => {
 		try {
 			if (!date) return undefined;
 
 			const parsedDate = typeof date === "string" ? new Date(date) : date;
 
-			// Extract UTC date components
 			const year = parsedDate.getUTCFullYear();
 			const month = parsedDate.getUTCMonth();
 			const day = parsedDate.getUTCDate();
 
-			// Create a Date object at midnight UTC
 			const utcMidnight = new Date(Date.UTC(year, month, day));
 			return format(utcMidnight, "yyyy-MM-dd");
 		} catch (error) {
@@ -373,15 +341,12 @@ export const FormDefaultDateField = <
 		try {
 			if (!dateString) return undefined;
 
-			// Parse input date as local time
 			const localDate = new Date(dateString);
 
-			// Get local date components
 			const year = localDate.getFullYear();
 			const month = localDate.getMonth();
 			const day = localDate.getDate();
 
-			// Create Date object at midnight UTC of the local date
 			return new Date(Date.UTC(year, month, day));
 		} catch (error) {
 			console.error(error);
@@ -391,32 +356,33 @@ export const FormDefaultDateField = <
 
 	return (
 		<FormField
-			control={props.control}
-			name={props.name}
-			render={({ field }) => (
-				<FormItem className="flex flex-col">
-					<FormLabel className="self-start">{props.label}</FormLabel>
-					<FormControl>
+			control={control}
+			name={name}
+			render={({ field, fieldState }) => (
+				<Field data-invalid={!!fieldState.error} className="flex flex-col">
+					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
+					<FieldContent>
 						<Input
 							{...field}
-							{...props}
+							{...rest}
 							value={field.value || ""}
 							onChange={e => field.onChange(e.target.value)}
 							type="date"
 							max="9999-12-31"
 						/>
-					</FormControl>
-					{props.description ? <FormDescription>{props.description}</FormDescription> : null}
-					<FormMessage />
-				</FormItem>
+					</FieldContent>
+					{description ? <FieldDescription>{description}</FieldDescription> : null}
+					<FieldError errors={[fieldState.error]} />
+				</Field>
 			)}
 		/>
 	);
 };
-type FormMultiSelectFieldProps<
-	TFieldValues extends FieldValues,
-	TName extends FieldPath<TFieldValues>,
-> = Omit<ControllerProps<TFieldValues, TName>, "render"> & {
+
+type FormMultiSelectFieldProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = Omit<
+	ControllerProps<TFieldValues, TName>,
+	"render"
+> & {
 	label?: React.ReactNode;
 	options: Array<SelectOption | RelationSelectOption>;
 	className?: string;
@@ -449,33 +415,23 @@ export function FormMultiSelectField<
 			control={control}
 			name={name}
 			defaultValue={defaultValue}
-			render={({ field }) => {
+			render={({ field, fieldState }) => {
 				const selected: string[] = field.value ?? [];
 
 				const toggleOption = (value: string) => {
-					const newValue = selected.includes(value)
-						? selected.filter(v => v !== value)
-						: [...selected, value];
+					const newValue = selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value];
 					field.onChange(newValue);
 					onChange?.(newValue);
 				};
 
 				return (
-					<FormItem className={cn("flex flex-col", className)}>
-						{label ? <FormLabel>{label}</FormLabel> : null}
-						<FormControl className="w-full">
+					<Field data-invalid={!!fieldState.error} className={cn("flex flex-col", className)}>
+						{label ? <FieldLabel>{label}</FieldLabel> : null}
+						<FieldContent className="w-full">
 							<Popover open={open} onOpenChange={setOpen}>
 								<PopoverTrigger asChild disabled={disabled}>
-									<Button
-										variant="outline"
-										// role="combobox"
-										size={"sm"}
-										// aria-expanded={open}
-										className={cn("w-full justify-between", inputClassName)}
-									>
-										{selected.length > 0
-											? `${selected.length} selected`
-											: (placeholder ?? "Select")}
+									<Button variant="outline" size={"sm"} className={cn("w-full justify-between", inputClassName)}>
+										{selected.length > 0 ? `${selected.length} selected` : (placeholder ?? "Select")}
 										<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 									</Button>
 								</PopoverTrigger>
@@ -489,10 +445,7 @@ export function FormMultiSelectField<
 													"options" in opt ? (
 														<CommandGroup key={opt.label} heading={opt.label}>
 															{opt.options.map(nested => (
-																<CommandItem
-																	key={nested.value}
-																	onSelect={() => toggleOption(nested.value)}
-																>
+																<CommandItem key={nested.value} onSelect={() => toggleOption(nested.value)}>
 																	<Check
 																		className={cn(
 																			"mr-2 h-4 w-4",
@@ -520,30 +473,30 @@ export function FormMultiSelectField<
 									</PopoverContent>
 								</div>
 							</Popover>
-						</FormControl>
-						<FormMessage />
+						</FieldContent>
+						<FieldError errors={[fieldState.error]} />
 
-						{showSelected ? <div className=" flex flex-wrap gap-2">
+						{showSelected && selected.length > 0 ? (
+							<div className="flex flex-wrap gap-2 mt-2">
 								{selected.map(value => {
-									const label =
-										options
-											.flatMap(o => ("options" in o ? o.options : o))
-											.find(o => o.value === value)?.label ?? value;
+									const badgeLabel =
+										options.flatMap(o => ("options" in o ? o.options : o)).find(o => o.value === value)?.label ?? value;
 									return (
 										<Badge
 											onClick={() => !disabled && toggleOption(value)}
 											key={value}
-											aria-disabled
+											aria-disabled={disabled}
 											variant="secondary"
 											className={cn("px-2 py-1", !disabled && "cursor-pointer")}
 										>
-											{label}
+											{badgeLabel}
 											{!disabled && <X className="ml-1 h-3 w-3 cursor-pointer" />}
 										</Badge>
 									);
 								})}
-							</div> : null}
-					</FormItem>
+							</div>
+						) : null}
+					</Field>
 				);
 			}}
 		/>

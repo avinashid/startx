@@ -1,5 +1,5 @@
-import type React from 'react';
-import { useEffect, useRef } from 'react';
+import type React from "react";
+import { useEffect, useRef } from "react";
 
 const useDidMountEffect = (func: React.EffectCallback, deps: React.DependencyList) => {
 	const didMount = useRef(false);

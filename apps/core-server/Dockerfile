@@ -21,7 +21,7 @@ COPY configs ./configs
 COPY turbo.json ./
 
 # Build the required packages
-RUN pnpm build:web
+RUN pnpm build --filter=core-server
 
 # --- Final production image ---
 FROM node:24-alpine

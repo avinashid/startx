@@ -1,4 +1,4 @@
-import { cn } from '../lib/utils';
+import { cn } from "@repo/ui/lib/utils";
 
 export type GridProps = {
 	children: React.ReactNode;
@@ -10,9 +10,9 @@ const Grid = (props: GridProps) => {
 	return (
 		<div
 			className={cn(
-				'grid sm:grid-cols-12 gap-2 grid-cols-1',
-				props.grow ? 'min-h-[calc(100vh-60px)] py-2' : '',
-				props.className,
+				"grid sm:grid-cols-12 gap-2 grid-cols-1",
+				props.grow ? "min-h-[calc(100vh-60px)] py-2" : "",
+				props.className
 			)}
 		>
 			{props.children}
