@@ -31,8 +31,7 @@ export function loadDotenv(opts?: { root?: string }) {
 	const root = opts?.root ?? projectRoot();
 
 	// Shared options for a cleaner setup
-	const baseOptions = { quiet: true };
-
+	const baseOptions = { quiet: true, ignore: ["MISSING_ENV_FILE"] };
 	if (process.env.NODE_ENV === "test") {
 		config({ path: path.join(root, ".env.test"), ...baseOptions });
 		// optional: if you want local test overrides

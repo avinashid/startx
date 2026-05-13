@@ -5,7 +5,7 @@
 		"skipLibCheck": true,
 		"jsx": "react-jsx",
 		"noEmit": true,
-		"baseUrl": ".",
+		// "baseUrl": ".",
 		"paths": {
 			"@repo/ui/*": ["./src/*"]
 		}

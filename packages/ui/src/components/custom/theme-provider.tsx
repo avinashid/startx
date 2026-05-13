@@ -1,61 +1,136 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { Toaster } from 'sonner';
-type Theme = 'dark' | 'light' | 'system';
+import * as React from "react";
+import { Toaster } from "../ui/sonner";
+
+export type Mode = "dark" | "light" | "system";
+export type ThemeColor =
+	| "default"
+	| "orange"
+	| "purple"
+	| "emerald"
+	| "rose"
+	| "amber"
+	| "brick"
+	| "rust"
+	| "cyan"
+	| "indigo"
+	| "blue";
+
+export const themes: Record<ThemeColor, string> = {
+	default: "default",
+	orange: "orange",
+	purple: "purple",
+	emerald: "emerald",
+	rose: "rose",
+	amber: "amber",
+	brick: "brick",
+	rust: "rust",
+	cyan: "cyan",
+	indigo: "indigo",
+	blue: "blue",
+};
 
 type ThemeProviderProps = {
 	children: React.ReactNode;
-	defaultTheme?: Theme;
-	storageKey?: string;
+	defaultMode?: Mode;
+	defaultColor?: ThemeColor;
+	storageKeyPrefix?: string;
 };
 
 type ThemeProviderState = {
-	theme: Theme;
-	setTheme: (theme: Theme) => void;
+	mode: Mode;
+	setMode: (mode: Mode) => void;
+	color: ThemeColor;
+	setColor: (color: ThemeColor) => void;
 };
 
-const initialState: ThemeProviderState = {
-	theme: 'system',
-	setTheme: () => null,
-};
+const ThemeProviderContext = React.createContext<ThemeProviderState | undefined>(undefined);
 
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
-export const ThemeProvider = ({
+export function ThemeProvider({
 	children,
-	defaultTheme = 'dark',
-	storageKey = 'vite-ui-theme',
+	defaultMode = "system",
+	defaultColor = "default",
+	storageKeyPrefix = "app-theme",
 	...props
-}: ThemeProviderProps) => {
-	const [theme, setTheme] = useState<Theme>(
-		() =>
-			(typeof window !== 'undefined' && (localStorage.getItem(storageKey) as Theme)) ||
-			defaultTheme,
+}: ThemeProviderProps) {
+	const modeKey = `${storageKeyPrefix}-mode`;
+	const colorKey = `${storageKeyPrefix}-color`;
+
+	// --- State ---
+	const [mode, setModeState] = React.useState<Mode>(() => (localStorage.getItem(modeKey) as Mode) || defaultMode);
+
+	const [color, setColorState] = React.useState<ThemeColor>(
+		() => (localStorage.getItem(colorKey) as ThemeColor) || defaultColor
 	);
 
-	useEffect(() => {
-		const root = window.document.documentElement;
+	// --- Actions ---
+	const setMode = React.useCallback(
+		(newMode: Mode) => {
+			if (!document.startViewTransition) {
+				localStorage.setItem(modeKey, newMode);
+				setModeState(newMode);
+				return;
+			}
 
-		root.classList.remove('light', 'dark');
+			document.startViewTransition(() => {
+				localStorage.setItem(modeKey, newMode);
+				setModeState(newMode);
+			});
+		},
+		[modeKey]
+	);
 
-		if (theme === 'system') {
-			const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-				? 'dark'
-				: 'light';
+	const setColor = React.useCallback(
+		(newColor: ThemeColor) => {
+			if (!document.startViewTransition) {
+				localStorage.setItem(colorKey, newColor);
+				setColorState(newColor);
+				return;
+			}
 
+			document.startViewTransition(() => {
+				localStorage.setItem(colorKey, newColor);
+				setColorState(newColor);
+			});
+		},
+		[colorKey]
+	);
+
+	// --- Apply Mode (Light/Dark) ---
+	React.useEffect(() => {
+		const root = document.documentElement;
+		root.classList.remove("light", "dark");
+
+		if (mode === "system") {
+			const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 			root.classList.add(systemTheme);
 			return;
 		}
 
-		root.classList.add(theme);
-	}, [theme]);
+		root.classList.add(mode);
+	}, [mode]);
 
-	const value = {
-		theme,
-		setTheme: (theme: Theme) => {
-			localStorage.setItem(storageKey, theme);
-			setTheme(theme);
-		},
-	};
+	// --- Apply Color Scheme ---
+	React.useEffect(() => {
+		const root = document.documentElement;
+		if (color === "default") {
+			root.removeAttribute("data-theme");
+		} else {
+			root.setAttribute("data-theme", color);
+		}
+	}, [color]);
+
+	// --- System Mode Listener ---
+	React.useEffect(() => {
+		if (mode !== "system") return;
+
+		const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+		const handleChange = () => setModeState("system");
+
+		mediaQuery.addEventListener("change", handleChange);
+		return () => mediaQuery.removeEventListener("change", handleChange);
+	}, [mode]);
+
+	const value = React.useMemo(() => ({ mode, setMode, color, setColor }), [mode, color, setMode, setColor]);
 
 	return (
 		<ThemeProviderContext.Provider {...props} value={value}>
@@ -63,12 +138,12 @@ export const ThemeProvider = ({
 			{children}
 		</ThemeProviderContext.Provider>
 	);
-};
+}
 
 export const useTheme = () => {
-	const context = useContext(ThemeProviderContext);
-
-	if (context === undefined) throw new Error('useTheme must be used within a ThemeProvider');
-
+	const context = React.useContext(ThemeProviderContext);
+	if (context === undefined) {
+		throw new Error("useTheme must be used within a ThemeProvider");
+	}
 	return context;
 };

@@ -19,7 +19,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"constants": "workspace:^",
+		"@repo/common": "workspace:^",
 		"@db/drizzle": "workspace:^",
 		"@repo/mail": "workspace:^",
 		"@repo/lib": "workspace:^",

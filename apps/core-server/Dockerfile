@@ -1,7 +1,8 @@
+# syntax=docker/dockerfile:1
+
 FROM node:24-alpine AS base
-RUN apk add --no-cache git \
-        && corepack enable \
-        && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.0.8 --activate
+
 WORKDIR /app
 
 FROM base AS builder

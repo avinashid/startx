@@ -1,7 +1,11 @@
+import "@repo/ui/globals.css";
+import { QueryProvider } from "@repo/ui/api";
+import { ThemeProvider } from "@repo/ui/components/custom/theme-provider";
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
-
 import type { Route } from "./+types/root";
 import "./app.css";
+import { AuthStartup } from "./config/auth/auth-state";
+import { ENV } from "./config/env";
 
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -21,6 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 		<html lang="en">
 			<head>
 				<meta charSet="utf-8" />
+
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<Meta />
 				<Links />
@@ -35,7 +40,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-	return <Outlet />;
+	return (
+		<QueryProvider mode={ENV.MODE}>
+			<ThemeProvider>
+				<AuthStartup />
+				<Outlet />
+			</ThemeProvider>
+		</QueryProvider>
+	);
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

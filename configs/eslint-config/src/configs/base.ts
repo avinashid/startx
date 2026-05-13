@@ -54,7 +54,6 @@ export const baseConfig = tseslint.config(
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
-		// ADDED: Settings block to correctly resolve TypeScript imports
 		settings: {
 			"import-x/resolver": {
 				typescript: {
