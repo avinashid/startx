@@ -1,10 +1,14 @@
 import type { UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 import type { z } from "zod";
 import type { IPaginatedData, TimeString } from "../api-types";
+
 export type ExtractData<E> = "data" extends keyof E ? E["data"] : unknown;
 export type ExtractZQuery<E> = "zQuery" extends keyof E ? E["zQuery"] : never;
 export type ExtractZParams<E> = "zParams" extends keyof E ? E["zParams"] : never;
 export type ExtractZBody<E> = "zBody" extends keyof E ? NonNullable<E["zBody"]> : never;
+
+export type WithAbort<T> = T & { abort: () => void };
+
 type CommonQueryOptions = {
 	staleTime?: number | TimeString;
 	enabled?: boolean;
@@ -50,9 +54,11 @@ export type UseApiOptions<Schema, K extends keyof Schema> = Schema[K] extends in
 	: never;
 
 export type UseApiReturn<Schema, K extends keyof Schema> = Schema[K] extends { apiType: "fetch" }
-	? UseQueryResult<ExtractData<Schema[K]>>
+	? WithAbort<UseQueryResult<ExtractData<Schema[K]>>>
 	: Schema[K] extends { apiType: "paginated-fetch" }
-		? UseQueryResult<IPaginatedData<ExtractData<Schema[K]>, Schema[K] extends { other: infer O } ? O : unknown>>
+		? WithAbort<
+				UseQueryResult<IPaginatedData<ExtractData<Schema[K]>, Schema[K] extends { other: infer O } ? O : unknown>>
+			>
 		: Schema[K] extends { apiType: "mutation" }
-			? UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>
+			? WithAbort<UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>>
 			: never;

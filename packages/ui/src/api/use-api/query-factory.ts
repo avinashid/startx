@@ -12,14 +12,14 @@ function stringifyKeyValue(value: unknown): string {
 }
 export function makeQueryKeyFactory<StaticKeys extends readonly string[], ZQ extends ZQuery, ZP extends ZParams>(
 	staticKey: StaticKeys,
-	zParams: ZP,
-	zQuery: ZQ
+	zParams?: ZP,
+	zQuery?: ZQ
 ): QueryKeyFactory<ZQ, ZP> {
 	return input => {
 		const key: string[] = [...staticKey.filter(Boolean)];
 
-		if (input?.params) {
-			const shapeKeys = Object.keys(zParams.shape);
+		if (input?.params && zParams) {
+			const shapeKeys = Object.keys(zParams?.shape);
 
 			for (const k of shapeKeys) {
 				const v = input.params[k];
@@ -30,8 +30,8 @@ export function makeQueryKeyFactory<StaticKeys extends readonly string[], ZQ ext
 			}
 		}
 
-		if (input?.query) {
-			const shapeKeys = Object.keys(zQuery.shape);
+		if (input?.query && zQuery) {
+			const shapeKeys = Object.keys(zQuery?.shape);
 
 			for (const k of shapeKeys) {
 				const v = input.query[k];

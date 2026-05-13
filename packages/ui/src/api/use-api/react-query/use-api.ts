@@ -4,9 +4,10 @@ import {
 	useQueryClient,
 	type UseQueryOptions,
 	type UseQueryResult,
+	type UseMutationResult,
 } from "@tanstack/react-query";
 import { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { z } from "zod";
 import { FormUtils } from "@repo/ui/lib/utils";
 import { ApiHelper } from "../api-helpers";
@@ -81,7 +82,8 @@ function useFetchApi<ID, ZQ extends ZQuery, ZP extends ZParams>(
 		staleTime?: number;
 		enabled?: boolean;
 	}
-): UseQueryResult<ID> {
+): UseQueryResult<ID> & { abort: () => void } {
+	const queryClient = useQueryClient();
 	const queryKey = useMemo(
 		() =>
 			ApiHelper.getQueryKey(key, endpoint.key, {
@@ -92,9 +94,9 @@ function useFetchApi<ID, ZQ extends ZQuery, ZP extends ZParams>(
 	);
 	const staleTime = ApiHelper.parseTime(ApiHelper.merge(options.staleTime, endpoint.staleTime));
 
-	return useQuery<ID>({
+	const query = useQuery<ID>({
 		queryKey,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const config: AxiosRequestConfig = {
 				method: endpoint.method || "GET",
 				url: ApiHelper.buildUrl({
@@ -103,6 +105,7 @@ function useFetchApi<ID, ZQ extends ZQuery, ZP extends ZParams>(
 					searchParams: options.query,
 				}),
 				params: options.query,
+				signal,
 			};
 			const resp = await axiosClient.request<ID>(config);
 
@@ -117,7 +120,13 @@ function useFetchApi<ID, ZQ extends ZQuery, ZP extends ZParams>(
 		refetchOnMount: endpoint.refetch?.onMount ? "always" : false,
 		refetchOnWindowFocus: endpoint.refetch?.onFocus ? "always" : false,
 	} as UseQueryOptions<ID>);
+
+	return {
+		...query,
+		abort: () => queryClient.cancelQueries({ queryKey }),
+	};
 }
+
 function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 	key: keyof RawSchema,
 	endpoint: IPaginatedFetchOptions<ID, IO, ZQ, ZP>,
@@ -130,7 +139,8 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 		staleTime?: number;
 		enabled?: boolean;
 	}
-): UseQueryResult<{ data: IPaginatedData<ID, IO> }> {
+): UseQueryResult<{ data: IPaginatedData<ID, IO> }> & { abort: () => void } {
+	const queryClient = useQueryClient();
 	const mergedQuery = useMemo(
 		() =>
 			ApiHelper.merge(options.query, {
@@ -151,9 +161,9 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 
 	const staleTime = ApiHelper.parseTime(ApiHelper.merge(options.staleTime, endpoint.staleTime));
 
-	return useQuery<{ data: IPaginatedData<ID, IO> }>({
+	const query = useQuery<{ data: IPaginatedData<ID, IO> }>({
 		queryKey,
-		queryFn: async () => {
+		queryFn: async ({ signal }) => {
 			const config: AxiosRequestConfig = {
 				method: endpoint.method || "GET",
 				url: ApiHelper.buildUrl({
@@ -161,6 +171,7 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 					params: options.params,
 					searchParams: mergedQuery,
 				}),
+				signal,
 			};
 
 			const resp = await axiosClient.request<{
@@ -178,16 +189,84 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 		refetchOnMount: endpoint.refetch?.onMount ? "always" : false,
 		refetchOnWindowFocus: endpoint.refetch?.onFocus ? "always" : false,
 	} as UseQueryOptions<{ data: IPaginatedData<ID, IO> }>);
-}
 
+	return {
+		...query,
+		abort: () => queryClient.cancelQueries({ queryKey }),
+	};
+}
+function useMutationApi<Schema extends RawSchema, K extends keyof Schema & string>(
+	endpoint: IFetchMutationOptions<K>,
+	axiosClient: AxiosInstance,
+	proxy: ReturnType<typeof createQueryKeysProxy<Schema>>,
+	options?: MutationOptions<Schema[K]>
+): UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>> & { abort: () => void } {
+	const queryClient = useQueryClient();
+	const abortControllerRef = useRef<AbortController | null>(null);
+	const isFormData = ApiHelper.merge(options?.isFormData, endpoint.isFormData);
+
+	const mutation = useMutation<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>({
+		mutationFn: async (variables: MutationVariables<Schema[K]>) => {
+			abortControllerRef.current = new AbortController();
+
+			if (endpoint.zBody && endpoint.validateBody !== false && options?.overwriteEvents !== true) {
+				const valid = ApiHelper.validateSchema(endpoint.zBody, variables.body);
+				if (!valid.success) {
+					throw new Error(valid.errors.join(", "));
+				}
+			}
+
+			const body = ApiHelper.merge(variables.body, options?.body)!;
+			const config: AxiosRequestConfig = {
+				method: endpoint.method || "POST",
+				url: ApiHelper.buildUrl(
+					ApiHelper.merge(
+						{ route: endpoint.route, params: variables.params, searchParams: variables.query },
+						{ route: endpoint.route, params: options?.params, searchParams: options?.query }
+					)
+				),
+				params: ApiHelper.merge(variables.query, options?.query),
+				data: isFormData ? FormUtils.getFormData(body!) : body,
+				...(isFormData && { headers: { "Content-Type": "multipart/form-data" } }),
+				signal: abortControllerRef.current.signal,
+			};
+
+			const response = await axiosClient.request<ExtractData<Schema[K]>>(config);
+
+			await processEvents(endpoint.onFetch, response.data, variables, proxy, queryClient, options?.overwriteEvents);
+
+			return response.data;
+		},
+		onSuccess: async (data, variables) => {
+			options?.onSuccess?.(data, variables);
+			await processEvents(endpoint.onSuccess, data, variables, proxy, queryClient, options?.overwriteEvents);
+		},
+		onError: async (error: Error, variables) => {
+			options?.onError?.(error, variables);
+			await processEvents(
+				endpoint.onError,
+				error as AxiosError<any>,
+				variables,
+				proxy,
+				queryClient,
+				options?.overwriteEvents
+			);
+		},
+		onMutate: options?.onMutate,
+	});
+
+	return {
+		...mutation,
+		abort: () => abortControllerRef.current?.abort(),
+	};
+}
 export function useApi<Schema extends RawSchema>(schema: Schema, axiosClient: AxiosInstance) {
-	return <K extends keyof Schema & string>(key: K, options: UseApiOptions<Schema, K>): UseApiReturn<Schema, K> => {
+	return <K extends keyof Schema & string>(key: K, options?: UseApiOptions<Schema, K>): UseApiReturn<Schema, K> => {
 		const endpoint = schema[key];
-		const queryClient = useQueryClient();
 		const proxy = useMemo(() => createQueryKeysProxy(schema), [schema]);
 
 		if (endpoint.apiType === "fetch") {
-			const ep = endpoint as IFetchOptions<unknown>;
+			const ep = endpoint as IFetchOptions<unknown, ZQuery, ZParams>;
 			const opts = options as FetchOptions<Schema[K]> | undefined;
 			return useFetchApi(key, ep, axiosClient, {
 				query: opts?.query,
@@ -198,7 +277,7 @@ export function useApi<Schema extends RawSchema>(schema: Schema, axiosClient: Ax
 		}
 
 		if (endpoint.apiType === "paginated-fetch") {
-			const ep = endpoint as IPaginatedFetchOptions<unknown, unknown>;
+			const ep = endpoint as IPaginatedFetchOptions<unknown, unknown, ZQuery, ZParams>;
 			const opts = options as PaginatedFetchOptions<Schema[K]> | undefined;
 			return usePaginatedFetchApi(key, ep, axiosClient, {
 				query: opts?.query,
@@ -211,56 +290,8 @@ export function useApi<Schema extends RawSchema>(schema: Schema, axiosClient: Ax
 		if (endpoint.apiType === "mutation") {
 			const ep = endpoint as IFetchMutationOptions<K>;
 			const opts = options as MutationOptions<Schema[K]> | undefined;
-			const isFormData = ApiHelper.merge(opts?.isFormData, ep.isFormData);
-
-			return useMutation<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>({
-				mutationFn: async (variables: MutationVariables<Schema[K]>) => {
-					if (ep.zBody && ep.validateBody !== false && opts?.overwriteEvents !== true) {
-						const valid = ApiHelper.validateSchema(ep.zBody, variables.body);
-						if (!valid.success) {
-							throw new Error(valid.errors.join(", "));
-						}
-					}
-
-					const body = ApiHelper.merge(variables.body, opts?.body)!;
-					const config: AxiosRequestConfig = {
-						method: ep.method || "POST",
-						url: ApiHelper.buildUrl(
-							ApiHelper.merge(
-								{ route: ep.route, params: variables.params, searchParams: variables.query },
-								{ route: ep.route, params: opts?.params, searchParams: opts?.query }
-							)
-						),
-						params: ApiHelper.merge(variables.query, opts?.query),
-						data: isFormData ? FormUtils.getFormData(body!) : body,
-						...(isFormData && { headers: { "Content-Type": "multipart/form-data" } }),
-					};
-
-					const response = await axiosClient.request<ExtractData<Schema[K]>>(config);
-
-					await processEvents(ep.onFetch, response.data, variables, proxy, queryClient, opts?.overwriteEvents);
-
-					return response.data;
-				},
-				onSuccess: async (data, variables) => {
-					opts?.onSuccess?.(data, variables);
-					await processEvents(ep.onSuccess, data, variables, proxy, queryClient, opts?.overwriteEvents);
-				},
-				onError: async (error: Error, variables) => {
-					opts?.onError?.(error, variables);
-					await processEvents(
-						ep.onError,
-						error as AxiosError<any>,
-						variables,
-						proxy,
-						queryClient,
-						opts?.overwriteEvents
-					);
-				},
-				onMutate: opts?.onMutate,
-			}) as UseApiReturn<Schema, K>;
+			return useMutationApi(ep, axiosClient, proxy, opts) as UseApiReturn<Schema, K>;
 		}
-
 		throw new Error(`Unknown API type: ${endpoint.apiType}`);
 	};
 }

@@ -25,10 +25,10 @@ export type ZQuery = ZodObject<Record<string, ZodType<ValidQueryValue>>>;
 export interface IBaseApi<ID, ZQ extends ZQuery, ZP extends ZParams> {
 	apiType: ApiType;
 	route: string;
-	method: ApiMethod;
-	zQuery: ZQ;
-	zParams: ZP;
-	data: ID;
+	method?: ApiMethod;
+	zQuery?: ZQ;
+	zParams?: ZP;
+	data?: ID;
 	retry?: { count: number; interval: number };
 }
 
