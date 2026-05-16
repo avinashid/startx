@@ -14,6 +14,10 @@ export const scripts: SCRIPT = {
 			script: "email dev --port 3014 --dir ./src",
 			tags: ["node", "mail"],
 		},
+		{
+			script: "react-router dev",
+			tags: ["react-router", "frontend"],
+		},
 	],
 	"dev:debug": [
 		{
@@ -44,6 +48,10 @@ export const scripts: SCRIPT = {
 			script: "tsdown --config-loader unrun",
 			tags: ["runnable", "node", "tsdown"],
 		},
+		{
+			script: "react-router build",
+			tags: ["react-router", "frontend"],
+		},
 	],
 	"cli": [
 		{
@@ -63,6 +71,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "node dist/index.mjs",
 			tags: ["node", "runnable"],
+		},
+		{
+			script: "react-router-serve ./build/server/index.js",
+			tags: ["react-router", "frontend"],
 		},
 	],
 	"lint": [
@@ -91,7 +103,7 @@ export const scripts: SCRIPT = {
 			tags: ["root"],
 		},
 		{
-			script: "rimraf dist .turbo dist",
+			script: "rimraf dist build .turbo",
 			tags: [],
 		},
 	],
@@ -101,7 +113,7 @@ export const scripts: SCRIPT = {
 			tags: ["root"],
 		},
 		{
-			script: "rimraf node_modules dist .turbo",
+			script: "rimraf node_modules dist build .turbo",
 			tags: ["node"],
 		},
 	],
@@ -133,6 +145,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "tsc --noEmit",
 			tags: ["node"],
+		},
+		{
+			script: "react-router typegen && tsc",
+			tags: ["react-router", "frontend"],
 		},
 	],
 	"format": [

@@ -1,23 +1,20 @@
-import { cva, type VariantProps } from 'class-variance-authority';
-import type { ReactNode } from 'react';
+import { cva, type VariantProps } from "class-variance-authority";
+import type { ReactNode } from "react";
 
-import { cn } from '../lib/utils';
-import { Separator } from '../ui/separator';
-const pageSectionVariant = cva(
-	'flex flex-col space-y-4 rounded-lg  bg-background/70 p-6 md:px-6 px-2 w-full h-full ',
-	{
-		variants: {
-			variant: {
-				default: '',
-				outline: 'border',
-				transparent: 'bg-transparent md:px-0 px-0',
-			},
-		},
-		defaultVariants: {
-			variant: 'default',
+import { cn } from "@repo/ui/lib/utils";
+import { Separator } from "../ui/separator";
+const pageSectionVariant = cva("flex flex-col space-y-4 rounded-lg  bg-background/70 p-6 md:px-6 px-2 w-full h-full ", {
+	variants: {
+		variant: {
+			default: "",
+			outline: "border",
+			transparent: "bg-transparent md:px-0 px-0",
 		},
 	},
-);
+	defaultVariants: {
+		variant: "default",
+	},
+});
 type PageSectionProps = {
 	icon?: ReactNode;
 	title: ReactNode;

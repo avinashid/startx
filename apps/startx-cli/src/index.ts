@@ -7,15 +7,13 @@ import { version } from "../../../package.json";
 
 const program = new Command();
 
-program
-	.name("startx")
-	.description("StartX CLI - Your all in one monorepo startup tool.")
-	.version(version);
+program.name("startx").description("StartX CLI - Your all in one monorepo startup tool.").version(version);
 
 program.command("ping").action(() => {
 	logger.info("pong");
 });
 
 program.addCommand(InitCommand.command);
+// program.addCommand(PackageCommand.command);
 
 program.parse(process.argv);

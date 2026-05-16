@@ -1,7 +1,4 @@
-process.env.DOTENV_CONFIG_QUIET = "true";
-
-import { config } from "dotenv";
-import { expand } from "dotenv-expand";
+import { config } from "@dotenvx/dotenvx";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -24,7 +21,7 @@ export function projectRoot() {
 }
 
 /**
- * Load .env files with a clear precedence:
+ * Load .env files with a clear precedence using dotenvx:
  * - test: .env.test (and optional .env.test.local)
  * - otherwise: .env -> .env.local (local should override .env)
  *
@@ -33,21 +30,30 @@ export function projectRoot() {
 export function loadDotenv(opts?: { root?: string }) {
 	const root = opts?.root ?? projectRoot();
 
+	// Shared options for a cleaner setup
+	const baseOptions = { quiet: true, ignore: ["MISSING_ENV_FILE"] };
 	if (process.env.NODE_ENV === "test") {
-		expand(config({ path: path.join(root, ".env.test") }));
+		config({ path: path.join(root, ".env.test"), ...baseOptions });
 		// optional: if you want local test overrides
-		expand(config({ path: path.join(root, ".env.test.local"), override: true }));
+		config({ path: path.join(root, ".env.test.local"), override: true, ...baseOptions });
 		return;
 	}
 
 	// production/dev flow
-	expand(config({ path: path.join(process.cwd(), ".env") })); // prod
+	config({ path: path.join(process.cwd(), ".env"), ...baseOptions }); // prod
+
 	// dev env
-	expand(config({ path: path.join(root, ".env") }));
+	config({ path: path.join(root, ".env"), ...baseOptions });
+
 	// .env.local should override the base (for dev machine secrets)
-	expand(config({ path: path.join(root, ".env.local"), override: true }));
+	config({ path: path.join(root, ".env.local"), override: true, ...baseOptions });
+
 	// also load .env.${NODE_ENV}.local if you want per-env local overrides:
 	if (process.env.NODE_ENV) {
-		expand(config({ path: path.join(root, `.env.${process.env.NODE_ENV}.local`), override: true }));
+		config({
+			path: path.join(root, `.env.${process.env.NODE_ENV}.local`),
+			override: true,
+			...baseOptions,
+		});
 	}
 }

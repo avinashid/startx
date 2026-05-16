@@ -23,7 +23,6 @@
 	},
 	"dependencies": {
 		"winston": "catalog:",
-		"dotenv": "catalog:",
 		"@repo/env": "workspace:*"
 	},
 	"startx": {

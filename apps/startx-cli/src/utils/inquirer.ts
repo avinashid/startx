@@ -1,4 +1,4 @@
-import { input, select, checkbox } from "@inquirer/prompts";
+import { input, select, checkbox, confirm } from "@inquirer/prompts";
 import { type z, type ZodTypeAny, ZodEnum, ZodNumber } from "zod";
 
 type PromptProps<T extends ZodTypeAny | undefined> = {
@@ -18,6 +18,13 @@ type MultiSelectProps<T extends "single" | "multiple"> = {
 };
 
 export class CommonInquirer {
+	static async confirm(props: { message: string; default?: boolean }) {
+		return await confirm({
+			message: props.message,
+			default: props.default,
+		});
+	}
+
 	static async getText<T extends ZodTypeAny | undefined>(
 		props: PromptProps<T>
 	): Promise<T extends ZodTypeAny ? z.infer<T> : string> {

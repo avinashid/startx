@@ -27,6 +27,7 @@
 	},
 	"dependencies": {
 		"@repo/redis": "workspace:*",
+		"@repo/common": "workspace:*",
 		"@aws-sdk/client-s3": "catalog:",
 		"@repo/mail": "workspace:*",
 		"@repo/logger": "workspace:*",
@@ -48,7 +49,8 @@
 			"@repo/env",
 			"@repo/logger",
 			"@repo/mail",
-			"@repo/redis"
+			"@repo/redis",
+			"@repo/constants"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

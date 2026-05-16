@@ -1,0 +1,4 @@
+{
+	"extends": "typescript-config/tsconfig.common.json",
+	"include": ["src/**/*.ts"]
+}

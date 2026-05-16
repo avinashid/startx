@@ -1,16 +1,9 @@
-import { type HTMLProps, forwardRef } from 'react';
+import { Loader2Icon } from "lucide-react";
 
-import { cn } from '../lib/utils';
+import { cn } from "@repo/ui/lib/utils";
 
-export const Spinner = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
-	({ className, ...rest }, ref) => {
-		const spinnerClass = cn(
-			'animate-spin rounded-full border-2 border-current border-t-transparent h-4 w-4',
-			className,
-		);
+function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+	return <Loader2Icon role="status" aria-label="Loading" className={cn("size-4 animate-spin", className)} {...props} />;
+}
 
-		return <div className={spinnerClass} ref={ref} {...rest} />;
-	},
-);
-
-Spinner.displayName = 'Spinner';
+export { Spinner };

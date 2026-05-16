@@ -1,0 +1,55 @@
+{
+	"name": "web-client",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"build": "react-router build",
+		"dev": "react-router dev",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"start": "react-router-serve ./build/server/index.js",
+		"typecheck": "react-router typegen && tsc",
+		"test": "vitest run",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@dotenvx/dotenvx": "catalog:",
+		"@react-router/node": "catalog:",
+		"@react-router/serve": "catalog:",
+		"@repo/ui": "workspace:*",
+		"isbot": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"react-router": "catalog:",
+		"zustand": "^5.0.13",
+		"@repo/common": "workspace:*"
+	},
+	"devDependencies": {
+		"@react-router/dev": "catalog:",
+		"@tailwindcss/vite": "catalog:",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"eslint-config": "workspace:*",
+		"tailwindcss": "catalog:",
+		"typescript-config": "workspace:^",
+		"vite": "catalog:"
+	},
+	"startx": {
+		"gTags": [
+			"react",
+			"frontend"
+		],
+		"tags": [
+			"react-router"
+		],
+		"requiredDeps": [
+			"@repo/ui"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}
