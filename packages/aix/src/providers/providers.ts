@@ -1,4 +1,5 @@
 import type { AiInterfaceConstructor } from "./ai-interface.js";
+import { BedrockClient } from "./bedrock/bedrock.js";
 import { OpenAIClient } from "./openai/openai.js";
 import type { AiProvider } from "./types.js";
 export function aiProvider<T extends AiProvider>(type: T) {
@@ -32,6 +33,16 @@ export function aiProvider<T extends AiProvider>(type: T) {
 				});
 			case "cloudflare":
 				return new OpenAIClient(props);
+			case "bedrock":
+				return new BedrockClient({
+					...props,
+					credentials: {
+						accessKeyId: props.credentials.accessKeyId!,
+						secretAccessKey: props.credentials.secretAccessKey!,
+						sessionToken: props.credentials.sessionToken,
+						region: props.credentials.region!,
+					},
+				});
 			default:
 				throw new Error("Provider not implemented");
 		}

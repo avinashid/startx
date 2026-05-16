@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"types": ["node"],
-		"baseUrl": "src",
+		// "baseUrl": "src",
 		"tsBuildInfoFile": "dist/typecheck.tsbuildinfo",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true

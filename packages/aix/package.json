@@ -21,6 +21,8 @@
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
+		"@aws-sdk/client-bedrock": "^3.1047.0",
+		"@aws-sdk/client-bedrock-runtime": "^3.1047.0",
 		"@repo/env": "workspace:*",
 		"@repo/lib": "workspace:*",
 		"@repo/logger": "workspace:*",

@@ -1,4 +1,4 @@
-export type AiProvider = "groq" | "openAi" | "cloudflare" | "gemini" | "anthropic" | "cerebras";
+export type AiProvider = "groq" | "openAi" | "cloudflare" | "gemini" | "anthropic" | "cerebras" | "bedrock";
 export type AiProviderModelType = "text-completion" | "image-generation" | "audio-generation";
 
 export type AiChatRole = "user" | "system" | "assistant";

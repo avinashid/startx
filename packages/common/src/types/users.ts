@@ -6,4 +6,5 @@ export type SessionUser = {
 	fullName: string;
 	role: SessionUserRole;
 	currentProfile: SessionUserRole;
+	accessToken: string;
 };

@@ -21,6 +21,7 @@ export type TAGS =
 	// Frontend tags
 	| "frontend"
 	| "react"
+	| "react-router"
 	// Cli tags
 	| "cli"
 	| "commander"
@@ -36,10 +37,7 @@ export type TAGS =
 
 export type SCRIPT = Record<string, Array<{ script: string; tags: TAGS[] }>>;
 
-export type WHITELIST_DEPS = Record<
-	string,
-	{ tags: TAGS[]; version: string; isDevDependency?: boolean }
->;
+export type WHITELIST_DEPS = Record<string, { tags: TAGS[]; version: string; isDevDependency?: boolean }>;
 export type WHITELIST_FILES = Record<string, { tags: TAGS[] }>;
 
 export type PackageDef<T extends string> = {

@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": ".",
 		"types": ["node", "react"],
-		"baseUrl": "src",
+		// "baseUrl": "src",
 		"jsx": "react",
 		"tsBuildInfoFile": "dist/typecheck.tsbuildinfo",
 		"experimentalDecorators": true,

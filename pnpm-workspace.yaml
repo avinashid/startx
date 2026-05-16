@@ -12,7 +12,7 @@ catalog:
   unrun: "^0.2.27"
   vite: "^8.0.0"
   rimraf: "^6.1.2"
-  turbo: "^2.8.1"
+  turbo: "^2.9.14"
   tsx: "^4.21.0"
 
   # utils

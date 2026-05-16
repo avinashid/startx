@@ -26,9 +26,9 @@ export interface AiInterfaceConstructor<T extends AiProvider = AiProvider> {
 	model: (typeof DefaultAiModels)[T][number]["id"];
 	conversations: AiChatMessage[];
 	credentials: {
-		apiKey: string;
+		apiKey?: string;
 		baseUrl?: string;
-	};
+	} & Record<string, string | undefined>;
 	tokens?: Partial<Record<"maxLimit" | "current" | "total", { input: number; output: number }>> & {
 		minTokenToGenerateSchemaOnToolCall?: number;
 	};
@@ -53,10 +53,10 @@ export abstract class AiInterface<AI, P extends AiProvider> {
 	}
 	abstract ai: AI;
 	protected abstract handleAi(): Promise<void>;
-	abstract listModels(): Promise<{
+	abstract listModels(): Promise<Array<{
 		provider: string;
 		name: string;
-	}>;
+	}>>;
 	protected model: (typeof DefaultAiModels)[P][number]["id"];
 	protected credentials: AiInterfaceConstructor["credentials"];
 	private iInternal: TInternal;
