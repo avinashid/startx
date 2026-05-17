@@ -329,10 +329,11 @@ export class InitCommand {
 		for (const file of files) {
 			const checked = FileCheck[file];
 			if (checked && !checked.tags.every(tag => tags.has(tag))) continue;
+			const destFileName = file === "_gitignore" ? ".gitignore" : file;
 			try {
 				await fsTool.copyFile({
 					from: path.join(source, file),
-					to: path.join(destination, file),
+					to: path.join(destination, destFileName),
 				});
 			} catch (error) {
 				logger.error(`Failed to copy file ${file}:`, error);
