@@ -45,12 +45,12 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "root"],
 		},
 		{
-			script: "tsdown --config-loader unrun",
-			tags: ["runnable", "node", "tsdown"],
+			script: "react-router build",
+			tags: ["react-router", "frontend", "runnable"],
 		},
 		{
-			script: "react-router build",
-			tags: ["react-router", "frontend"],
+			script: "tsdown --config-loader unrun",
+			tags: ["runnable", "node", "tsdown"],
 		},
 	],
 	"cli": [

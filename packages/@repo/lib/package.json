@@ -50,7 +50,7 @@
 			"@repo/logger",
 			"@repo/mail",
 			"@repo/redis",
-			"@repo/constants"
+			"@repo/common"
 		],
 		"requiredDevDeps": [
 			"typescript-config"

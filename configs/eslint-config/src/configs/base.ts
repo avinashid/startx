@@ -82,6 +82,8 @@ export const baseConfig = tseslint.config(
 			"@typescript-eslint/no-unsafe-argument": "warn",
 			"@typescript-eslint/no-unsafe-call": "warn",
 			"@typescript-eslint/no-unsafe-return": "off",
+			"@typescript-eslint/no-unnecessary-type-assertion": "warn",
+
 			"@typescript-eslint/no-unsafe-member-access": ["warn", { allowOptionalChaining: true }],
 			"@typescript-eslint/array-type": ["warn", { default: "array-simple" }],
 			"@typescript-eslint/return-await": ["warn", "always"],
