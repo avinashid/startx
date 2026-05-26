@@ -1,41 +1,70 @@
-import { defineEnv, ENV } from "@repo/env";
-import * as jwt from "jsonwebtoken";
+import { Time } from "@repo/common/time";
+import { defineEnv } from "@repo/env";
+import { logger } from "@repo/logger";
+import jwt from "jsonwebtoken";
 import z from "zod";
-export type AuthTokenPayload = {
+
+export type AccessTokenPayload = {
 	userID: string;
 	email: string;
+	sessionID: string;
 };
 
-const credentials = defineEnv({
-	ACCESS_TOKEN_SECRET: z.string(),
-	REFRESH_TOKEN_SECRET: z.string(),
+export type RefreshTokenPayload = {
+	userID: string;
+	email: string;
+	sessionID: string;
+	jti: string;
+};
+
+const env = defineEnv({
+	ACCESS_TOKEN_SECRET: z.string().min(32),
+	REFRESH_TOKEN_SECRET: z.string().min(32),
+	ACCESS_TOKEN_EXPIRY: z.coerce.number().default(Time.hours(1).milliseconds),
+	REFRESH_TOKEN_EXPIRY: z.coerce.number().default(Time.days(30).milliseconds),
 });
-const accessTokenSecret = credentials.ACCESS_TOKEN_SECRET;
-const refreshTokenSecret = credentials.REFRESH_TOKEN_SECRET;
+
+const JWT_CONFIG = {
+	algorithm: "HS256" as const,
+};
 
 export class TokenModule {
-	static signRefreshToken(payload: AuthTokenPayload) {
-		return jwt.sign(payload, refreshTokenSecret, { expiresIn: "365d" });
+	static signAccessToken(payload: AccessTokenPayload): string {
+		return jwt.sign(payload, env.ACCESS_TOKEN_SECRET, {
+			...JWT_CONFIG,
+			expiresIn: env.ACCESS_TOKEN_EXPIRY,
+		});
 	}
-	static verifyRefreshToken(refreshToken: string) {
+
+	static verifyAccessToken(token: string): AccessTokenPayload | null {
 		try {
-			const payload = jwt.verify(refreshToken, refreshTokenSecret) as AuthTokenPayload;
-			return payload;
+			return jwt.verify(token, env.ACCESS_TOKEN_SECRET, {
+				algorithms: ["HS256"],
+			}) as AccessTokenPayload;
 		} catch (error) {
-			console.error(error);
+			logger.warn("Access token verification failed", {
+				error: error instanceof Error ? error.message : "unknown",
+			});
 			return null;
 		}
 	}
-	static signAccessToken(payload: AuthTokenPayload) {
-		const expiration = ENV.NODE_ENV === "development" ? "30d" : "1d";
-		return jwt.sign(payload, accessTokenSecret, { expiresIn: expiration });
+
+	static signRefreshToken(payload: RefreshTokenPayload): string {
+		return jwt.sign(payload, env.REFRESH_TOKEN_SECRET, {
+			...JWT_CONFIG,
+			expiresIn: env.REFRESH_TOKEN_EXPIRY,
+		});
 	}
-	static verifyAccessToken(accessToken: string) {
+
+	static verifyRefreshToken(token: string): RefreshTokenPayload | null {
 		try {
-			const payload = jwt.verify(accessToken, accessTokenSecret) as AuthTokenPayload;
-			return payload;
+			return jwt.verify(token, env.REFRESH_TOKEN_SECRET, {
+				algorithms: ["HS256"],
+			}) as RefreshTokenPayload;
 		} catch (error) {
-			console.error(error);
+			logger.warn("Refresh token verification failed", {
+				error: error instanceof Error ? error.message : "unknown",
+			});
 			return null;
 		}
 	}

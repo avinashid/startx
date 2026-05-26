@@ -1,10 +1,14 @@
+import { Time } from "@repo/common/time";
 import type { SessionUser } from "@repo/common/types/users";
 import { defineEnv } from "@repo/env";
+import crypto from "node:crypto";
 import { z } from "zod";
 import { TokenModule } from "../extra/token-module.js";
+
 const env = defineEnv({
-	SESSION_DURATION: z.number().default(60 * 60 * 6),
+	SESSION_DURATION: z.number().default(Time.days(30).milliseconds),
 });
+
 export const constants = {
 	sessionDuration: env.SESSION_DURATION,
 };
@@ -14,95 +18,162 @@ export type TokenPair = {
 	refreshToken: string;
 };
 
+export type SessionType =
+	| {
+			type: "single";
+	  }
+	| {
+			type: "multi";
+			maxConcurrentSessions: number;
+	  };
+
+export type SessionRecord = {
+	sessionId: string;
+	user: Omit<SessionUser, "accessToken">;
+	refreshTokenHash: string;
+	createdAt: number;
+	lastSeenAt: number;
+};
+
 export abstract class IUserSession {
-	protected accessTokenKey(key: string) {
-		return `access_token:${key}`;
-	}
-	protected refreshTokenKey(key: string) {
-		return `refresh_token:${key}`;
-	}
-	protected userTokensKey(userId: string) {
-		return `session:${userId}`;
+	protected abstract type: SessionType;
+
+	protected sessionKey(sessionId: string) {
+		return `session:${sessionId}`;
 	}
 
-	protected abstract setSessionData(key: string, data: SessionUser, ttl: number): Promise<void>;
-	protected abstract getSessionData(key: string): Promise<SessionUser | null>;
-	protected abstract deleteSessionData(key: string): Promise<void>;
-
-	protected abstract setTokenData(key: string, data: TokenPair, ttl: number): Promise<void>;
-	protected abstract getTokenData(key: string): Promise<TokenPair | null>;
-	protected abstract deleteTokenData(key: string): Promise<void>;
-
-	public async getSessionUser(token: string): Promise<SessionUser | null> {
-		return await this.getSessionData(this.accessTokenKey(token));
+	protected userSessionsKey(userId: string) {
+		return `user:sessions:${userId}`;
 	}
 
-	public async startSession(payload: Omit<SessionUser, "accessToken">): Promise<TokenPair> {
-		await this.endSession(payload.id);
+	protected hashToken(token: string) {
+		return crypto.createHash("sha256").update(token).digest("hex");
+	}
+
+	protected abstract setSession(sessionId: string, data: SessionRecord, ttl: number): Promise<void>;
+
+	protected abstract getSession(sessionId: string): Promise<SessionRecord | null>;
+
+	protected abstract deleteSession(sessionId: string): Promise<void>;
+
+	protected abstract addUserSession(userId: string, sessionId: string): Promise<void>;
+
+	protected abstract removeUserSession(userId: string, sessionId: string): Promise<void>;
+
+	protected abstract getUserSessions(userId: string): Promise<string[]>;
+
+	protected abstract clearUserSessions(userId: string): Promise<void>;
+
+	protected generateSessionId() {
+		return crypto.randomUUID();
+	}
+
+	protected generateRefreshJti() {
+		return crypto.randomUUID();
+	}
+
+	public async startSession(user: Omit<SessionUser, "accessToken">): Promise<TokenPair> {
+		if (this.type.type === "single") {
+			await this.endAllSessions(user.id);
+		}
+
+		if (this.type.type === "multi") {
+			const existing = await this.getUserSessions(user.id);
+
+			if (existing.length >= this.type.maxConcurrentSessions) {
+				const oldest = existing[0];
+				await this.endSession(oldest);
+			}
+		}
+
+		const sessionId = this.generateSessionId();
+		const refreshJti = this.generateRefreshJti();
 
 		const accessToken = TokenModule.signAccessToken({
-			userID: payload.id,
-			email: payload.email,
+			userID: user.id,
+			email: user.email,
+			sessionID: sessionId,
 		});
 
 		const refreshToken = TokenModule.signRefreshToken({
-			userID: payload.id,
-			email: payload.email,
+			userID: user.id,
+			email: user.email,
+			sessionID: sessionId,
+			jti: refreshJti,
 		});
 
-		const sessionData: SessionUser = { ...payload, accessToken };
-		const tokens: TokenPair = { accessToken, refreshToken };
+		const record: SessionRecord = {
+			sessionId,
+			user,
+			refreshTokenHash: this.hashToken(refreshToken),
+			createdAt: Date.now(),
+			lastSeenAt: Date.now(),
+		};
 
 		await Promise.all([
-			this.setSessionData(this.accessTokenKey(accessToken), sessionData, constants.sessionDuration),
-			this.setSessionData(payload.id, sessionData, constants.sessionDuration),
-			this.setTokenData(this.refreshTokenKey(refreshToken), tokens, constants.sessionDuration),
-			this.setTokenData(this.userTokensKey(payload.id), tokens, constants.sessionDuration),
+			this.setSession(sessionId, record, constants.sessionDuration),
+			this.addUserSession(user.id, sessionId),
 		]);
 
-		return tokens;
+		return {
+			accessToken,
+			refreshToken,
+		};
 	}
 
-	public async checkRefreshToken(refreshToken: string): Promise<TokenPair | null> {
-		return await this.getTokenData(this.refreshTokenKey(refreshToken));
+	public async validateSession(sessionId: string): Promise<SessionRecord | null> {
+		return await this.getSession(sessionId);
 	}
 
-	public async updateAccessToken(payload: Omit<SessionUser, "accessToken">): Promise<string | null> {
-		const tokens = await this.getTokens(payload.id);
-		if (!tokens) return null;
-
-		const accessToken = tokens.accessToken;
-		const sessionData: SessionUser = { ...payload, accessToken };
-
-		await Promise.all([
-			this.setSessionData(this.accessTokenKey(accessToken), sessionData, constants.sessionDuration),
-			this.setSessionData(payload.id, sessionData, constants.sessionDuration),
-		]);
-
-		return accessToken;
-	}
-
-	public async getTokens(userId: string): Promise<TokenPair | null> {
-		return await this.getTokenData(this.userTokensKey(userId));
-	}
-
-	public async logout(accessToken: string): Promise<null> {
-		const session = await this.getSessionUser(accessToken);
+	public async rotateRefreshToken(sessionId: string, refreshToken: string): Promise<TokenPair | null> {
+		const session = await this.getSession(sessionId);
 		if (!session) return null;
 
-		await this.endSession(session.id);
-		return null;
+		const incomingHash = this.hashToken(refreshToken);
+
+		if (incomingHash !== session.refreshTokenHash) {
+			await this.endSession(sessionId);
+			return null;
+		}
+
+		const newRefreshJti = this.generateRefreshJti();
+
+		const accessToken = TokenModule.signAccessToken({
+			userID: session.user.id,
+			email: session.user.email,
+			sessionID: sessionId,
+		});
+
+		const newRefreshToken = TokenModule.signRefreshToken({
+			userID: session.user.id,
+			email: session.user.email,
+			sessionID: sessionId,
+			jti: newRefreshJti,
+		});
+
+		session.refreshTokenHash = this.hashToken(newRefreshToken);
+		session.lastSeenAt = Date.now();
+
+		await this.setSession(sessionId, session, constants.sessionDuration);
+
+		return {
+			accessToken,
+			refreshToken: newRefreshToken,
+		};
 	}
 
-	public async endSession(userId: string): Promise<void> {
-		const tokens = await this.getTokens(userId);
-		if (!tokens) return;
+	public async endSession(sessionId: string): Promise<void> {
+		const session = await this.getSession(sessionId);
+		if (!session) return;
 
-		await Promise.all([
-			this.deleteTokenData(this.refreshTokenKey(tokens.refreshToken)),
-			this.deleteSessionData(this.accessTokenKey(tokens.accessToken)),
-			this.deleteTokenData(this.userTokensKey(userId)),
-			this.deleteSessionData(userId),
-		]);
+		await Promise.all([this.deleteSession(sessionId), this.removeUserSession(session.user.id, sessionId)]);
+	}
+
+	public async endAllSessions(userId: string): Promise<void> {
+		const sessions = await this.getUserSessions(userId);
+
+		await Promise.all(sessions.map((sid) => this.deleteSession(sid)));
+
+		await this.clearUserSessions(userId);
 	}
 }

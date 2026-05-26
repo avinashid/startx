@@ -1,44 +1,74 @@
-import type { SessionUser } from "@repo/common/types/users";
 import { RedisStore } from "@repo/redis";
-import { IUserSession, type TokenPair } from "./i-session.js";
+import type { SessionRecord, SessionType } from "./i-session.js";
+import { constants, IUserSession } from "./i-session.js";
+
+type SessionIndex = string[];
 
 export class RedisUserSession extends IUserSession {
-	private userStore: RedisStore<SessionUser>;
-	private tokenStore: RedisStore<TokenPair>;
+	private sessionStore: RedisStore<SessionRecord>;
+	private sessionIndexStore: RedisStore<SessionIndex>;
 
-	constructor() {
+	constructor(type: SessionType) {
 		super();
-		this.userStore = new RedisStore<SessionUser>({
-			namespace: "user-session",
+
+		this.type = type;
+
+		this.sessionStore = new RedisStore<SessionRecord>({
+			namespace: "auth-session",
 		});
-		this.tokenStore = new RedisStore<TokenPair>({
-			namespace: "user-tokens",
+
+		this.sessionIndexStore = new RedisStore<SessionIndex>({
+			namespace: "auth-session-index",
 		});
 	}
 
-	protected async setSessionData(key: string, data: SessionUser, ttl: number): Promise<void> {
-		await this.userStore.set(key, data, ttl);
+	protected type: SessionType;
+	protected async setSession(sessionId: string, data: SessionRecord, ttl: number): Promise<void> {
+		await this.sessionStore.set(sessionId, data, ttl);
 	}
 
-	protected async getSessionData(key: string): Promise<SessionUser | null> {
-		const data = await this.userStore.get(key);
-		return data ?? null;
+	protected async getSession(sessionId: string): Promise<SessionRecord | null> {
+		const session = await this.sessionStore.get(sessionId);
+		return session ?? null;
 	}
 
-	protected async deleteSessionData(key: string): Promise<void> {
-		await this.userStore.del(key);
+	protected async deleteSession(sessionId: string): Promise<void> {
+		await this.sessionStore.del(sessionId);
 	}
 
-	protected async setTokenData(key: string, data: TokenPair, ttl: number): Promise<void> {
-		await this.tokenStore.set(key, data, ttl);
+	protected async addUserSession(userId: string, sessionId: string): Promise<void> {
+		const key = this.userSessionsKey(userId);
+
+		const sessions = (await this.sessionIndexStore.get(key)) ?? [];
+
+		if (!sessions.includes(sessionId)) {
+			sessions.push(sessionId);
+		}
+
+		await this.sessionIndexStore.set(key, sessions, constants.sessionDuration);
 	}
 
-	protected async getTokenData(key: string): Promise<TokenPair | null> {
-		const data = await this.tokenStore.get(key);
-		return data ?? null;
+	protected async removeUserSession(userId: string, sessionId: string): Promise<void> {
+		const key = this.userSessionsKey(userId);
+
+		const sessions = (await this.sessionIndexStore.get(key)) ?? [];
+
+		const filtered = sessions.filter(id => id !== sessionId);
+
+		if (filtered.length === 0) {
+			await this.sessionIndexStore.del(key);
+			return;
+		}
+
+		await this.sessionIndexStore.set(key, filtered, constants.sessionDuration);
 	}
 
-	protected async deleteTokenData(key: string): Promise<void> {
-		await this.tokenStore.del(key);
+	protected async getUserSessions(userId: string): Promise<string[]> {
+		const key = this.userSessionsKey(userId);
+		return (await this.sessionIndexStore.get(key)) ?? [];
+	}
+
+	protected async clearUserSessions(userId: string): Promise<void> {
+		await this.sessionIndexStore.del(this.userSessionsKey(userId));
 	}
 }

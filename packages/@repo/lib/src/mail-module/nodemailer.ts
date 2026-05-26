@@ -6,48 +6,61 @@ import z from "zod";
 
 const credentials = defineEnv({
 	SMTP_HOST: z.string(),
-	SMTP_PORT: z.coerce.number().default(587),
+	SMTP_PORT: z.coerce.number().default(465),
 	SMTP_USER: z.string(),
 	SMTP_PASSWORD: z.string(),
-	SMTP_MAIL_ENCRYPTION: z.string().default("tls"),
+	SMTP_MAIL_ENCRYPTION: z.enum(["ssl", "tls", "starttls"]).default("ssl"),
 	SMTP_SENDER_MAIL: z.string().email(),
 	SMTP_SENDER_NAME: z.string().default("Startx"),
 });
 
-class SMTPMailService {
-	private static transporter: Transporter | null = null;
+export type SMTPConfig = typeof credentials;
 
-	private static initializeTransporter(): Transporter {
-		if (!this.transporter) {
-			this.transporter = nodemailer.createTransport({
-				host: credentials.SMTP_HOST,
-				port: credentials.SMTP_PORT,
-				secure: credentials.SMTP_MAIL_ENCRYPTION === "ssl",
+class SMTPMailService {
+	private static transporters = new Map<string, Transporter>();
+
+	private static getTransporter(config: SMTPConfig): Transporter {
+		const cacheKey = `${config.SMTP_HOST}:${config.SMTP_USER}`;
+
+		if (!this.transporters.has(cacheKey)) {
+			const transporter = nodemailer.createTransport({
+				host: config.SMTP_HOST,
+				port: config.SMTP_PORT,
+				secure: config.SMTP_MAIL_ENCRYPTION === "ssl",
 				auth: {
-					user: credentials.SMTP_USER,
-					pass: credentials.SMTP_PASSWORD,
+					user: config.SMTP_USER,
+					pass: config.SMTP_PASSWORD,
 				},
 			});
+			this.transporters.set(cacheKey, transporter);
 		}
-		return this.transporter;
+
+		return this.transporters.get(cacheKey)!;
 	}
 
-	static async verifyConnection(): Promise<void> {
-		const transporter = this.initializeTransporter();
+	static async verifyConnection(customConfig?: SMTPConfig): Promise<boolean> {
+		const config = customConfig || credentials;
+		const transporter = this.getTransporter(config);
+
 		try {
 			await transporter.verify();
-			logger.info("SMTP Connection verified successfully.");
+			logger.info(`SMTP Connection verified successfully for ${config.SMTP_HOST}`);
+			return true;
 		} catch (error) {
-			logger.error("SMTP Connection verification failed:", error);
-			throw error;
+			logger.error(`SMTP Connection verification failed for ${config.SMTP_HOST}:`, error);
+			return false;
 		}
 	}
 
-	static async sendMail(props: { to: string; subject: string; text: string; html?: string }) {
-		const transporter = this.initializeTransporter();
+	static async sendMail(
+		props: { to: string; subject: string; text: string; html?: string },
+		customConfig?: SMTPConfig
+	) {
+		const config = customConfig || credentials;
+		const transporter = this.getTransporter(config);
 
 		const mailOptions: SendMailOptions = {
-			from: `"${credentials.SMTP_SENDER_NAME}" <${credentials.SMTP_SENDER_MAIL}>`,
+			from: `"${config.SMTP_SENDER_NAME}" <${config.SMTP_SENDER_MAIL}>`,
 			to: props.to,
 			subject: props.subject,
 			text: props.text,
@@ -60,7 +73,6 @@ class SMTPMailService {
 			return info;
 		} catch (error) {
 			logger.error("Error sending email:", error);
-			// Retain the original error context for debugging
 			throw new Error("Failed to send email", { cause: error });
 		}
 	}

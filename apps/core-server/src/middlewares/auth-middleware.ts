@@ -1,30 +1,83 @@
-import { UserSession } from "@repo/lib/session-module";
+import { TokenModule } from "@repo/lib/extra";
+import { defaultUserSession } from "@repo/lib/session-module";
 import type { NextFunction, Request, Response } from "express";
 
-type ExpressHandler = (req: Request, res: Response, next: NextFunction) => unknown;
+type ExpressHandler = (req: Request, res: Response, next: NextFunction) => Promise<void> | void;
+
+function extractBearerToken(req: Request): string | null {
+	const auth = req.headers.authorization;
+
+	if (!auth) return null;
+
+	const [scheme, token] = auth.split(" ");
+
+	if (scheme !== "Bearer" || !token) {
+		return null;
+	}
+
+	return token;
+}
+
+async function authenticateRequest(req: Request) {
+	const accessToken = extractBearerToken(req);
+
+	if (!accessToken) {
+		return {
+			ok: false as const,
+			status: 401,
+			message: "Access token missing",
+		};
+	}
+
+	const payload = TokenModule.verifyAccessToken(accessToken);
+
+	if (!payload?.sessionID) {
+		return {
+			ok: false as const,
+			status: 401,
+			message: "Invalid access token",
+		};
+	}
+
+	const session = await defaultUserSession.validateSession(payload.sessionID);
+
+	if (!session) {
+		return {
+			ok: false as const,
+			status: 401,
+			message: "Session expired or revoked",
+		};
+	}
+
+	return {
+		ok: true as const,
+		user: session.user,
+		session,
+	};
+}
 
 export class AuthMiddlewares {
 	static async validateActiveSession(req: Request, res: Response, next: NextFunction) {
 		try {
-			const accessToken = req.headers["authorization"]?.split(" ")[1];
-			if (!accessToken) {
-				res.status(401).json({ message: "access token missing" });
+			const auth = await authenticateRequest(req);
+
+			if (!auth.ok) {
+				res.status(auth.status).json({
+					success: false,
+					message: auth.message,
+				});
 				return;
 			}
 
-			const payload = await UserSession.getSessionUser(accessToken);
+			req.user = auth.user;
 
-			if (!payload) {
-				res.status(401).json({ message: "invalid access token" });
-				return;
-			}
-			req.user = payload;
-			return next();
+			next();
 		} catch (error) {
 			next(error);
 		}
 	}
 }
+
 export function validateSession() {
 	return function <T extends ExpressHandler>(
 		_target: unknown,
@@ -35,30 +88,21 @@ export function validateSession() {
 
 		if (!originalMethod) return;
 
-		descriptor.value = async function (
-			this: unknown,
-			req: Request,
-			res: Response,
-			next: NextFunction
-		) {
+		descriptor.value = async function (this: unknown, req: Request, res: Response, next: NextFunction) {
 			try {
-				const accessToken = req.headers.authorization?.split(" ")[1];
+				const auth = await authenticateRequest(req);
 
-				if (!accessToken) {
-					res.status(401).json({ message: "access token missing" });
+				if (!auth.ok) {
+					res.status(auth.status).json({
+						success: false,
+						message: auth.message,
+					});
 					return;
 				}
 
-				const payload = await UserSession.getSessionUser(accessToken);
+				req.user = auth.user;
 
-				if (!payload) {
-					res.status(401).json({ message: "invalid access token" });
-					return;
-				}
-
-				req.user = payload;
-
-				return originalMethod.call(this, req, res, next);
+				await originalMethod.call(this, req, res, next);
 			} catch (error) {
 				next(error);
 			}
