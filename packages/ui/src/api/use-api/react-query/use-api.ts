@@ -126,7 +126,6 @@ function useFetchApi<ID, ZQ extends ZQuery, ZP extends ZParams>(
 		abort: () => queryClient.cancelQueries({ queryKey }),
 	};
 }
-
 function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 	key: keyof RawSchema,
 	endpoint: IPaginatedFetchOptions<ID, IO, ZQ, ZP>,
@@ -139,7 +138,7 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 		staleTime?: number;
 		enabled?: boolean;
 	}
-): UseQueryResult<{ data: IPaginatedData<ID, IO> }> & { abort: () => void } {
+): UseQueryResult<IPaginatedData<ID, IO>> & { abort: () => void } {
 	const queryClient = useQueryClient();
 	const mergedQuery = useMemo(
 		() =>
@@ -161,10 +160,13 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 
 	const staleTime = ApiHelper.parseTime(ApiHelper.merge(options.staleTime, endpoint.staleTime));
 
-	const query = useQuery<{ data: IPaginatedData<ID, IO> }>({
+	const query = useQuery<IPaginatedData<ID, IO>>({
 		queryKey,
 		queryFn: async ({ signal }) => {
-			const config: AxiosRequestConfig = {
+			const resp = await axiosClient.request<{
+				message: string;
+				data: IPaginatedData<ID, IO>;
+			}>({
 				method: endpoint.method || "GET",
 				url: ApiHelper.buildUrl({
 					route: endpoint.route,
@@ -172,13 +174,9 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 					searchParams: mergedQuery,
 				}),
 				signal,
-			};
+			});
 
-			const resp = await axiosClient.request<{
-				data: IPaginatedData<ID, IO>;
-			}>(config);
-
-			return resp.data;
+			return resp.data.data;
 		},
 		staleTime,
 		enabled: options.enabled ?? endpoint.enable?.isEnable ?? true,
@@ -188,13 +186,14 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 		refetchIntervalInBackground: endpoint.refetch?.interval?.inBackground,
 		refetchOnMount: endpoint.refetch?.onMount ? "always" : false,
 		refetchOnWindowFocus: endpoint.refetch?.onFocus ? "always" : false,
-	} as UseQueryOptions<{ data: IPaginatedData<ID, IO> }>);
+	});
 
 	return {
 		...query,
 		abort: () => queryClient.cancelQueries({ queryKey }),
 	};
 }
+
 function useMutationApi<Schema extends RawSchema, K extends keyof Schema & string>(
 	endpoint: IFetchMutationOptions<K>,
 	axiosClient: AxiosInstance,

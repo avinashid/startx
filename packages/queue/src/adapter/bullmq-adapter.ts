@@ -21,7 +21,7 @@ export class BullMQProvider implements IQueueProvider {
 		};
 	}
 
-	private getQueue(queueName: string): Queue {
+	getQueue(queueName: string): Queue {
 		if (!this.queues.has(queueName)) {
 			this.queues.set(queueName, new Queue(queueName, { connection: this.connection }));
 		}

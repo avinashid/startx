@@ -102,6 +102,8 @@ catalog:
 
   # bullmq
   bullmq: "^5.76.4"
+  "@bull-board/express": "^7.1.5"
+  "@bull-board/api": "^7.1.5"
 
   # redis
   ioredis: "^5.10.1"

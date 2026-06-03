@@ -26,10 +26,14 @@
 		"@repo/redis": "workspace:^",
 		"@repo/env": "workspace:^",
 		"@repo/logger": "workspace:^",
-		"@repo/queue": "workspace:*"
+		"@repo/queue": "workspace:*",
+		"@bull-board/api": "catalog:",
+		"@bull-board/express": "catalog:",
+		"express": "catalog:"
 	},
 	"devDependencies": {
 		"eslint-config": "workspace:*",
+		"@types/express": "catalog:",
 		"vitest-config": "workspace:*",
 		"tsdown-config": "workspace:*",
 		"typescript-config": "workspace:*"

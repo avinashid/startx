@@ -12,6 +12,12 @@ catalogs:
     '@biomejs/biome':
       specifier: ^2.3.13
       version: 2.3.13
+    '@bull-board/api':
+      specifier: ^7.1.5
+      version: 7.1.5
+    '@bull-board/express':
+      specifier: ^7.1.5
+      version: 7.1.5
     '@dotenvx/dotenvx':
       specifier: ^1.64.0
       version: 1.64.0
@@ -380,6 +386,12 @@ importers:
 
   apps/queue-worker:
     dependencies:
+      '@bull-board/api':
+        specifier: 'catalog:'
+        version: 7.1.5(@bull-board/ui@7.1.5)
+      '@bull-board/express':
+        specifier: 'catalog:'
+        version: 7.1.5
       '@db/drizzle':
         specifier: workspace:^
         version: link:../../packages/@db/drizzle
@@ -404,7 +416,13 @@ importers:
       '@repo/redis':
         specifier: workspace:^
         version: link:../../packages/@repo/redis
+      express:
+        specifier: 'catalog:'
+        version: 5.2.1
     devDependencies:
+      '@types/express':
+        specifier: 'catalog:'
+        version: 5.0.6
       eslint-config:
         specifier: workspace:*
         version: link:../../configs/eslint-config
@@ -1510,6 +1528,17 @@ packages:
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
+
+  '@bull-board/api@7.1.5':
+    resolution: {integrity: sha512-EW0sbTtGIysu9vipdVpPQeToPqOpPgVZTt+pn1Ut3gbSS/GLWbEgIfFtMmSQDUoSL9WH00RzjgUY5K+43nWh0A==}
+    peerDependencies:
+      '@bull-board/ui': 7.1.5
+
+  '@bull-board/express@7.1.5':
+    resolution: {integrity: sha512-kp4SzhVjZlykryiQwcOhJjDhiLbBnZoAMoSgEstzqQ0raLw+jERRC6ryJ0MIQO+SO+Jv9EjjxrXCR8O2YSP/eg==}
+
+  '@bull-board/ui@7.1.5':
+    resolution: {integrity: sha512-2IkatKwNRx/1M9/lAZIptcxS1FPNq6icpp2M46Upwd4olVxs/ujF9Kvs+Ff9ExtIO/OgYfwx7mG2IprGZ+nQCg==}
 
   '@colors/colors@1.6.0':
     resolution: {integrity: sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==}
@@ -5810,6 +5839,11 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
+  ejs@5.0.2:
+    resolution: {integrity: sha512-IpbUaI/CAW86l3f+T8zN0iggSc0LmMZLcIW5eRVStLVNCoTXkE0YlncbbH50fp8Cl6zHIky0sW2uUbhBqGw0Jw==}
+    engines: {node: '>=0.12.18'}
+    hasBin: true
+
   electron-to-chromium@1.5.283:
     resolution: {integrity: sha512-3vifjt1HgrGW/h76UEeny+adYApveS9dH2h3p57JYzBSXJIKUJAvtmIytDKjcSCt9xHfrNCFJ7gts6vkhuq++w==}
 
@@ -7763,6 +7797,9 @@ packages:
   redis-errors@1.2.0:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
     engines: {node: '>=4'}
+
+  redis-info@3.1.0:
+    resolution: {integrity: sha512-ER4L9Sh/vm63DkIE0bkSjxluQlioBiBgf5w1UuldaW/3vPcecdljVDisZhmnCMvsxHNiARTTDDHGg9cGwTfrKg==}
 
   redis-parser@3.0.0:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
@@ -9859,6 +9896,24 @@ snapshots:
   '@bramus/specificity@2.4.2':
     dependencies:
       css-tree: 3.2.1
+
+  '@bull-board/api@7.1.5(@bull-board/ui@7.1.5)':
+    dependencies:
+      '@bull-board/ui': 7.1.5
+      redis-info: 3.1.0
+
+  '@bull-board/express@7.1.5':
+    dependencies:
+      '@bull-board/api': 7.1.5(@bull-board/ui@7.1.5)
+      '@bull-board/ui': 7.1.5
+      ejs: 5.0.2
+      express: 5.2.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@bull-board/ui@7.1.5':
+    dependencies:
+      '@bull-board/api': 7.1.5(@bull-board/ui@7.1.5)
 
   '@colors/colors@1.6.0': {}
 
@@ -13585,6 +13640,8 @@ snapshots:
 
   ee-first@1.1.1: {}
 
+  ejs@5.0.2: {}
+
   electron-to-chromium@1.5.283: {}
 
   embla-carousel-react@8.6.0(react@19.2.4):
@@ -15893,6 +15950,10 @@ snapshots:
   readdirp@4.1.2: {}
 
   redis-errors@1.2.0: {}
+
+  redis-info@3.1.0:
+    dependencies:
+      lodash: 4.17.23
 
   redis-parser@3.0.0:
     dependencies:

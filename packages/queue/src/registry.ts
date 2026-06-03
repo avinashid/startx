@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { emailQueue } from "./common/email-queue.js";
+import { commonQueue } from "./common/index.js";
 
 export const JobSchemas = {
-	...emailQueue,
+	...commonQueue,
 } as const;
 
 export type JobRegistry = {
