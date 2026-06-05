@@ -5,12 +5,14 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import { TokenModule } from "../extra/token-module.js";
 
-const env = defineEnv({
+export const sessionEnv = defineEnv({
 	SESSION_DURATION: z.number().default(Time.days(30).milliseconds),
+	SESSION_TYPE: z.enum(["single", "multi"]).default("multi"),
+	MAX_CONCURRENT_SESSIONS: z.number().default(1),
 });
 
 export const constants = {
-	sessionDuration: env.SESSION_DURATION,
+	sessionDuration: sessionEnv.SESSION_DURATION,
 };
 
 export type TokenPair = {
@@ -172,7 +174,7 @@ export abstract class IUserSession {
 	public async endAllSessions(userId: string): Promise<void> {
 		const sessions = await this.getUserSessions(userId);
 
-		await Promise.all(sessions.map((sid) => this.deleteSession(sid)));
+		await Promise.all(sessions.map(sid => this.deleteSession(sid)));
 
 		await this.clearUserSessions(userId);
 	}

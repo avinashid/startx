@@ -69,6 +69,26 @@
 			"cache": false,
 			"interactive": true
 		},
+		"db:migrate": {
+			"cache": false,
+			"interactive": true
+		},
+		"db:up": {
+			"cache": false,
+			"interactive": true
+		},
+		"db:check": {
+			"cache": false,
+			"interactive": true
+		},
+		"db:pull": {
+			"cache": false,
+			"interactive": true
+		},
+		"db:generate": {
+			"cache": false,
+			"interactive": true
+		},
 		"db:studio": {
 			"cache": false,
 			"interactive": false,

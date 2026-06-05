@@ -1,0 +1,41 @@
+{
+	"name": "@repo/model",
+	"type": "module",
+	"scripts": {
+		"lint": "eslint .",
+		"lint:fix": "eslint . src/**/*.ts --fix",
+		"clean": "rimraf dist build .turbo",
+		"deep:clean": "rimraf node_modules dist build .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "vitest run"
+	},
+	"exports": {
+		".": "./src/index.ts",
+		"./*": "./src/*/index.ts"
+	},
+	"dependencies": {
+		"@repo/lib": "workspace:^",
+		"@repo/logger": "workspace:^"
+	},
+	"devDependencies": {
+		"typescript-config": "workspace:^",
+		"eslint-config": "workspace:^",
+		"vitest-config": "workspace:^"
+	},
+	"startx": {
+		"iTags": [
+			"node"
+		],
+		"gTags": [],
+		"tags": [],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/lib"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

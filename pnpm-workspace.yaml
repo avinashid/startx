@@ -75,8 +75,8 @@ catalog:
   "@types/morgan": "^1.9.10"
 
   # db
-  drizzle-orm: "^0.45.1"
-  drizzle-kit: "^0.31.10"
+  drizzle-orm: "^1.0.0-beta.22"
+  drizzle-kit: "^1.0.0-beta.22"
   pg: "^8.19.0"
   better-sqlite3: "^12.9.0"
 

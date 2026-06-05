@@ -1,26 +1,15 @@
 import { defineEnv } from "@repo/env";
-import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle, type NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
-import { type PgTransaction } from "drizzle-orm/pg-core";
-import Pg from "pg";
+import { PgAsyncTransaction } from "drizzle-orm/pg-core";
 import z from "zod";
-
-import * as schema from "./schema/index.js";
 
 const env = defineEnv({
 	DATABASE_URL: z.string(),
 });
-export const client = new Pg.Pool({
-	connectionString: env.DATABASE_URL,
-});
-const db = drizzle({ client, schema });
-export type DrizzleTransaction = PgTransaction<
-	NodePgQueryResultHKT,
-	typeof schema,
-	ExtractTablesWithRelations<typeof schema>
->;
+export type DrizzleTransaction = PgAsyncTransaction<NodePgQueryResultHKT>;
+const db = drizzle(env.DATABASE_URL);
+
 export type DrizzleDB = typeof db;
 export { db };
 export * from "drizzle-orm";
 export * from "./functions.js";
-export * from "./schema/index.js";

@@ -11,6 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY --parents apps/*/package.json ./
 COPY --parents packages/*/package.json ./
+COPY --parents packages/*/*/package.json ./
 COPY --parents configs/*/package.json ./
 
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
@@ -21,13 +22,17 @@ COPY packages ./packages
 COPY configs ./configs
 COPY turbo.json ./
 
-# Build the required packages
-RUN pnpm build --filter=core-server
+# Build the required packages with Turbo cache mounted
+RUN --mount=type=cache,id=turbo,target=/app/.turbo/cache \
+    pnpm build --filter=queue-worker
 
 # --- Final production image ---
 FROM node:24-alpine
 
 WORKDIR /app
+
+# Install external dependencies locally
+RUN npm install sharp
 
 # Copy built server dist
 COPY --from=builder /app/apps/core-server/dist ./

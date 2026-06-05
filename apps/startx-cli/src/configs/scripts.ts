@@ -137,6 +137,46 @@ export const scripts: SCRIPT = {
 			tags: ["db", "root"],
 		},
 	],
+	"db:pull": [
+		{
+			script: "drizzle-kit pull",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:pull",
+			tags: ["db", "root"],
+		},
+	],
+	"db:generate": [
+		{
+			script: "drizzle-kit generate",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:generate",
+			tags: ["db", "root"],
+		},
+	],
+	"db:migrate": [
+		{
+			script: "drizzle-kit migrate",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:migrate",
+			tags: ["db", "root"],
+		},
+	],
+	"db:check": [
+		{
+			script: "drizzle-kit check",
+			tags: ["drizzle", "db"],
+		},
+		{
+			script: "turbo run db:check",
+			tags: ["db", "root"],
+		},
+	],
 	"typecheck": [
 		{
 			script: "turbo run typecheck",
