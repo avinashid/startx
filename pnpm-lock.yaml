@@ -818,6 +818,25 @@ importers:
         specifier: workspace:^
         version: link:../../../configs/vitest-config
 
+  packages/@repo/model:
+    dependencies:
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../lib
+      '@repo/logger':
+        specifier: workspace:^
+        version: link:../logger
+    devDependencies:
+      eslint-config:
+        specifier: workspace:^
+        version: link:../../../configs/eslint-config
+      typescript-config:
+        specifier: workspace:^
+        version: link:../../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:^
+        version: link:../../../configs/vitest-config
+
   packages/@repo/redis:
     dependencies:
       '@repo/env':
