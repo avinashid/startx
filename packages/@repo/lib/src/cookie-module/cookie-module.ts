@@ -20,9 +20,9 @@ const COOKIE_NAMES = {
 } as const;
 
 const COOKIE_TTL = {
-	development: Time.days(90).milliseconds, // 3 months
-	staging: Time.days(90).milliseconds, // 3 months
-	production: Time.days(30).milliseconds, // 30 days
+	development: Time.days(90).milliseconds,
+	staging: Time.days(90).milliseconds,
+	production: Time.days(30).milliseconds,
 } as const;
 
 function getRuntimeEnv(): RuntimeEnv {

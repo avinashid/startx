@@ -4,7 +4,7 @@ import type { Transporter, SendMailOptions } from "nodemailer";
 import * as nodemailer from "nodemailer";
 import z from "zod";
 
-const credentials = defineEnv({
+const credentials = {
 	SMTP_HOST: z.string(),
 	SMTP_PORT: z.coerce.number().default(465),
 	SMTP_USER: z.string(),
@@ -12,9 +12,10 @@ const credentials = defineEnv({
 	SMTP_MAIL_ENCRYPTION: z.enum(["ssl", "tls", "starttls"]).default("ssl"),
 	SMTP_SENDER_MAIL: z.string().email(),
 	SMTP_SENDER_NAME: z.string().default("Startx"),
-});
+};
+const _SMTPConfigSchema = z.object(credentials);
 
-export type SMTPConfig = typeof credentials;
+export type SMTPConfig = z.infer<typeof _SMTPConfigSchema>;
 
 class SMTPMailService {
 	private static transporters = new Map<string, Transporter>();
@@ -39,7 +40,7 @@ class SMTPMailService {
 	}
 
 	static async verifyConnection(customConfig?: SMTPConfig): Promise<boolean> {
-		const config = customConfig || credentials;
+		const config = customConfig || defineEnv(credentials);
 		const transporter = this.getTransporter(config);
 
 		try {
@@ -56,7 +57,7 @@ class SMTPMailService {
 		props: { to: string; subject: string; text: string; html?: string },
 		customConfig?: SMTPConfig
 	) {
-		const config = customConfig || credentials;
+		const config = customConfig || defineEnv(credentials);
 		const transporter = this.getTransporter(config);
 
 		const mailOptions: SendMailOptions = {
