@@ -8,7 +8,7 @@
 		"dev": "react-router dev",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
-		"start": "react-router-serve ./build/server/index.js",
+		"start": "vite preview",
 		"typecheck": "react-router typegen && tsc",
 		"test": "vitest run",
 		"lint": "eslint .",

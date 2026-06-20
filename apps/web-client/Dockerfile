@@ -9,34 +9,32 @@ FROM base AS builder
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-COPY --parents apps/queue-worker/package.json ./
-COPY --parents packages/*/package.json ./
-COPY --parents packages/*/*/package.json ./
+COPY --parents apps/web-client/package.json ./
+COPY --parents packages/common/package.json ./
+COPY --parents packages/ui/package.json ./
 COPY --parents configs/*/package.json ./
 
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
-COPY apps/queue-worker/ ./apps/queue-worker/
-COPY packages ./packages
+COPY apps/web-client/ ./apps/web-client/
+COPY packages/common ./packages/common
+COPY packages/ui ./packages/ui
 COPY configs ./configs
-COPY assets ./assets
 COPY turbo.json ./
 
 # Build the required packages with Turbo cache mounted
 RUN --mount=type=cache,id=turbo,target=/app/.turbo/cache \
-    pnpm build --filter=queue-worker
+    pnpm build --filter=web-client
 
 # --- Final production image ---
-FROM node:24-alpine
+FROM nginx:stable-alpine
 
-WORKDIR /app
-
-# Install external dependencies locally
-RUN npm install sharp @bull-board/api @bull-board/ui @bull-board/express
 
 # Copy built server dist
-COPY --from=builder /app/apps/queue-worker/dist ./
-EXPOSE 2866
+COPY --from=builder /app/apps/web-client/build/client /usr/share/nginx/html
+COPY --from=builder /app/apps/web-client/nginx.conf /etc/nginx/conf.d/default.conf
 
-CMD ["node", "./index.mjs"]
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

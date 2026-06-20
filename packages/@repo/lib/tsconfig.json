@@ -1,7 +1,8 @@
 {
 	"extends": "typescript-config/tsconfig.node.json",
 	"compilerOptions": {
-		"jsx": "react"
+		"jsx": "react",
+		"lib": ["DOM", "ES2022"]
 	},
 	"include": ["src/**/*.ts"]
 }

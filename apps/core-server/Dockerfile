@@ -9,7 +9,7 @@ FROM base AS builder
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-COPY --parents apps/*/package.json ./
+COPY --parents apps/core-server/package.json ./
 COPY --parents packages/*/package.json ./
 COPY --parents packages/*/*/package.json ./
 COPY --parents configs/*/package.json ./
@@ -20,11 +20,12 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 COPY apps/core-server/ ./apps/core-server/
 COPY packages ./packages
 COPY configs ./configs
+COPY assets ./assets
 COPY turbo.json ./
 
 # Build the required packages with Turbo cache mounted
 RUN --mount=type=cache,id=turbo,target=/app/.turbo/cache \
-    pnpm build --filter=queue-worker
+    pnpm build --filter=core-server
 
 # --- Final production image ---
 FROM node:24-alpine

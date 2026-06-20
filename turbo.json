@@ -10,7 +10,7 @@
 		"build": {
 			"cache": true,
 			"inputs": ["src/**", "tsdown.config.ts", "eslint.config.*", "tsconfig*.json", "package.json"],
-			"outputs": ["dist/**"],
+			"outputs": ["dist/**", "build/**"],
 			"dependsOn": ["lint", "^build"]
 		},
 

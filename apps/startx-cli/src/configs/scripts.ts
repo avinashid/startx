@@ -69,12 +69,12 @@ export const scripts: SCRIPT = {
 			tags: ["backend", "runnable", "node", "root"],
 		},
 		{
-			script: "node dist/index.mjs",
-			tags: ["node", "runnable"],
+			script: "vite preview",
+			tags: ["react-router", "frontend", "runnable"],
 		},
 		{
-			script: "react-router-serve ./build/server/index.js",
-			tags: ["react-router", "frontend"],
+			script: "node dist/index.mjs",
+			tags: ["node", "runnable"],
 		},
 	],
 	"lint": [
