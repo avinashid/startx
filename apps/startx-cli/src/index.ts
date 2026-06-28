@@ -3,6 +3,7 @@ import { logger } from "@repo/logger";
 import { Command } from "commander";
 
 import { InitCommand } from "./commands/init";
+import { PackageCommand } from "./commands/package";
 import { version } from "../../../package.json";
 
 const program = new Command();
@@ -14,6 +15,6 @@ program.command("ping").action(() => {
 });
 
 program.addCommand(InitCommand.command);
-// program.addCommand(PackageCommand.command);
+program.addCommand(PackageCommand.command);
 
 program.parse(process.argv);

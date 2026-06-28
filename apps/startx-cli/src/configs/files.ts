@@ -16,6 +16,9 @@ export const FileCheck: WHITELIST_FILES = {
 	".prettierignore": {
 		tags: ["biome"],
 	},
+	"README.md": {
+		tags: ["never"],
+	},
 	"biome.json": {
 		tags: ["biome"],
 	},

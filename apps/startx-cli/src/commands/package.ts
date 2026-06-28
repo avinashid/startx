@@ -6,6 +6,7 @@ import fs from "fs/promises";
 import path from "path";
 import z from "zod";
 
+import { DepCheck } from "../configs/deps";
 import { FileCheck } from "../configs/files";
 import type { StartXPackageJson, TAGS } from "../types";
 import { CliUtils, type PackageItem } from "../utils/cli-utils";
@@ -15,6 +16,7 @@ import { CommonInquirer } from "../utils/inquirer";
 type PackageOptions = {
 	eslint?: boolean;
 	install?: boolean;
+	name?: string;
 };
 
 type NewPackageOptions = PackageOptions & {
@@ -39,11 +41,12 @@ export class PackageCommand {
 		)
 		.addCommand(
 			new Command("add")
-				.description("Add an existing StartX package by name.")
+				.description("Add an existing StartX app or package, optionally with a new name.")
 				.argument("[packageName]")
+				.option("-n, --name <name>", "override the name for the added package")
 				.option("--eslint", "enable ESLint support for the added package")
 				.option("--no-eslint", "skip ESLint support for the added package")
-				.option("--no-install", "do not run the package manager after updating ESLint")
+				.option("--no-install", "do not run the package manager after updating dependencies")
 				.action(PackageCommand.add.bind(PackageCommand))
 		)
 		.addCommand(
@@ -85,7 +88,7 @@ export class PackageCommand {
 		const selectedName =
 			packageName ??
 			(await CommonInquirer.choose({
-				message: "Select package to add",
+				message: "Select app or package to add",
 				options: availablePackages.map(pkg => pkg.name),
 				mode: "single",
 				required: true,
@@ -95,6 +98,16 @@ export class PackageCommand {
 		if (!selectedPackage) {
 			throw new Error(`Package "${selectedName}" was not found in the StartX template.`);
 		}
+
+		const templateName = selectedPackage.packageJson?.name ?? selectedPackage.name;
+		const overrideName =
+			options.name ??
+			(await CommonInquirer.getText({
+				message: "Name for the new package (leave unchanged to keep the original)",
+				name: "overrideName",
+				default: templateName,
+				schema: packageNameSchema,
+			}));
 
 		const directory = CliUtils.getDirectory();
 		const eslintEnabled = await this.resolveEslintPreference(options);
@@ -109,15 +122,24 @@ export class PackageCommand {
 			eslintEnabled,
 		});
 
+		await this.checkAndInstallMissingDeps({
+			workspace: directory.workspace,
+			tags,
+			install: options.install,
+		});
+
 		for (const pkg of packagesToInstall) {
+			const isMain = pkg.name === selectedPackage.name;
 			await this.installTemplatePackage({
 				pkg,
 				directory,
 				tags,
+				overrideName: isMain ? overrideName : undefined,
+				overrideRelativePath: isMain ? this.getDestinationPath(pkg.relativePath, overrideName) : undefined,
 			});
 		}
 
-		logger.info(`Package add complete: ${selectedPackage.name}`);
+		logger.info(`Done! Run \`pnpm install\` to link the new package.`);
 	}
 
 	private static async create(packageName: string | undefined, options: NewPackageOptions) {
@@ -136,8 +158,11 @@ export class PackageCommand {
 			throw new Error(`Package directory already exists: ${packageDir}`);
 		}
 
+		const rootPackage = await this.readRootPackage(directory.workspace);
 		const eslintEnabled = await this.resolveEslintPreference(options);
+		const vitestEnabled = this.hasDependency(rootPackage, "vitest");
 		const packages = await CliUtils.getPackageList();
+
 		await this.ensureTemplatePackage({
 			packages,
 			name: "typescript-config",
@@ -154,8 +179,20 @@ export class PackageCommand {
 			});
 		}
 
+		if (vitestEnabled) {
+			await this.ensureTemplatePackage({
+				packages,
+				name: "vitest-config",
+				directory,
+				tags: ["common", "node", "vitest"],
+			});
+		}
+
 		await fs.mkdir(path.join(packageDir, "src"), { recursive: true });
-		await this.writeJson(path.join(packageDir, "package.json"), this.createPackageJson({ name, eslintEnabled }));
+		await this.writeJson(
+			path.join(packageDir, "package.json"),
+			this.createPackageJson({ name, eslintEnabled, vitestEnabled })
+		);
 		await fs.writeFile(
 			path.join(packageDir, "tsconfig.json"),
 			`${JSON.stringify(
@@ -181,7 +218,15 @@ export class PackageCommand {
 			);
 		}
 
+		if (vitestEnabled) {
+			await fs.writeFile(
+				path.join(packageDir, "vitest.config.ts"),
+				`import vitestConfig from "vitest-config/node";\n\nexport default vitestConfig;\n`
+			);
+		}
+
 		logger.info(`Created package ${name} at ${path.relative(directory.workspace, packageDir)}`);
+		logger.info(`Run \`pnpm install\` to link the new package.`);
 	}
 
 	private static async resolveEslintPreference(options: PackageOptions) {
@@ -228,6 +273,7 @@ export class PackageCommand {
 		if (this.hasDependency(rootPackage, "@biomejs/biome")) tags.add("biome");
 		if (this.hasDependency(rootPackage, "prettier")) tags.add("prettier");
 		if (this.hasDependency(rootPackage, "vitest")) tags.add("vitest");
+		if (this.hasDependency(rootPackage, "tsdown")) tags.add("tsdown");
 
 		for (const pkg of props.packages) {
 			pkg.packageJson?.startx?.tags?.forEach(tag => tags.add(tag));
@@ -295,15 +341,25 @@ export class PackageCommand {
 		pkg: PackageItem;
 		directory: ReturnType<typeof CliUtils.getDirectory>;
 		tags: TAGS[];
+		overrideName?: string;
+		overrideRelativePath?: string;
 	}) {
 		if (!props.pkg.packageJson) {
 			throw new Error(`Missing package.json for ${props.pkg.name}`);
 		}
 
-		const destination = path.join(props.directory.workspace, props.pkg.relativePath);
+		const relativePath = props.overrideRelativePath ?? props.pkg.relativePath;
+		const destination = path.join(props.directory.workspace, relativePath);
+
 		if (await this.pathExists(path.join(destination, "package.json"))) {
-			logger.info(`Skipping ${props.pkg.name}; it already exists.`);
-			return;
+			const overwrite = await CommonInquirer.confirm({
+				message: `"${relativePath}" already exists. Overwrite?`,
+				default: false,
+			});
+			if (!overwrite) {
+				logger.info(`Skipping ${props.pkg.name}.`);
+				return;
+			}
 		}
 
 		const tags = new Set<TAGS>([...props.tags, ...(props.pkg.packageJson.startx?.tags ?? [])]);
@@ -314,7 +370,7 @@ export class PackageCommand {
 		const { packageJson, isWorkspace } = FileHandler.handlePackageJson({
 			app: props.pkg.packageJson,
 			tags: Array.from(tags),
-			name: props.pkg.packageJson.name || props.pkg.name,
+			name: props.overrideName ?? props.pkg.packageJson.name ?? props.pkg.name,
 		});
 
 		if (isWorkspace) {
@@ -329,7 +385,7 @@ export class PackageCommand {
 			exclude: !tags.has("vitest") ? /\.test\.tsx?$/ : undefined,
 		});
 
-		logger.info(`Installed ${props.pkg.name}`);
+		logger.info(`Installed ${props.overrideName ?? props.pkg.name} at ${relativePath}`);
 	}
 
 	private static async copyValidatedFilesFromFolder(source: string, destination: string, tags: Set<TAGS>) {
@@ -346,7 +402,7 @@ export class PackageCommand {
 		}
 	}
 
-	private static createPackageJson(props: { name: string; eslintEnabled: boolean }) {
+	private static createPackageJson(props: { name: string; eslintEnabled: boolean; vitestEnabled: boolean }) {
 		const scripts: Record<string, string> = {
 			typecheck: "tsc --noEmit",
 			clean: "rimraf dist .turbo",
@@ -354,11 +410,21 @@ export class PackageCommand {
 		const devDependencies: Record<string, string> = {
 			"typescript-config": "workspace:*",
 		};
+		const ignore: string[] = [];
 
 		if (props.eslintEnabled) {
 			scripts.lint = "eslint .";
 			scripts["lint:fix"] = "eslint . --fix";
 			devDependencies["eslint-config"] = "workspace:*";
+		} else {
+			ignore.push("eslint-config");
+		}
+
+		if (props.vitestEnabled) {
+			scripts.test = "vitest run";
+			devDependencies["vitest-config"] = "workspace:*";
+		} else {
+			ignore.push("vitest-config");
 		}
 
 		return {
@@ -371,9 +437,64 @@ export class PackageCommand {
 			startx: {
 				iTags: ["node"],
 				requiredDevDeps: ["typescript-config"],
-				...(props.eslintEnabled ? {} : { ignore: ["eslint-config"] }),
+				...(ignore.length > 0 ? { ignore } : {}),
 			},
 		};
+	}
+
+	private static async checkAndInstallMissingDeps(props: {
+		workspace: string;
+		tags: TAGS[];
+		install?: boolean;
+	}) {
+		const rootPackage = await this.readRootPackage(props.workspace);
+		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.workspace });
+
+		const missing: Array<{ name: string; version: string; isDev: boolean }> = [];
+		for (const [dep, config] of Object.entries(DepCheck)) {
+			if (!config.tags.every(tag => props.tags.includes(tag as TAGS))) continue;
+			if (config.tags.includes("root")) continue;
+			if (this.hasDependency(rootPackage, dep)) continue;
+			const version = pnpmWorkspace?.catalog?.[dep] ? "catalog:" : config.version;
+			missing.push({ name: dep, version, isDev: config.isDevDependency ?? true });
+		}
+
+		if (missing.length === 0) return;
+
+		logger.warn(`The following workspace dependencies are required but not installed:`);
+		for (const dep of missing) {
+			logger.warn(`  - ${dep.name}`);
+		}
+
+		const shouldAdd = await CommonInquirer.confirm({
+			message: "Add them to the workspace root package.json?",
+			default: true,
+		});
+		if (!shouldAdd) {
+			logger.warn("Skipping. Some features may not work correctly without these dependencies.");
+			return;
+		}
+
+		for (const dep of missing) {
+			if (dep.isDev) {
+				(rootPackage.devDependencies as Record<string, string>)[dep.name] = dep.version;
+			} else {
+				(rootPackage.dependencies as Record<string, string>)[dep.name] = dep.version;
+			}
+		}
+
+		await this.writeJson(path.join(props.workspace, "package.json"), rootPackage);
+		logger.info("Added missing dependencies to root package.json.");
+
+		if (props.install !== false) {
+			await this.installRootDependencies(props.workspace);
+		}
+	}
+
+	private static getDestinationPath(templateRelativePath: string, newName: string): string {
+		const parentDir = path.dirname(templateRelativePath);
+		const leafName = newName.includes("/") ? newName.split("/").pop()! : newName;
+		return path.join(parentDir, leafName);
 	}
 
 	private static getDefaultPackagePath(name: string) {
