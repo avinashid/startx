@@ -21,14 +21,14 @@
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"@aws-sdk/client-bedrock": "^3.1047.0",
-		"@aws-sdk/client-bedrock-runtime": "^3.1047.0",
+		"@aws-sdk/client-bedrock": "catalog:",
+		"@aws-sdk/client-bedrock-runtime": "catalog:",
 		"@repo/env": "workspace:*",
 		"@repo/lib": "workspace:*",
 		"@repo/logger": "workspace:*",
-		"@toon-format/toon": "^2.1.0",
+		"@toon-format/toon": "catalog:",
 		"js-tiktoken": "catalog:",
-		"jsonrepair": "^3.14.0",
+		"jsonrepair": "catalog:",
 		"openai": "catalog:",
 		"pg": "catalog:",
 		"quickjs-emscripten": "catalog:",

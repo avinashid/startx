@@ -20,20 +20,20 @@
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
-		"cross-env": "^10.1.0",
+		"cross-env": "catalog:",
 		"eslint-config": "workspace:*",
 		"tsdown-config": "workspace:*",
 		"typescript-config": "workspace:*",
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"@inquirer/prompts": "^8.3.0",
+		"@inquirer/prompts": "catalog:",
 		"@repo/lib": "workspace:*",
 		"@repo/logger": "workspace:*",
 		"@repo/env": "workspace:*",
-		"chokidar": "^4.0.3",
-		"commander": "^14.0.0",
-		"type-fest": "^5.4.4"
+		"chokidar": "catalog:",
+		"commander": "catalog:",
+		"type-fest": "catalog:"
 	},
 	"startx": {
 		"mode": "silent",

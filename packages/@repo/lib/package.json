@@ -18,8 +18,8 @@
 		"./*": "./src/*/index.ts"
 	},
 	"devDependencies": {
-		"@types/jsonwebtoken": "^9.0.7",
-		"@types/nodemailer": "^6.4.16",
+		"@types/jsonwebtoken": "catalog:",
+		"@types/nodemailer": "catalog:",
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
 		"vine": "link:@types/vinejs/vine",
@@ -38,7 +38,7 @@
 		"firebase-admin": "catalog:",
 		"jsonwebtoken": "catalog:",
 		"nodemailer": "catalog:",
-		"yaml": "^2.8.2"
+		"yaml": "catalog:"
 	},
 	"startx": {
 		"iTags": [

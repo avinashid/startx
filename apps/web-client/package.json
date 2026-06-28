@@ -23,7 +23,7 @@
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"react-router": "catalog:",
-		"zustand": "^5.0.13",
+		"zustand": "catalog:",
 		"@repo/common": "workspace:*"
 	},
 	"devDependencies": {
