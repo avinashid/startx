@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import YAML from "yaml";
+import * as YAML from "yaml";
 
 import { __dirname } from "../utils.js";
 

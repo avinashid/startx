@@ -4,7 +4,7 @@ import { spawn } from "child_process";
 import { Command } from "commander";
 import fs from "fs/promises";
 import path from "path";
-import YAML from "yaml";
+import * as YAML from "yaml";
 import z from "zod";
 
 import { DepCheck } from "../configs/deps";
@@ -376,6 +376,7 @@ export class PackageCommand {
 
 		await this.syncDepsWithCatalog({
 			workspace: props.directory.workspace,
+			templateDir: props.directory.template,
 			packageJson: packageJson as Record<string, unknown>,
 		});
 
@@ -448,19 +449,35 @@ export class PackageCommand {
 		const rootPackage = await this.readRootPackage(props.workspace);
 		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.workspace });
 
-		const missing: Array<{ name: string; version: string; isDev: boolean }> = [];
+		const missingNpm: Array<{ name: string; version: string; isDev: boolean }> = [];
+		const missingWorkspace: string[] = [];
+
 		for (const [dep, config] of Object.entries(DepCheck)) {
 			if (!config.tags.every(tag => props.tags.includes(tag))) continue;
 			if (config.tags.includes("root")) continue;
-			if (this.hasDependency(rootPackage, dep)) continue;
-			const version = pnpmWorkspace?.catalog?.[dep] ? "catalog:" : config.version;
-			missing.push({ name: dep, version, isDev: config.isDevDependency ?? true });
+
+			if (config.version.startsWith("workspace:")) {
+				// Workspace packages live in configs/, packages/, apps/ — not in root package.json
+				const exists = await this.workspacePackageExists(props.workspace, dep);
+				if (!exists) missingWorkspace.push(dep);
+			} else {
+				if (this.hasDependency(rootPackage, dep)) continue;
+				const version = pnpmWorkspace?.catalog?.[dep] ? "catalog:" : config.version;
+				missingNpm.push({ name: dep, version, isDev: config.isDevDependency ?? true });
+			}
 		}
 
-		if (missing.length === 0) return;
+		if (missingWorkspace.length > 0) {
+			logger.warn("The following workspace packages are missing from this monorepo:");
+			for (const name of missingWorkspace) {
+				logger.warn(`  - ${name}  →  run: startx package add ${name}`);
+			}
+		}
 
-		logger.warn(`The following workspace dependencies are required but not installed:`);
-		for (const dep of missing) {
+		if (missingNpm.length === 0) return;
+
+		logger.warn("The following npm dependencies are required but not installed:");
+		for (const dep of missingNpm) {
 			logger.warn(`  - ${dep.name}`);
 		}
 
@@ -473,7 +490,7 @@ export class PackageCommand {
 			return;
 		}
 
-		for (const dep of missing) {
+		for (const dep of missingNpm) {
 			if (dep.isDev) {
 				(rootPackage.devDependencies as Record<string, string>)[dep.name] = dep.version;
 			} else {
@@ -487,6 +504,24 @@ export class PackageCommand {
 		if (props.install !== false) {
 			await this.installRootDependencies(props.workspace);
 		}
+	}
+
+	private static async workspacePackageExists(workspace: string, packageName: string): Promise<boolean> {
+		// Resolve scoped names: @repo/lib → packages/@repo/lib
+		const subPath = packageName.startsWith("@")
+			? path.join(...packageName.split("/"))
+			: packageName;
+
+		const candidates = [
+			path.join(workspace, "configs", subPath, "package.json"),
+			path.join(workspace, "packages", subPath, "package.json"),
+			path.join(workspace, "apps", subPath, "package.json"),
+		];
+
+		for (const candidate of candidates) {
+			if (await this.pathExists(candidate)) return true;
+		}
+		return false;
 	}
 
 	private static getDestinationPath(templateRelativePath: string, newName: string): string {
@@ -559,6 +594,7 @@ export class PackageCommand {
 
 	private static async syncDepsWithCatalog(props: {
 		workspace: string;
+		templateDir: string;
 		packageJson: Record<string, unknown>;
 	}): Promise<void> {
 		const workspacePath = path.join(props.workspace, "pnpm-workspace.yaml");
@@ -566,12 +602,15 @@ export class PackageCommand {
 		try {
 			content = await fs.readFile(workspacePath, "utf-8");
 		} catch {
-			throw new Error(`Could not find workspace file at ${workspacePath}.`);
+			return;
 		}
 
 		const doc = YAML.parseDocument(content);
 		const catalog = doc.getIn(["catalog"]) as Record<string, string> | undefined;
 		if (!catalog) return;
+
+		// Load template's catalog to resolve "catalog:" entries to real versions
+		const templateCatalog = await this.loadTemplateCatalog(props.templateDir);
 
 		const deps = props.packageJson.dependencies as Record<string, string> | undefined;
 		const devDeps = props.packageJson.devDependencies as Record<string, string> | undefined;
@@ -580,12 +619,19 @@ export class PackageCommand {
 		const processMap = (depMap: Record<string, string> | undefined) => {
 			if (!depMap) return;
 			for (const [name, version] of Object.entries(depMap)) {
-				if (version === "catalog:" || version.startsWith("workspace:")) continue;
-				if (catalog[name]) {
-					depMap[name] = "catalog:";
+				if (version.startsWith("workspace:")) continue;
+
+				if (version === "catalog:") {
+					// Valid only if the user's catalog already has this entry.
+					// If not, resolve the real version from the template's catalog and add it.
+					if (!catalog[name]) {
+						const templateVersion = templateCatalog[name];
+						if (templateVersion) newEntries[name] = templateVersion;
+					}
 				} else {
-					newEntries[name] = version;
+					// Hardcoded version — normalize to catalog:
 					depMap[name] = "catalog:";
+					if (!catalog[name]) newEntries[name] = version;
 				}
 			}
 		};
@@ -603,6 +649,16 @@ export class PackageCommand {
 		logger.info("Added to pnpm-workspace.yaml catalog:");
 		for (const [name, version] of Object.entries(newEntries)) {
 			logger.info(`  + ${name}: ${version}`);
+		}
+	}
+
+	private static async loadTemplateCatalog(templateDir: string): Promise<Record<string, string>> {
+		try {
+			const raw = await fs.readFile(path.join(templateDir, "pnpm-workspace.yaml"), "utf-8");
+			const doc = YAML.parseDocument(raw);
+			return (doc.getIn(["catalog"]) as Record<string, string>) ?? {};
+		} catch {
+			return {};
 		}
 	}
 
