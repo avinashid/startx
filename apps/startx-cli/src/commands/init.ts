@@ -26,6 +26,8 @@ export class InitCommand {
 		const prefs = await this.getPrefs({ projectName, options, projects: availableApps });
 		const nonAppPackages = packageList.filter(pkg => pkg.type !== "apps");
 
+		await this.checkTargetDirectory(prefs.directory.workspace);
+
 		const config = await this.getConfigPrefs({
 			selectedApps: prefs.selectedApps,
 			packages: nonAppPackages,
@@ -40,7 +42,7 @@ export class InitCommand {
 		const workspaceTags = [...packagePrefs.gTags, "runnable"] as TAGS[];
 		await this.installWorkspace({
 			name: prefs.projectName,
-			tags: [...workspaceTags, "runnable"],
+			tags: workspaceTags,
 			dir: prefs.directory,
 		});
 
@@ -307,24 +309,48 @@ export class InitCommand {
 
 	private static async writeVscodeSettings(props: { workspace: string; tags: TAGS[] }) {
 		const usesBiome = props.tags.includes("biome");
+		const vscodeDir = path.join(props.workspace, ".vscode");
 
 		const settings: Record<string, unknown> = {
 			"editor.formatOnSave": true,
 			"editor.defaultFormatter": usesBiome ? "biomejs.biome" : "esbenp.prettier-vscode",
 			"editor.codeActionsOnSave": {
-				...(usesBiome ? { "source.organizeImports.biome": "explicit" } : {}),
+				...(usesBiome
+					? {
+							"source.organizeImports.biome": "explicit",
+							"source.fixAll.biome": "explicit",
+						}
+					: {}),
 				"source.fixAll.eslint": "explicit",
-				"js/ts.suggest.autoImports": "explicit",
 				"source.fixAll": "explicit",
 			},
 			"eslint.workingDirectories": [{ "mode": "auto" }],
 		};
 
-		await fsTool.writeJSONFile({
-			dir: path.join(props.workspace, ".vscode"),
-			file: "settings",
-			content: settings,
+		const extensions = {
+			recommendations: ["dbaeumer.vscode-eslint", ...(usesBiome ? ["biomejs.biome"] : ["esbenp.prettier-vscode"])],
+		};
+
+		await Promise.all([
+			fsTool.writeJSONFile({ dir: vscodeDir, file: "settings", content: settings }),
+			fsTool.writeJSONFile({ dir: vscodeDir, file: "extensions", content: extensions }),
+		]);
+	}
+
+	private static async checkTargetDirectory(workspace: string) {
+		const [files, dirs] = await Promise.all([
+			fsTool.listFiles({ dir: workspace }),
+			fsTool.listDirectories({ dir: workspace }),
+		]);
+		if (files.length === 0 && dirs.length === 0) return;
+
+		const overwrite = await CommonInquirer.confirm({
+			message: `Directory "${workspace}" already exists and is not empty. Overwrite?`,
+			default: false,
 		});
+		if (!overwrite) {
+			throw new Error("Aborted: target directory already exists.");
+		}
 	}
 
 	// Helpers

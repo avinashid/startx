@@ -93,7 +93,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "eslint", "root"],
 		},
 		{
-			script: "eslint . src/**/*.ts --fix",
+			script: "eslint . --fix",
 			tags: ["node", "eslint"],
 		},
 	],
@@ -119,62 +119,72 @@ export const scripts: SCRIPT = {
 	],
 	"db:push": [
 		{
-			script: "drizzle-kit push",
-			tags: ["drizzle", "db"],
-		},
-		{
 			script: "turbo run db:push",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit push",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"db:studio": [
 		{
-			script: "drizzle-kit studio",
-			tags: ["drizzle", "db"],
-		},
-		{
 			script: "turbo run db:studio",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit studio",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"db:pull": [
 		{
-			script: "drizzle-kit pull",
-			tags: ["drizzle", "db"],
-		},
-		{
 			script: "turbo run db:pull",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit pull",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"db:generate": [
 		{
-			script: "drizzle-kit generate",
-			tags: ["drizzle", "db"],
-		},
-		{
 			script: "turbo run db:generate",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit generate",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"db:migrate": [
 		{
-			script: "drizzle-kit migrate",
-			tags: ["drizzle", "db"],
-		},
-		{
 			script: "turbo run db:migrate",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit migrate",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"db:check": [
 		{
+			script: "turbo run db:check",
+			tags: ["db", "root"],
+		},
+		{
 			script: "drizzle-kit check",
 			tags: ["drizzle", "db"],
 		},
+	],
+	"db:up": [
 		{
-			script: "turbo run db:check",
+			script: "turbo run db:up",
 			tags: ["db", "root"],
+		},
+		{
+			script: "drizzle-kit up",
+			tags: ["drizzle", "db"],
 		},
 	],
 	"typecheck": [

@@ -27,9 +27,9 @@ export class FileHandler {
 		tags: TAGS[];
 		dependencies?: Record<string, string>;
 	}) {
-		const isWorkspace = !!props.app.devDependencies?.turbo;
+		const isWorkspace = props.tags.includes("root");
 
-		const tags = isWorkspace ? [...props.tags, "root"] : [...props.tags];
+		const tags = [...props.tags];
 		const workspaceAttr: Record<string, unknown> = isWorkspace
 			? {
 					version: "1.0.0",
