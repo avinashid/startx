@@ -615,6 +615,9 @@ importers:
       type-fest:
         specifier: 'catalog:'
         version: 5.4.4
+      yaml:
+        specifier: 'catalog:'
+        version: 2.8.2
     devDependencies:
       cross-env:
         specifier: 'catalog:'

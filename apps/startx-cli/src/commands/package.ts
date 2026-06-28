@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import { Command } from "commander";
 import fs from "fs/promises";
 import path from "path";
+import YAML from "yaml";
 import z from "zod";
 
 import { DepCheck } from "../configs/deps";
@@ -261,11 +262,7 @@ export class PackageCommand {
 		return true;
 	}
 
-	private static async getInstallTags(props: {
-		workspace: string;
-		packages: PackageItem[];
-		eslintEnabled: boolean;
-	}) {
+	private static async getInstallTags(props: { workspace: string; packages: PackageItem[]; eslintEnabled: boolean }) {
 		const tags = new Set<TAGS>(["common", "node"]);
 		const rootPackage = await this.readRootPackage(props.workspace);
 
@@ -377,6 +374,11 @@ export class PackageCommand {
 			throw new Error(`Cannot install workspace as a package: ${props.pkg.name}`);
 		}
 
+		await this.syncDepsWithCatalog({
+			workspace: props.directory.workspace,
+			packageJson: packageJson as Record<string, unknown>,
+		});
+
 		await fsTool.writeJSONFile({ dir: destination, file: "package", content: packageJson });
 		await this.copyValidatedFilesFromFolder(props.pkg.path, destination, tags);
 		await fsTool.copyDirectory({
@@ -442,17 +444,13 @@ export class PackageCommand {
 		};
 	}
 
-	private static async checkAndInstallMissingDeps(props: {
-		workspace: string;
-		tags: TAGS[];
-		install?: boolean;
-	}) {
+	private static async checkAndInstallMissingDeps(props: { workspace: string; tags: TAGS[]; install?: boolean }) {
 		const rootPackage = await this.readRootPackage(props.workspace);
 		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.workspace });
 
 		const missing: Array<{ name: string; version: string; isDev: boolean }> = [];
 		for (const [dep, config] of Object.entries(DepCheck)) {
-			if (!config.tags.every(tag => props.tags.includes(tag as TAGS))) continue;
+			if (!config.tags.every(tag => props.tags.includes(tag))) continue;
 			if (config.tags.includes("root")) continue;
 			if (this.hasDependency(rootPackage, dep)) continue;
 			const version = pnpmWorkspace?.catalog?.[dep] ? "catalog:" : config.version;
@@ -557,6 +555,55 @@ export class PackageCommand {
 			logger.warn(`Could not install dependencies automatically: ${error instanceof Error ? error.message : error}`);
 			logger.warn(`Run "${command} ${args.join(" ")}" manually in ${workspace}.`);
 		});
+	}
+
+	private static async syncDepsWithCatalog(props: {
+		workspace: string;
+		packageJson: Record<string, unknown>;
+	}): Promise<void> {
+		const workspacePath = path.join(props.workspace, "pnpm-workspace.yaml");
+		let content: string;
+		try {
+			content = await fs.readFile(workspacePath, "utf-8");
+		} catch {
+			throw new Error(`Could not find workspace file at ${workspacePath}.`);
+		}
+
+		const doc = YAML.parseDocument(content);
+		const catalog = doc.getIn(["catalog"]) as Record<string, string> | undefined;
+		if (!catalog) return;
+
+		const deps = props.packageJson.dependencies as Record<string, string> | undefined;
+		const devDeps = props.packageJson.devDependencies as Record<string, string> | undefined;
+		const newEntries: Record<string, string> = {};
+
+		const processMap = (depMap: Record<string, string> | undefined) => {
+			if (!depMap) return;
+			for (const [name, version] of Object.entries(depMap)) {
+				if (version === "catalog:" || version.startsWith("workspace:")) continue;
+				if (catalog[name]) {
+					depMap[name] = "catalog:";
+				} else {
+					newEntries[name] = version;
+					depMap[name] = "catalog:";
+				}
+			}
+		};
+
+		processMap(deps);
+		processMap(devDeps);
+
+		if (Object.keys(newEntries).length === 0) return;
+
+		for (const [name, version] of Object.entries(newEntries)) {
+			doc.setIn(["catalog", name], version);
+		}
+
+		await fs.writeFile(workspacePath, doc.toString());
+		logger.info("Added to pnpm-workspace.yaml catalog:");
+		for (const [name, version] of Object.entries(newEntries)) {
+			logger.info(`  + ${name}: ${version}`);
+		}
 	}
 
 	private static async writeJson(file: string, content: object) {
