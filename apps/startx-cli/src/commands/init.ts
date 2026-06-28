@@ -299,6 +299,32 @@ export class InitCommand {
 			props.dir.workspace,
 			new Set(["root", ...props.tags] as TAGS[])
 		);
+		await this.writeVscodeSettings({
+			workspace: props.dir.workspace,
+			tags: props.tags,
+		});
+	}
+
+	private static async writeVscodeSettings(props: { workspace: string; tags: TAGS[] }) {
+		const usesBiome = props.tags.includes("biome");
+
+		const settings: Record<string, unknown> = {
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": usesBiome ? "biomejs.biome" : "esbenp.prettier-vscode",
+			"editor.codeActionsOnSave": {
+				...(usesBiome ? { "source.organizeImports.biome": "explicit" } : {}),
+				"source.fixAll.eslint": "explicit",
+				"js/ts.suggest.autoImports": "explicit",
+				"source.fixAll": "explicit",
+			},
+			"eslint.workingDirectories": [{ "mode": "auto" }],
+		};
+
+		await fsTool.writeJSONFile({
+			dir: path.join(props.workspace, ".vscode"),
+			file: "settings",
+			content: settings,
+		});
 	}
 
 	// Helpers
