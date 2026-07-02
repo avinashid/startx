@@ -163,7 +163,18 @@ export abstract class IUserSession {
 			refreshToken: newRefreshToken,
 		};
 	}
+	public async createAccessToken(sessionId: string): Promise<string | null> {
+		const session = await this.getSession(sessionId);
+		if (!session) return null;
 
+		const accessToken = TokenModule.signAccessToken({
+			userID: session.user.id,
+			email: session.user.email,
+			sessionID: sessionId,
+		});
+
+		return accessToken;
+	}
 	public async endSession(sessionId: string): Promise<void> {
 		const session = await this.getSession(sessionId);
 		if (!session) return;

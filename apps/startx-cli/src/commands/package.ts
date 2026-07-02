@@ -124,7 +124,7 @@ export class PackageCommand {
 		});
 
 		await this.checkAndInstallMissingDeps({
-			workspace: directory.workspace,
+			directory,
 			tags,
 			install: options.install,
 		});
@@ -444,10 +444,16 @@ export class PackageCommand {
 			},
 		};
 	}
-
-	private static async checkAndInstallMissingDeps(props: { workspace: string; tags: TAGS[]; install?: boolean }) {
-		const rootPackage = await this.readRootPackage(props.workspace);
-		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.workspace });
+	private static async checkAndInstallMissingDeps(props: {
+		directory: {
+			template: string;
+			workspace: string;
+		};
+		tags: TAGS[];
+		install?: boolean;
+	}) {
+		const rootPackage = await this.readRootPackage(props.directory.workspace);
+		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.directory.workspace });
 
 		const missingNpm: Array<{ name: string; version: string; isDev: boolean }> = [];
 		const missingWorkspace: string[] = [];
@@ -457,8 +463,7 @@ export class PackageCommand {
 			if (config.tags.includes("root")) continue;
 
 			if (config.version.startsWith("workspace:")) {
-				// Workspace packages live in configs/, packages/, apps/ — not in root package.json
-				const exists = await this.workspacePackageExists(props.workspace, dep);
+				const exists = await this.workspacePackageExists(props.directory.workspace, dep);
 				if (!exists) missingWorkspace.push(dep);
 			} else {
 				if (this.hasDependency(rootPackage, dep)) continue;
@@ -490,6 +495,9 @@ export class PackageCommand {
 			return;
 		}
 
+		rootPackage.devDependencies ??= {};
+		rootPackage.dependencies ??= {};
+
 		for (const dep of missingNpm) {
 			if (dep.isDev) {
 				(rootPackage.devDependencies as Record<string, string>)[dep.name] = dep.version;
@@ -498,19 +506,16 @@ export class PackageCommand {
 			}
 		}
 
-		await this.writeJson(path.join(props.workspace, "package.json"), rootPackage);
+		await this.writeJson(path.join(props.directory.workspace, "package.json"), rootPackage);
 		logger.info("Added missing dependencies to root package.json.");
 
 		if (props.install !== false) {
-			await this.installRootDependencies(props.workspace);
+			await this.installRootDependencies(props.directory.workspace);
 		}
 	}
-
 	private static async workspacePackageExists(workspace: string, packageName: string): Promise<boolean> {
 		// Resolve scoped names: @repo/lib → packages/@repo/lib
-		const subPath = packageName.startsWith("@")
-			? path.join(...packageName.split("/"))
-			: packageName;
+		const subPath = packageName.startsWith("@") ? path.join(...packageName.split("/")) : packageName;
 
 		const candidates = [
 			path.join(workspace, "configs", subPath, "package.json"),
@@ -602,6 +607,7 @@ export class PackageCommand {
 		try {
 			content = await fs.readFile(workspacePath, "utf-8");
 		} catch {
+			logger.warn(`Could not find pnpm workspace file at ${workspacePath}.`);
 			return;
 		}
 
@@ -609,7 +615,6 @@ export class PackageCommand {
 		const catalog = doc.getIn(["catalog"]) as Record<string, string> | undefined;
 		if (!catalog) return;
 
-		// Load template's catalog to resolve "catalog:" entries to real versions
 		const templateCatalog = await this.loadTemplateCatalog(props.templateDir);
 
 		const deps = props.packageJson.dependencies as Record<string, string> | undefined;
@@ -658,10 +663,10 @@ export class PackageCommand {
 			const doc = YAML.parseDocument(raw);
 			return (doc.getIn(["catalog"]) as Record<string, string>) ?? {};
 		} catch {
+			logger.warn(`Could not find pnpm-workspace.yaml template in ${templateDir}.`);
 			return {};
 		}
 	}
-
 	private static async writeJson(file: string, content: object) {
 		await fs.writeFile(file, `${JSON.stringify(content, null, 2)}\n`);
 	}
