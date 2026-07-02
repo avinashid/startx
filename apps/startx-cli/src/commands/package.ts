@@ -596,7 +596,6 @@ export class PackageCommand {
 			logger.warn(`Run "${command} ${args.join(" ")}" manually in ${workspace}.`);
 		});
 	}
-
 	private static async syncDepsWithCatalog(props: {
 		workspace: string;
 		templateDir: string;
@@ -612,8 +611,10 @@ export class PackageCommand {
 		}
 
 		const doc = YAML.parseDocument(content);
-		const catalog = doc.getIn(["catalog"]) as Record<string, string> | undefined;
-		if (!catalog) return;
+
+		if (!doc.has("catalog")) {
+			doc.set("catalog", {});
+		}
 
 		const templateCatalog = await this.loadTemplateCatalog(props.templateDir);
 
@@ -626,17 +627,16 @@ export class PackageCommand {
 			for (const [name, version] of Object.entries(depMap)) {
 				if (version.startsWith("workspace:")) continue;
 
+				const existsInUserCatalog = doc.hasIn(["catalog", name]);
+
 				if (version === "catalog:") {
-					// Valid only if the user's catalog already has this entry.
-					// If not, resolve the real version from the template's catalog and add it.
-					if (!catalog[name]) {
+					if (!existsInUserCatalog) {
 						const templateVersion = templateCatalog[name];
 						if (templateVersion) newEntries[name] = templateVersion;
 					}
 				} else {
-					// Hardcoded version — normalize to catalog:
 					depMap[name] = "catalog:";
-					if (!catalog[name]) newEntries[name] = version;
+					if (!existsInUserCatalog) newEntries[name] = version;
 				}
 			}
 		};
@@ -661,7 +661,9 @@ export class PackageCommand {
 		try {
 			const raw = await fs.readFile(path.join(templateDir, "pnpm-workspace.yaml"), "utf-8");
 			const doc = YAML.parseDocument(raw);
-			return (doc.getIn(["catalog"]) as Record<string, string>) ?? {};
+			const catalogNode = doc.get("catalog") as YAML.Document | undefined;
+
+			return catalogNode ? (catalogNode.toJSON() as Record<string, string>) : {};
 		} catch {
 			logger.warn(`Could not find pnpm-workspace.yaml template in ${templateDir}.`);
 			return {};
