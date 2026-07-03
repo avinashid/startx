@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { useMemo, useRef } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 import { FormUtils } from "@repo/ui/lib/utils";
 import { ApiHelper } from "../api-helpers";
@@ -250,6 +251,13 @@ function useMutationApi<Schema extends RawSchema, K extends keyof Schema & strin
 				queryClient,
 				options?.overwriteEvents
 			);
+			if (!options?.onError && !endpoint.onError) {
+				try {
+					toast.error((error as any)?.response?.data?.message ?? error.message);
+				} catch (error) {
+					console.error(error);
+				}
+			}
 		},
 		onMutate: options?.onMutate,
 	});

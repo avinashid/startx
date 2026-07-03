@@ -1,32 +1,39 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, type QueryClientConfig } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { type ReactNode } from "react";
+import { useState } from "react";
 import { ApiHelper } from "./use-api/api-helpers";
-
-const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnMount: false,
-			refetchOnWindowFocus: false,
-			staleTime: ApiHelper.parseTime("5:min"),
-		},
-		mutations: {
-			onError(error: any) {
-				console.error(error?.response?.data);
-				// toast.error(error.response?.data?.message ?? error.message);
-			},
-		},
-	},
-});
-export const QueryProvider = ({
-	children,
-	mode,
-}: {
-	children: ReactNode;
+type QueryProviderProps = Omit<QueryClientConfig, "client"> & {
 	mode?: "development" | "production" | "staging";
-}) => {
+	children?: React.ReactNode;
+};
+export const createQueryClient = (config?: QueryClientConfig) =>
+	new QueryClient(
+		ApiHelper.merge(
+			{
+				defaultOptions: {
+					queries: {
+						refetchOnMount: false,
+						refetchOnWindowFocus: false,
+						staleTime: ApiHelper.parseTime("5:min"),
+					},
+					mutations: {
+						onError(error: any) {
+							console.error(error?.response?.data);
+						},
+					},
+				},
+			},
+			config
+		)
+	);
+
+export const queryClient = createQueryClient();
+
+export const QueryProvider = ({ children, mode, ...config }: QueryProviderProps) => {
+	const [client] = useState(() => createQueryClient(config));
+
 	return (
-		<QueryClientProvider client={queryClient}>
+		<QueryClientProvider client={client}>
 			{mode === "development" && <ReactQueryDevtools initialIsOpen={false} />}
 			{children}
 		</QueryClientProvider>
