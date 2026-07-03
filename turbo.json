@@ -9,11 +9,19 @@
 
 		"build": {
 			"cache": true,
-			"inputs": ["src/**", "tsdown.config.ts", "eslint.config.*", "tsconfig*.json", "package.json"],
+			"inputs": [
+				"src/**",
+				"public/**",
+				"tsdown.config.ts",
+				"vite.config.*",
+				"react-router.config.*",
+				"eslint.config.*",
+				"tsconfig*.json",
+				"package.json"
+			],
 			"outputs": ["dist/**", "build/**"],
 			"dependsOn": ["lint", "^build"]
 		},
-
 		"typecheck": {
 			"cache": true,
 			"dependsOn": ["^typecheck", "build"],
