@@ -14,7 +14,7 @@ COPY --parents packages/common/package.json ./
 COPY --parents packages/ui/package.json ./
 COPY --parents configs/*/package.json ./
 
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=locked \
     pnpm install --frozen-lockfile
 
 COPY apps/web-client/ ./apps/web-client/
@@ -24,7 +24,7 @@ COPY configs ./configs
 COPY turbo.json ./
 
 # Build the required packages with Turbo cache mounted
-RUN --mount=type=cache,id=turbo,target=/app/.turbo/cache \
+RUN --mount=type=cache,id=turbo,target=/app/.turbo/cache,sharing=locked \
     pnpm build --filter=web-client
 
 # --- Final production image ---

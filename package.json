@@ -1,7 +1,7 @@
 {
 	"name": "startx",
 	"description": "",
-	"version": "1.1.35",
+	"version": "1.1.4",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
@@ -61,5 +61,5 @@
 	],
 	"author": "avinashid",
 	"license": "MIT",
-	"packageManager": "pnpm@10.28.2"
+	"packageManager": "pnpm@11.5.1"
 }

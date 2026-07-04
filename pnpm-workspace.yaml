@@ -4,6 +4,15 @@ packages:
   - "packages/*/*"
   - "configs/*"
 
+allowBuilds:
+  '@firebase/util': false
+  better-sqlite3: false
+  esbuild: false
+  msgpackr-extract: false
+  protobufjs: false
+  sharp: false
+  unrs-resolver: false
+
 catalog:
   # configs
   typescript: "^5.9.2"
