@@ -1,7 +1,7 @@
 {
 	"name": "startx",
 	"description": "",
-	"version": "1.1.51",
+	"version": "1.1.52",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/avinashid/startx.git"
