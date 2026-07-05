@@ -15,7 +15,7 @@ COPY --parents packages/ui/package.json ./
 COPY --parents configs/*/package.json ./
 
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=locked \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile --ignore-scripts
 
 COPY apps/web-client/ ./apps/web-client/
 COPY packages/common ./packages/common
