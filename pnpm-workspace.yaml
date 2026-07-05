@@ -5,7 +5,7 @@ packages:
   - "configs/*"
 
 allowBuilds:
-  '@firebase/util': false
+  "@firebase/util": false
   better-sqlite3: false
   esbuild: false
   msgpackr-extract: false
@@ -84,6 +84,7 @@ catalog:
   tailwindcss: "^4.2.2"
   "@tailwindcss/vite": "^4.2.2"
   zustand: "^5.0.13"
+  motion: "^12.40.0"
 
   # email
   react-email: "^5.2.11"
@@ -97,7 +98,7 @@ catalog:
   "@tanstack/react-query-devtools": "^5.100.9"
   "@fontsource-variable/eb-garamond": "^5.2.7"
   "@fontsource-variable/inter": "^5.2.8"
-  "@hookform/resolvers": "^3.9.1"
+  "@hookform/resolvers": "^5.4.0"
   "@phosphor-icons/react": "^2.1.10"
   "@tailwindcss/postcss": "^4"
   "@tailwindcss/typography": "^0.5.19"

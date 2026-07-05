@@ -4,6 +4,7 @@ import { ThemeProvider } from "@repo/ui/components/custom/theme-provider";
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { NavigationLoader } from "./components/utils/navigation-loader";
 import { AuthStartup } from "./config/auth/auth-state";
 import { ENV } from "./config/env";
 
@@ -31,6 +32,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body>
+				<NavigationLoader />
 				{children}
 				<ScrollRestoration />
 				<Scripts />

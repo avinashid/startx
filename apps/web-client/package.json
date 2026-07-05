@@ -18,10 +18,12 @@
 		"@dotenvx/dotenvx": "catalog:",
 		"@react-router/node": "catalog:",
 		"@react-router/serve": "catalog:",
+		"@hookform/resolvers": "catalog:",
 		"@repo/ui": "workspace:*",
 		"isbot": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
+		"motion": "catalog:",
 		"react-router": "catalog:",
 		"zustand": "catalog:",
 		"@repo/common": "workspace:*"

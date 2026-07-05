@@ -103,7 +103,7 @@ export const FormSelectField = <
 							}}
 							value={field.value ?? defaultValueProp ?? ""}
 						>
-							<SelectTrigger className={cn("bg-background w-full", inputClassName)}>
+							<SelectTrigger aria-invalid={!!fieldState.error} className={cn("bg-background w-full", inputClassName)}>
 								<SelectValue placeholder={placeholder ?? "Select"} />
 							</SelectTrigger>
 							<SelectContent>
@@ -155,7 +155,7 @@ export const FormTextField = <
 				<Field data-invalid={!!fieldState.error} className="flex flex-col">
 					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
 					<FieldContent>
-						<Input {...field} {...rest} />
+						<Input aria-invalid={!!fieldState.error} {...field} {...rest} />
 					</FieldContent>
 					{description ? <FieldDescription>{description}</FieldDescription> : null}
 					<FieldError errors={[fieldState.error]} />
@@ -187,7 +187,7 @@ export const FormTextAreaField = <
 				<Field data-invalid={!!fieldState.error} className="flex flex-col">
 					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
 					<FieldContent>
-						<Textarea {...field} {...rest} ref={field.ref} />
+						<Textarea aria-invalid={!!fieldState.error} {...field} {...rest} ref={field.ref} />
 					</FieldContent>
 					{description ? <FieldDescription>{description}</FieldDescription> : null}
 					<FieldError errors={[fieldState.error]} />
@@ -218,6 +218,7 @@ export const FormNumberField = <
 					<FieldContent>
 						<Input
 							inputMode="numeric"
+							aria-invalid={!!fieldState.error}
 							{...field}
 							onChange={e => {
 								if (!isNaN(Number(e.currentTarget.value))) field.onChange(Number(e.currentTarget.value));
@@ -363,6 +364,7 @@ export const FormDefaultDateField = <
 					{label ? <FieldLabel className="self-start">{label}</FieldLabel> : null}
 					<FieldContent>
 						<Input
+							aria-invalid={!!fieldState.error}
 							{...field}
 							{...rest}
 							value={field.value || ""}
@@ -430,7 +432,12 @@ export function FormMultiSelectField<
 						<FieldContent className="w-full">
 							<Popover open={open} onOpenChange={setOpen}>
 								<PopoverTrigger asChild disabled={disabled}>
-									<Button variant="outline" size={"sm"} className={cn("w-full justify-between", inputClassName)}>
+									<Button
+										aria-invalid={!!fieldState.error}
+										variant="outline"
+										size={"sm"}
+										className={cn("w-full justify-between", inputClassName)}
+									>
 										{selected.length > 0 ? `${selected.length} selected` : (placeholder ?? "Select")}
 										<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 									</Button>

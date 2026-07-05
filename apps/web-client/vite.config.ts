@@ -24,6 +24,9 @@ export default defineConfig(() => {
 		plugins: [tailwindcss(), reactRouter()],
 		resolve: {
 			tsconfigPaths: true,
+			alias: {
+				"~": path.resolve(__dirname, "./src"),
+			},
 		},
 		define: env,
 	};

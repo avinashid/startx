@@ -32,8 +32,7 @@
 		"country-state-city": "catalog:",
 		"express": "catalog:",
 		"express-fileupload": "catalog:",
-		"express-list-endpoints": "catalog:",
-		"morgan": "catalog:"
+		"express-list-endpoints": "catalog:"
 	},
 	"devDependencies": {
 		"@types/cookie-parser": "catalog:",
