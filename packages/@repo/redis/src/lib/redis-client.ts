@@ -10,9 +10,13 @@ const connection = defineEnv({
 	REDIS_DB: z.coerce.number().optional(),
 });
 
-let client: Redis | null = null;
+const clients = new Map<number, Redis>();
 
 export function getRedis(props?: { db?: number }) {
+	const db = props?.db ?? connection.REDIS_DB ?? 0;
+
+	let client = clients.get(db);
+
 	if (!client) {
 		client = new Redis({
 			host: connection.REDIS_HOST,
@@ -21,16 +25,18 @@ export function getRedis(props?: { db?: number }) {
 			password: connection.REDIS_PASSWORD,
 			lazyConnect: true,
 			maxRetriesPerRequest: null,
-			db: props?.db ?? connection.REDIS_DB ?? 0,
+			db,
 		});
 
 		client.on("connect", () => {
-			logger.info("[Redis] connected");
+			logger.info(`[Redis] connected (db ${db})`);
 		});
 
 		client.on("error", err => {
-			logger.error("[Redis] error:", err);
+			logger.error(`[Redis] error (db ${db}):`, err);
 		});
+
+		clients.set(db, client);
 	}
 
 	return client;
