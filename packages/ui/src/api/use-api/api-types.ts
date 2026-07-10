@@ -1,7 +1,7 @@
 import type { AxiosError } from "axios";
 import { z, ZodTypeAny, type ZodObject, type ZodType } from "zod";
 
-export type ApiType = "fetch" | "mutation" | "paginated-fetch";
+export type ApiType = "fetch" | "mutation" | "paginated-fetch" | "infinite-paginated";
 export type ApiMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 export type TimeUnit = "ms" | "sec" | "min" | "hour";

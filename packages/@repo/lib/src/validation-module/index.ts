@@ -86,7 +86,7 @@ export function paramsValidator<T extends SchemaTypes>(schema: T) {
 				return res.status(422).json({ message: error.join("\n") });
 			}
 
-			Object.assign(req.query, data);
+			Object.assign(req.params, data);
 
 			return await originalMethod.call(this, req, res, next);
 		} as unknown as F;

@@ -20,8 +20,8 @@ export type RefreshTokenPayload = {
 const env = defineEnv({
 	ACCESS_TOKEN_SECRET: z.string().min(32),
 	REFRESH_TOKEN_SECRET: z.string().min(32),
-	ACCESS_TOKEN_EXPIRY: z.coerce.number().default(Time.hours(1).milliseconds),
-	REFRESH_TOKEN_EXPIRY: z.coerce.number().default(Time.days(30).milliseconds),
+	ACCESS_TOKEN_EXPIRY: z.coerce.number().default(Time.hours(1).seconds),
+	REFRESH_TOKEN_EXPIRY: z.coerce.number().default(Time.days(30).seconds),
 });
 
 const JWT_CONFIG = {

@@ -15,7 +15,7 @@ const redisOtpStore = new RedisStore<{
 	namespace: "otp",
 });
 export class OTPModule {
-	private static otpExpirationMs = 5 * 60 * 1000;
+	private static otpExpirationSeconds = 5 * 60;
 
 	static async sendMailOTP({ email }: { email: string }): Promise<void> {
 		const normalizedEmail = email.trim().toLowerCase();
@@ -28,7 +28,7 @@ export class OTPModule {
 			await redisOtpStore.set(
 				normalizedEmail,
 				{ email: normalizedEmail, otp: hash, status: "pending" },
-				this.otpExpirationMs
+				this.otpExpirationSeconds
 			);
 		} catch (err) {
 			logger?.error("otp: redis write failed", { email: normalizedEmail, err });
@@ -69,7 +69,7 @@ export class OTPModule {
 		if (deleteOtp) {
 			await redisOtpStore.del(normalizedEmail);
 		} else {
-			await redisOtpStore.set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationMs);
+			await redisOtpStore.set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationSeconds);
 		}
 		return true;
 	}

@@ -72,7 +72,7 @@ export class PushNotificationManager {
 
 			for (const key in item.data) {
 				const value = item.data[key];
-				if (value !== null) {
+				if (value !== null && value !== undefined) {
 					data[key] = typeof value === "string" ? value : String(value);
 				}
 			}

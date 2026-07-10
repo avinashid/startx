@@ -6,7 +6,7 @@ import { z } from "zod";
 import { TokenModule } from "../extra/token-module.js";
 
 export const sessionEnv = defineEnv({
-	SESSION_DURATION: z.number().default(Time.days(30).milliseconds),
+	SESSION_DURATION: z.number().default(Time.days(30).seconds),
 	SESSION_TYPE: z.enum(["single", "multi"]).default("multi"),
 	MAX_CONCURRENT_SESSIONS: z.number().default(1),
 });
