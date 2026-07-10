@@ -1,14 +1,23 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, type UseQueryOptions, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { useMemo, useRef } from "react";
 import { z } from "zod";
 import { FormUtils } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { ApiHelper } from "../api-helpers";
-import type { IFetchOptions, IPaginatedFetchOptions, IFetchMutationOptions, IPaginatedData, QueryEvent, CbAction, RawSchema, QueryKey, ZQuery, ZParams } from "../api-types";
+import type { IFetchOptions, IPaginatedFetchOptions, IInfinitePaginatedFetchOptions, IFetchMutationOptions, IPaginatedData, QueryEvent, CbAction, RawSchema, QueryKey, ZQuery, ZParams } from "../api-types";
 import { createQueryKeysProxy } from "../query-factory";
 
-import type { UseApiOptions, UseApiReturn, MutationVariables, ExtractData, FetchOptions, PaginatedFetchOptions, MutationOptions } from "./types";
+import type {
+	UseApiOptions,
+	UseApiReturn,
+	MutationVariables,
+	ExtractData,
+	FetchOptions,
+	PaginatedFetchOptions,
+	InfinitePaginatedFetchOptions,
+	MutationOptions,
+} from "./types";
 
 async function processEvents<Schema extends RawSchema, IK extends string, IQ extends z.output<ZQuery>, IP extends z.output<ZParams>, IB, ID>(
 	events: QueryEvent<IK, IQ, IP, IB, ID, Schema> | undefined,
@@ -159,6 +168,87 @@ function usePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
 	};
 }
 
+function useInfinitePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
+	key: keyof RawSchema,
+	endpoint: IInfinitePaginatedFetchOptions<ID, IO, ZQ, ZP>,
+	axiosClient: AxiosInstance,
+	options: {
+		query?: z.output<ZQ>;
+		params?: z.output<ZP>;
+		initialPage?: number;
+		limit?: number;
+		staleTime?: number;
+		enabled?: boolean;
+	},
+) {
+	const queryClient = useQueryClient();
+	const initialPage = options.initialPage ?? endpoint.initialPage ?? 1;
+
+	const mergedQuery = useMemo(
+		() =>
+			ApiHelper.merge(options.query, {
+				limit: options.limit,
+			}),
+		[options.query, options.limit],
+	);
+
+	const queryKey = useMemo(
+		() =>
+			ApiHelper.getQueryKey(key, endpoint.key, {
+				params: options.params,
+				query: mergedQuery,
+			}),
+		[key, endpoint.key, options.params, mergedQuery],
+	);
+
+	const staleTime = ApiHelper.parseTime(ApiHelper.merge(options.staleTime, endpoint.staleTime));
+
+	const query = useInfiniteQuery<IPaginatedData<ID, IO>>({
+		queryKey,
+		queryFn: async ({ signal, pageParam }) => {
+			const resp = await axiosClient.request<{
+				message: string;
+				data: IPaginatedData<ID, IO>;
+			}>({
+				method: endpoint.method || "GET",
+				url: ApiHelper.buildUrl({
+					route: endpoint.route,
+					params: options.params,
+					searchParams: ApiHelper.merge(mergedQuery, { page: pageParam as number }),
+				}),
+				signal,
+			});
+
+			return resp.data.data;
+		},
+		initialPageParam: initialPage,
+		getNextPageParam: lastPage => {
+			const { currentPage, totalPages } = lastPage.pagination;
+			return currentPage < totalPages ? currentPage + 1 : undefined;
+		},
+		staleTime,
+		enabled: options.enabled ?? endpoint.enable?.isEnable ?? true,
+		retry: endpoint.retry?.count,
+		retryDelay: endpoint.retry?.interval,
+		refetchInterval: endpoint.refetch?.interval?.ms,
+		refetchIntervalInBackground: endpoint.refetch?.interval?.inBackground,
+		refetchOnMount: endpoint.refetch?.onMount ? "always" : false,
+		refetchOnWindowFocus: endpoint.refetch?.onFocus ? "always" : false,
+	});
+
+	const pages = query.data?.pages ?? [];
+	const lastPage = pages[pages.length - 1];
+
+	return {
+		...query,
+		data: pages.flatMap(page => page.data),
+		pages,
+		pagination: lastPage?.pagination,
+		other: lastPage?.other,
+		abort: () => queryClient.cancelQueries({ queryKey }),
+	};
+}
+
 function useMutationApi<Schema extends RawSchema, K extends keyof Schema & string>(
 	endpoint: IFetchMutationOptions<K>,
 	axiosClient: AxiosInstance,
@@ -245,6 +335,19 @@ export function useApi<Schema extends RawSchema>(schema: Schema, axiosClient: Ax
 				staleTime: ApiHelper.parseTime(ApiHelper.merge(opts?.staleTime, ep.staleTime)),
 				enabled: opts?.enabled,
 			}) as UseApiReturn<Schema, K>;
+		}
+
+		if (endpoint.apiType === "infinite-paginated") {
+			const ep = endpoint as IInfinitePaginatedFetchOptions<unknown, unknown, ZQuery, ZParams>;
+			const opts = options as InfinitePaginatedFetchOptions<Schema[K]> | undefined;
+			return useInfinitePaginatedFetchApi(key, ep, axiosClient, {
+				query: opts?.query,
+				params: opts?.params,
+				initialPage: opts?.initialPage,
+				limit: opts?.limit,
+				staleTime: ApiHelper.parseTime(ApiHelper.merge(opts?.staleTime, ep.staleTime)),
+				enabled: opts?.enabled,
+			}) as unknown as UseApiReturn<Schema, K>;
 		}
 
 		if (endpoint.apiType === "mutation") {

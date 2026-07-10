@@ -3,6 +3,7 @@ import { z, ZodTypeAny } from "zod";
 import type {
 	IFetchOptions,
 	IPaginatedFetchOptions,
+	IInfinitePaginatedFetchOptions,
 	IFetchMutationOptions,
 	IRefetch,
 	QueryEvent,
@@ -90,6 +91,31 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		const entry = {
 			...rest,
 			apiType: "paginated-fetch" as const,
+			queryKey: makeQueryKeyFactory(options.key ?? [], options.zParams, options.zQuery),
+			refetch: this.wrapRefetch(refetch),
+		};
+		return new ApiSchema({ ...this.schema, [key]: entry });
+	}
+
+	infinitePaginatedFetch<KEY extends string, ID, IO, ZQ extends ZQuery, ZP extends ZParams>(
+		key: EnsureUnique<KEY, RawSchemaKeys<Schema>>,
+		options: Omit<IInfinitePaginatedFetchOptions<ID, IO, ZQ, ZP, string>, "apiType" | "refetch"> & {
+			refetch?: IRefetch<
+				KEY | RawSchemaKeys<Schema>,
+				z.output<ZQ>,
+				z.output<ZP>,
+				undefined,
+				IPaginatedData<ID, IO>,
+				Schema
+			>;
+		}
+	): ApiSchema<
+		Schema & Record<KEY, IInfinitePaginatedFetchOptions<ID, IO, ZQ, ZP, KEY> & { queryKey: QueryKeyFactory<ZQ, ZP> }>
+	> {
+		const { refetch, ...rest } = options;
+		const entry = {
+			...rest,
+			apiType: "infinite-paginated" as const,
 			queryKey: makeQueryKeyFactory(options.key ?? [], options.zParams, options.zQuery),
 			refetch: this.wrapRefetch(refetch),
 		};

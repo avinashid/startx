@@ -119,6 +119,22 @@ export interface IPaginatedFetchOptions<
 	refetch?: IRefetch<IK, z.output<ZQ>, z.output<ZP>, undefined, IPaginatedData<ID, IO>>;
 }
 
+export interface IInfinitePaginatedFetchOptions<
+	ID,
+	IO,
+	ZQ extends ZQuery = ZQuery,
+	ZP extends ZParams = ZParams,
+	IK extends string = string,
+> extends IBaseApi<ID, ZQ, ZP> {
+	apiType: "infinite-paginated";
+	staleTime?: TimeString | number;
+	enable?: { isEnable?: boolean; autoEnable?: boolean };
+	other?: IO;
+	key?: string[];
+	initialPage?: number;
+	refetch?: IRefetch<IK, z.output<ZQ>, z.output<ZP>, undefined, IPaginatedData<ID, IO>>;
+}
+
 export interface IFetchMutationOptions<
 	IK extends string,
 	ZQ extends ZQuery = ZQuery,

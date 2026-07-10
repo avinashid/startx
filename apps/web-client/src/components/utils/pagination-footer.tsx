@@ -4,7 +4,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from "@repo/ui/lucide";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import React, { forwardRef, useMemo, type ButtonHTMLAttributes } from "react";
-import usePagination from "~/hooks/pagination/usePagination";
+import usePagination from "~/hooks/pagination/use-pagination";
 
 export type PaginationVariant = "default" | "compact" | "ghost";
 

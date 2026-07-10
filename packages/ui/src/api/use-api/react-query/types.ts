@@ -1,8 +1,9 @@
-import type { UseQueryResult, UseMutationResult } from "@tanstack/react-query";
+import type { UseQueryResult, UseMutationResult, UseInfiniteQueryResult, InfiniteData } from "@tanstack/react-query";
 import type { z } from "zod";
 import type { IPaginatedData, TimeString } from "../api-types";
 
 export type ExtractData<E> = "data" extends keyof E ? Exclude<E["data"], undefined> : unknown;
+export type ExtractOther<E> = E extends { other: infer O } ? O : unknown;
 export type ExtractZQuery<E> = "zQuery" extends keyof E ? NonNullable<E["zQuery"]> : never;
 export type ExtractZParams<E> = "zParams" extends keyof E ? NonNullable<E["zParams"]> : never;
 export type ExtractZBody<E> = "zBody" extends keyof E ? NonNullable<E["zBody"]> : never;
@@ -26,6 +27,22 @@ export type PaginatedFetchOptions<E> = CommonQueryOptions & {
 	limit?: number;
 };
 
+export type InfinitePaginatedFetchOptions<E> = CommonQueryOptions & {
+	query?: z.output<ExtractZQuery<E>>;
+	params?: z.output<ExtractZParams<E>>;
+	initialPage?: number;
+	limit?: number;
+};
+
+export type UseInfinitePaginatedApiReturn<E> = WithAbort<
+	Omit<UseInfiniteQueryResult<InfiniteData<IPaginatedData<ExtractData<E>, ExtractOther<E>>>>, "data"> & {
+		data: Array<ExtractData<E>>;
+		pages: Array<IPaginatedData<ExtractData<E>, ExtractOther<E>>>;
+		pagination: IPaginatedData<ExtractData<E>, ExtractOther<E>>["pagination"] | undefined;
+		other: ExtractOther<E> | undefined;
+	}
+>;
+
 export type MutationVariables<E> = {
 	body?: z.output<ExtractZBody<E>>;
 	query?: z.output<ExtractZQuery<E>>;
@@ -48,9 +65,11 @@ export type UseApiOptions<Schema, K extends keyof Schema> = Schema[K] extends in
 		? FetchOptions<E>
 		: E extends { apiType: "paginated-fetch" }
 			? PaginatedFetchOptions<E>
-			: E extends { apiType: "mutation" }
-				? MutationOptions<E>
-				: never
+			: E extends { apiType: "infinite-paginated" }
+				? InfinitePaginatedFetchOptions<E>
+				: E extends { apiType: "mutation" }
+					? MutationOptions<E>
+					: never
 	: never;
 
 export type UseApiReturn<Schema, K extends keyof Schema> = Schema[K] extends { apiType: "fetch" }
@@ -59,6 +78,8 @@ export type UseApiReturn<Schema, K extends keyof Schema> = Schema[K] extends { a
 		? WithAbort<
 				UseQueryResult<IPaginatedData<ExtractData<Schema[K]>, Schema[K] extends { other: infer O } ? O : unknown>>
 			>
-		: Schema[K] extends { apiType: "mutation" }
-			? WithAbort<UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>>
-			: never;
+		: Schema[K] extends { apiType: "infinite-paginated" }
+			? UseInfinitePaginatedApiReturn<Schema[K]>
+			: Schema[K] extends { apiType: "mutation" }
+				? WithAbort<UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>>
+				: never;

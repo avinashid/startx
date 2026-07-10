@@ -1,9 +1,9 @@
-import { useQueryClient, type Updater } from "@tanstack/react-query";
+import { useQueryClient, type Updater, type InfiniteData } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { z } from "zod";
 import type { RawSchema, IPaginatedData, QueryKey } from "../api-types";
 import { createQueryKeysProxy } from "../query-factory";
-import type { ExtractZQuery, ExtractZParams, ExtractData } from "./types";
+import type { ExtractZQuery, ExtractZParams, ExtractData, ExtractOther } from "./types";
 
 export type SafeZodInput<T> = T extends z.ZodTypeAny ? z.input<T> : never;
 
@@ -13,8 +13,10 @@ export type InputArgs<E> = {
 };
 
 export type ResolvedData<E> = E extends { apiType: "paginated-fetch" }
-	? IPaginatedData<ExtractData<E>, E extends { other: infer O } ? O : unknown>
-	: ExtractData<E>;
+	? IPaginatedData<ExtractData<E>, ExtractOther<E>>
+	: E extends { apiType: "infinite-paginated" }
+		? InfiniteData<IPaginatedData<ExtractData<E>, ExtractOther<E>>>
+		: ExtractData<E>;
 
 export function useApiClient<Schema extends RawSchema>(schema: Schema) {
 	const queryClient = useQueryClient();
