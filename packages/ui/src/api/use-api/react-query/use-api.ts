@@ -281,7 +281,7 @@ function useInfinitePaginatedFetchApi<ID, IO, ZQ extends ZQuery, ZP extends ZPar
 				url: ApiHelper.buildUrl({
 					route: endpoint.route,
 					params: options.params,
-					searchParams: ApiHelper.merge(mergedQuery, { page: pageParam as number }),
+					searchParams: ApiHelper.merge( { page: pageParam as number }, mergedQuery),
 				}),
 				signal,
 			});
