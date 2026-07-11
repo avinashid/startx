@@ -18,6 +18,7 @@ import type {
 } from "./api-types";
 import { makeQueryKeyFactory, createQueryKeysProxy, type QueryKeyFactory } from "./query-factory";
 import { useApi } from "./react-query/use-api";
+import { useApiControl } from "./react-query/use-api-control";
 
 type EnsureUnique<Key extends string, ExistingKeys extends string> = Key extends ExistingKeys
 	? `❌ Api key '${Key}' already exists.`
@@ -66,7 +67,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		const entry = {
 			...rest,
 			apiType: "fetch" as const,
-			queryKey: makeQueryKeyFactory(options.key ?? [], options.zParams, options.zQuery),
+			queryKey: makeQueryKeyFactory(key, options.key ?? [], options.zParams, options.zQuery),
 			refetch: this.wrapRefetch(refetch),
 		};
 		return new ApiSchema({ ...this.schema, [key]: entry });
@@ -91,7 +92,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		const entry = {
 			...rest,
 			apiType: "paginated-fetch" as const,
-			queryKey: makeQueryKeyFactory(options.key ?? [], options.zParams, options.zQuery),
+			queryKey: makeQueryKeyFactory(key, options.key ?? [], options.zParams, options.zQuery),
 			refetch: this.wrapRefetch(refetch),
 		};
 		return new ApiSchema({ ...this.schema, [key]: entry });
@@ -116,7 +117,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		const entry = {
 			...rest,
 			apiType: "infinite-paginated" as const,
-			queryKey: makeQueryKeyFactory(options.key ?? [], options.zParams, options.zQuery),
+			queryKey: makeQueryKeyFactory(key, options.key ?? [], options.zParams, options.zQuery),
 			refetch: this.wrapRefetch(refetch),
 		};
 		return new ApiSchema({ ...this.schema, [key]: entry });
@@ -147,7 +148,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		const entry = {
 			...rest,
 			apiType: "mutation" as const,
-			queryKey: makeQueryKeyFactory([], options.zParams, options.zQuery),
+			queryKey: makeQueryKeyFactory(key, [], options.zParams, options.zQuery),
 			onSuccess: this.wrapQueryEvent(onSuccess),
 			onFetch: this.wrapQueryEvent(onFetch),
 			onError: this.wrapQueryEvent(onError),
@@ -161,5 +162,8 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 	}
 	getReactQuery(axios: AxiosInstance) {
 		return useApi(this.schema, axios);
+	}
+	getQueryControl(axios?: AxiosInstance) {
+		return useApiControl(this.schema, axios);
 	}
 }

@@ -83,3 +83,21 @@ export type UseApiReturn<Schema, K extends keyof Schema> = Schema[K] extends { a
 			: Schema[K] extends { apiType: "mutation" }
 				? WithAbort<UseMutationResult<ExtractData<Schema[K]>, Error, MutationVariables<Schema[K]>>>
 				: never;
+
+export type QueryEntryKeys<Schema> = {
+	[K in keyof Schema & string]: Schema[K] extends { apiType: "fetch" | "paginated-fetch" | "infinite-paginated" }
+		? K
+		: never;
+}[keyof Schema & string];
+
+export type MutationEntryKeys<Schema> = {
+	[K in keyof Schema & string]: Schema[K] extends { apiType: "mutation" } ? K : never;
+}[keyof Schema & string];
+
+export type ControlOptions<E> = E extends { apiType: "fetch" }
+	? { query?: z.output<ExtractZQuery<E>>; params?: z.output<ExtractZParams<E>> }
+	: E extends { apiType: "paginated-fetch" }
+		? { query?: z.output<ExtractZQuery<E>>; params?: z.output<ExtractZParams<E>>; page?: number; limit?: number }
+		: E extends { apiType: "infinite-paginated" }
+			? { query?: z.output<ExtractZQuery<E>>; params?: z.output<ExtractZParams<E>>; limit?: number }
+			: never;

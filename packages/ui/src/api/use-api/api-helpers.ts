@@ -96,17 +96,17 @@ export class ApiHelper {
 
 		return url;
 	}
-	static getQueryKey<IK extends string, ZQ extends ZQuery = ZQuery, ZP extends ZParams = ZParams>(
+	static getQueryKey<IK extends string>(
 		key: IK,
 		extraKey?: string[],
 		input?: {
-			query?: z.output<ZQ>;
-			params?: z.output<ZP>;
+			query?: Record<string, unknown>;
+			params?: Record<string, unknown>;
 		}
 	): QueryKey<IK> {
 		const keys: string[] = [key];
 
-		const append = (prefix: "query" | "params", obj?: z.output<ZQ | ZP>) => {
+		const append = (prefix: "query" | "params", obj?: Record<string, unknown>) => {
 			if (!obj) return;
 			const sortedKeys = Object.keys(obj).sort();
 			for (const k of sortedKeys) {
@@ -117,7 +117,7 @@ export class ApiHelper {
 						keys.push(`${prefix}:${k}:${item}`);
 					}
 				} else {
-					keys.push(`${prefix}:${k}:${v}`);
+					keys.push(`${prefix}:${k}:${v as string}`);
 				}
 			}
 		};
