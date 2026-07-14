@@ -122,19 +122,26 @@ export class PackageCommand {
 			packages: packagesToInstall,
 			eslintEnabled,
 		});
+		const mainIsRunnable =
+			selectedPackage.type === "apps" || selectedPackage.packageJson?.startx?.mode === "standalone";
 
 		await this.checkAndInstallMissingDeps({
 			directory,
-			tags,
+			tags: mainIsRunnable ? [...tags, "runnable"] : tags,
 			install: options.install,
 		});
 
 		for (const pkg of packagesToInstall) {
 			const isMain = pkg.name === selectedPackage.name;
+			const pkgTags = new Set<TAGS>(tags);
+			if (pkg.type === "apps" || pkg.packageJson?.startx?.mode === "standalone") {
+				pkgTags.add("runnable");
+			}
+
 			await this.installTemplatePackage({
 				pkg,
 				directory,
-				tags,
+				tags: Array.from(pkgTags),
 				overrideName: isMain ? overrideName : undefined,
 				overrideRelativePath: isMain ? this.getDestinationPath(pkg.relativePath, overrideName) : undefined,
 			});
@@ -252,6 +259,9 @@ export class PackageCommand {
 			...(rootPackage.devDependencies as Record<string, string> | undefined),
 			eslint: await this.resolveDependencyVersion(directory.workspace, "eslint"),
 		};
+		if (this.ensureMinimumPackageManager(rootPackage)) {
+			logger.info(`Bumped workspace packageManager to ${rootPackage.packageManager}.`);
+		}
 		await this.writeJson(path.join(directory.workspace, "package.json"), rootPackage);
 		logger.info("Added eslint to the root devDependencies.");
 
@@ -273,13 +283,7 @@ export class PackageCommand {
 		if (this.hasDependency(rootPackage, "tsdown")) tags.add("tsdown");
 
 		for (const pkg of props.packages) {
-			pkg.packageJson?.startx?.tags?.forEach(tag => tags.add(tag));
-			pkg.packageJson?.startx?.iTags?.forEach(tag => tags.add(tag));
 			pkg.packageJson?.startx?.gTags?.forEach(tag => tags.add(tag));
-
-			if (pkg.type === "apps" || pkg.packageJson?.startx?.mode === "standalone") {
-				tags.add("runnable");
-			}
 		}
 
 		return Array.from(tags);
@@ -455,12 +459,20 @@ export class PackageCommand {
 		const rootPackage = await this.readRootPackage(props.directory.workspace);
 		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.directory.workspace });
 
+		let rootChanged = this.ensureMinimumPackageManager(rootPackage);
+		if (rootChanged) {
+			logger.info(`Bumped workspace packageManager to ${rootPackage.packageManager}.`);
+		}
+
+		// These are opt-in via prompts elsewhere (formatter/test-runner choice); never force-install them here.
+		const ignoredRootTools = new Set(["eslint", "vitest", "@biomejs/biome"]);
+
 		const missingNpm: Array<{ name: string; version: string; isDev: boolean }> = [];
 		const missingWorkspace: string[] = [];
 
 		for (const [dep, config] of Object.entries(DepCheck)) {
 			if (!config.tags.every(tag => props.tags.includes(tag))) continue;
-			if (config.tags.includes("root")) continue;
+			if (ignoredRootTools.has(dep)) continue;
 
 			if (config.version.startsWith("workspace:")) {
 				const exists = await this.workspacePackageExists(props.directory.workspace, dep);
@@ -479,39 +491,53 @@ export class PackageCommand {
 			}
 		}
 
-		if (missingNpm.length === 0) return;
+		if (missingNpm.length > 0) {
+			logger.warn("The following npm dependencies are required but not installed:");
+			for (const dep of missingNpm) {
+				logger.warn(`  - ${dep.name}`);
+			}
 
-		logger.warn("The following npm dependencies are required but not installed:");
-		for (const dep of missingNpm) {
-			logger.warn(`  - ${dep.name}`);
-		}
+			const shouldAdd = await CommonInquirer.confirm({
+				message: "Add them to the workspace root package.json?",
+				default: true,
+			});
 
-		const shouldAdd = await CommonInquirer.confirm({
-			message: "Add them to the workspace root package.json?",
-			default: true,
-		});
-		if (!shouldAdd) {
-			logger.warn("Skipping. Some features may not work correctly without these dependencies.");
-			return;
-		}
+			if (shouldAdd) {
+				rootPackage.devDependencies ??= {};
+				rootPackage.dependencies ??= {};
 
-		rootPackage.devDependencies ??= {};
-		rootPackage.dependencies ??= {};
+				for (const dep of missingNpm) {
+					if (dep.isDev) {
+						(rootPackage.devDependencies as Record<string, string>)[dep.name] = dep.version;
+					} else {
+						(rootPackage.dependencies as Record<string, string>)[dep.name] = dep.version;
+					}
+				}
 
-		for (const dep of missingNpm) {
-			if (dep.isDev) {
-				(rootPackage.devDependencies as Record<string, string>)[dep.name] = dep.version;
+				rootChanged = true;
+				logger.info("Added missing dependencies to root package.json.");
 			} else {
-				(rootPackage.dependencies as Record<string, string>)[dep.name] = dep.version;
+				logger.warn("Skipping. Some features may not work correctly without these dependencies.");
 			}
 		}
 
+		if (!rootChanged) return;
+
 		await this.writeJson(path.join(props.directory.workspace, "package.json"), rootPackage);
-		logger.info("Added missing dependencies to root package.json.");
 
 		if (props.install !== false) {
 			await this.installRootDependencies(props.directory.workspace);
 		}
+	}
+	private static ensureMinimumPackageManager(rootPackage: StartXPackageJson): boolean {
+		const match = rootPackage.packageManager?.match(/^pnpm@(\d+)/);
+		if (!match) return false;
+
+		const majorVersion = Number(match[1]);
+		if (majorVersion >= 11) return false;
+
+		rootPackage.packageManager = "pnpm@11.5.1";
+		return true;
 	}
 	private static async workspacePackageExists(workspace: string, packageName: string): Promise<boolean> {
 		// Resolve scoped names: @repo/lib → packages/@repo/lib
@@ -613,7 +639,7 @@ export class PackageCommand {
 		const doc = YAML.parseDocument(content);
 
 		if (!doc.has("catalog")) {
-			doc.set("catalog", {});
+			doc.set("catalog", doc.createNode({}));
 		}
 
 		const templateCatalog = await this.loadTemplateCatalog(props.templateDir);

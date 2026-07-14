@@ -1,4 +1,4 @@
 export const Constants = {
-	packageManager: "pnpm@10.28.2",
+	packageManager: "pnpm@11.5.1",
 	node: ">=22",
 };

@@ -1,6 +1,7 @@
 import { fsTool } from "@repo/lib/file-system-module";
 import { logger } from "@repo/logger";
 import { Command } from "commander";
+import fs from "fs/promises";
 import path from "path";
 import z from "zod";
 
@@ -338,6 +339,8 @@ export class InitCommand {
 	}
 
 	private static async checkTargetDirectory(workspace: string) {
+		if (!(await this.pathExists(workspace))) return;
+
 		const [files, dirs] = await Promise.all([
 			fsTool.listFiles({ dir: workspace }),
 			fsTool.listDirectories({ dir: workspace }),
@@ -350,6 +353,15 @@ export class InitCommand {
 		});
 		if (!overwrite) {
 			throw new Error("Aborted: target directory already exists.");
+		}
+	}
+
+	private static async pathExists(target: string) {
+		try {
+			await fs.access(target);
+			return true;
+		} catch {
+			return false;
 		}
 	}
 
