@@ -66,7 +66,7 @@ export const scripts: SCRIPT = {
 	"start": [
 		{
 			script: "turbo run start",
-			tags: ["backend", "runnable", "node", "root"],
+			tags: ["runnable", "root"],
 		},
 		{
 			script: "vite preview",
