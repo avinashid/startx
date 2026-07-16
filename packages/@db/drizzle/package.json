@@ -12,6 +12,8 @@
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
 		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",

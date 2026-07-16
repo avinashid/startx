@@ -48,7 +48,8 @@
 			"react-router"
 		],
 		"requiredDeps": [
-			"@repo/ui"
+			"@repo/ui",
+			"@repo/common"
 		],
 		"requiredDevDeps": [
 			"typescript-config"
