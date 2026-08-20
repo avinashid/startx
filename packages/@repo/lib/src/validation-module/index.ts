@@ -6,147 +6,69 @@ import type { NextFunction, Request, Response } from "express";
 
 import { ErrorResponse } from "../error-handlers-module/index.js";
 
-export async function validateBody<T extends SchemaTypes>(
-	schema: T,
-	payload: unknown
-): Promise<{ data?: Infer<T>; error: string[] }> {
-	try {
-		const validator = vine.compile(schema);
-		const data = await validator.validate(payload);
+export class RouterValidation {
+	public static schema = {
+		validateId: vine.object({
+			id: vine.string().uuid(),
+		}),
 
-		return { data, error: [] };
-	} catch (err: unknown) {
-		if (err && typeof err === "object" && "messages" in err) {
-			const messages = (err as { messages: Array<{ message: string }> }).messages;
-			return {
-				error: messages.map(e => e.message),
-			};
-		}
-
-		return { error: ["Validation failed"] };
-	}
-}
-
-export function bodyValidator<T extends SchemaTypes>(schema: T) {
-	return function <
-		F extends (
-			req: Request<any, any, Infer<T>, any, Record<string, any>>,
-			res: Response<any, Record<string, any>>,
-			next: NextFunction
-		) => Promise<any> | void,
-	>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
-		const originalMethod = descriptor.value!;
-
-		descriptor.value = async function (
-			this: unknown,
-			req: Request<any, any, Infer<T>, any, Record<string, any>>,
-			res: Response,
-			next: NextFunction
-		) {
-			const { error, data } = await validateBody(schema, req.body);
-
-			logger.info(`Body: ${JSON.stringify(req.body, null, 2)}`, {
-				logType: "requestBody",
-			});
-
-			if (!data || error.length) {
-				logger.error(error.join("\n"), { logType: "validationErrors" });
-				return res.status(422).json({ message: error.join("\n") });
-			}
-
-			req.body = data;
-
-			return await originalMethod.call(this, req, res, next);
-		} as unknown as F;
-
-		return descriptor;
+		pagination: vine.object({
+			page: vine
+				.number()
+				.positive()
+				.parse(e => (!e ? 1 : e))
+				.optional(),
+			limit: vine
+				.number()
+				.positive()
+				.parse(e => (!e ? 10 : e))
+				.optional(),
+			query: vine
+				.string()
+				.parse(e => (!e ? "" : e))
+				.optional(),
+		}),
 	};
-}
 
-export function paramsValidator<T extends SchemaTypes>(schema: T) {
-	return function <
-		F extends (
-			req: Request<any, any, Infer<T>, any, Record<string, any>>,
-			res: Response<any, Record<string, any>>,
-			next: NextFunction
-		) => Promise<any> | void,
-	>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
-		const originalMethod = descriptor.value!;
+	public static fn = {
+		validate: async <T extends SchemaTypes>(schema: T, payload: unknown): Promise<Infer<T>> => {
+			try {
+				const validator = vine.compile(schema);
+				return await validator.validate(payload);
+			} catch (err: unknown) {
+				if (err && typeof err === "object" && "messages" in err) {
+					const messages = (err as { messages: Array<{ message: string }> }).messages;
+					const errorMessage = messages.map(e => e.message).join("\n");
 
-		descriptor.value = async function (
-			this: unknown,
-			req: Request<Infer<T>, any, any, any, Record<string, any>>,
-			res: Response,
-			next: NextFunction
-		) {
-			const { error, data } = await validateBody(schema, req.params);
+					logger.error(errorMessage, { logType: "validationErrors" });
+					throw new ErrorResponse(errorMessage, 422);
+				}
 
-			if (!data || error.length) {
-				logger.error(error.join("\n"), { logType: "validationErrors" });
-				return res.status(422).json({ message: error.join("\n") });
+				logger.error("Validation failed", { logType: "validationErrors" });
+				throw new ErrorResponse("Validation failed", 422);
 			}
+		},
 
-			Object.assign(req.params, data);
-
-			return await originalMethod.call(this, req, res, next);
-		} as unknown as F;
-
-		return descriptor;
-	};
-}
-
-export function queryValidator<T extends SchemaTypes>(schema: T) {
-	return function <
-		F extends (
-			req: Request<any, any, Infer<T>, any, Record<string, any>>,
-			res: Response<any, Record<string, any>>,
-			next: NextFunction
-		) => Promise<any> | void,
-	>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
-		const originalMethod = descriptor.value!;
-
-		descriptor.value = async function (
-			this: unknown,
-			req: Request<any, any, any, Infer<T>, Record<string, any>>,
-			res: Response,
-			next: NextFunction
-		) {
-			const { error, data } = await validateBody(schema, req.query);
-
-			if (!data || error.length) {
-				logger.error(error.join("\n"), { logType: "validationErrors" });
-				return res.status(422).json({ message: error.join("\n") });
-			}
-
-			Object.assign(req.query, data);
-			return await originalMethod.call(this, req, res, next);
-		} as unknown as F;
-
-		return descriptor;
-	};
-}
-
-export function mediaBodyValidator<T extends SchemaTypes>(schema: T, optional = false) {
-	return function <
-		F extends (
-			req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any },
-			res: Response<any, Record<string, any>>,
-			next: NextFunction
-		) => Promise<any> | void,
-	>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
-		const originalMethod = descriptor.value!;
-
-		descriptor.value = async function (
-			this: unknown,
-			req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any },
-			res: Response,
-			next: NextFunction
-		) {
-			const files = req.files;
+		validateBody: async <T extends SchemaTypes>(schema: T, payload: Request): Promise<Infer<T>> => {
+			return await RouterValidation.fn.validate(schema, payload.body);
+		},
+		validateParams: async <T extends SchemaTypes>(schema: T, payload: Request): Promise<Infer<T>> => {
+			return await RouterValidation.fn.validate(schema, payload.params);
+		},
+		validateQuery: async <T extends SchemaTypes>(schema: T, payload: Request): Promise<Infer<T>> => {
+			return await RouterValidation.fn.validate(schema, payload.query);
+		},
+		validateMediaBody: async <T extends SchemaTypes>(
+			schema: T,
+			req: Request<any, any, any, any, Record<string, any>> & { files?: any; file?: any },
+			options: { optional?: boolean; multiple?: boolean } = {}
+		): Promise<{ data: Infer<T>; media: any }> => {
+			const { optional = false, multiple = false } = options;
+			const files = req.files || req.file;
 
 			if (!files && !optional) {
 				logger.error("Add at least one file", { logType: "validationErrors" });
-				return res.status(422).json({ message: "Add at least one file" });
+				throw new ErrorResponse("Add at least one file", 422);
 			}
 
 			const isJSON = (str: unknown): unknown => {
@@ -159,56 +81,152 @@ export function mediaBodyValidator<T extends SchemaTypes>(schema: T, optional = 
 				}
 			};
 
-			const parsedData = Object.fromEntries(Object.entries(req.body).map(([k, v]) => [k, isJSON(v)]));
+			const parsedData = Object.fromEntries(Object.entries(req.body || {}).map(([k, v]) => [k, isJSON(v)]));
 
-			const { error, data } = await validateBody(schema, parsedData);
+			const data = await RouterValidation.fn.validate(schema, parsedData);
 
-			if (!data || error.length) {
-				logger.error(error.join("\n"), { logType: "validationErrors" });
-				return res.status(422).json({ message: error.join("\n") });
+			let media: any = undefined;
+
+			if (files) {
+				const filesArray = Array.isArray(files)
+					? files
+					: typeof files === "object" && files !== null
+						? Object.values(files).flat()
+						: [files];
+
+				media = multiple ? filesArray : filesArray[0];
 			}
 
-			req.body = data;
-			req.files = files;
-
-			return await originalMethod.call(this, req, res, next);
-		} as unknown as F;
-
-		return descriptor;
+			return { data, media };
+		},
 	};
-}
 
-export const validateId = vine.object({
-	id: vine.string().uuid(),
-});
+	public static decorator = {
+		body: <T extends SchemaTypes>(schema: T) => {
+			return function <
+				F extends (
+					req: Request<any, any, Infer<T>, any, Record<string, any>>,
+					res: Response<any, Record<string, any>>,
+					next: NextFunction
+				) => Promise<any> | void,
+			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
+				const originalMethod = descriptor.value!;
 
-export const paginationValidator = vine.object({
-	page: vine
-		.number()
-		.positive()
-		.parse(e => (!e ? 1 : e))
-		.optional(),
-	limit: vine
-		.number()
-		.positive()
-		.parse(e => (!e ? 10 : e))
-		.optional(),
-	query: vine
-		.string()
-		.parse(e => (!e ? "" : e))
-		.optional(),
-});
+				descriptor.value = async function (
+					this: unknown,
+					req: Request<any, any, Infer<T>, any, Record<string, any>>,
+					res: Response,
+					next: NextFunction
+				) {
+					try {
+						const data = await RouterValidation.fn.validate(schema, req.body);
 
-export async function validate<T extends SchemaTypes>(schema: T, payload: Infer<T>): Promise<Infer<T>> {
-	const result = await validateBody(schema, payload);
+						logger.info(`Body: ${JSON.stringify(req.body, null, 2)}`, {
+							logType: "requestBody",
+						});
 
-	if (result.error.length) {
-		throw new ErrorResponse(result.error.join("\n"), 422);
-	}
+						req.body = data;
+						return await originalMethod.call(this, req, res, next);
+					} catch (error) {
+						next(error);
+					}
+				} as unknown as F;
 
-	if (result.data === undefined) {
-		throw new ErrorResponse("Validation failed", 422);
-	}
+				return descriptor;
+			};
+		},
 
-	return result.data;
+		params: <T extends SchemaTypes>(schema: T) => {
+			return function <
+				F extends (
+					req: Request<any, any, Infer<T>, any, Record<string, any>>,
+					res: Response<any, Record<string, any>>,
+					next: NextFunction
+				) => Promise<any> | void,
+			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
+				const originalMethod = descriptor.value!;
+
+				descriptor.value = async function (
+					this: unknown,
+					req: Request<Infer<T>, any, any, any, Record<string, any>>,
+					res: Response,
+					next: NextFunction
+				) {
+					try {
+						const data = await RouterValidation.fn.validate(schema, req.params);
+						Object.assign(req.params, data);
+						return await originalMethod.call(this, req, res, next);
+					} catch (error) {
+						next(error);
+					}
+				} as unknown as F;
+
+				return descriptor;
+			};
+		},
+
+		query: <T extends SchemaTypes>(schema: T) => {
+			return function <
+				F extends (
+					req: Request<any, any, Infer<T>, any, Record<string, any>>,
+					res: Response<any, Record<string, any>>,
+					next: NextFunction
+				) => Promise<any> | void,
+			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
+				const originalMethod = descriptor.value!;
+
+				descriptor.value = async function (
+					this: unknown,
+					req: Request<any, any, any, Infer<T>, Record<string, any>>,
+					res: Response,
+					next: NextFunction
+				) {
+					try {
+						const data = await RouterValidation.fn.validate(schema, req.query);
+						Object.assign(req.query, data);
+						return await originalMethod.call(this, req, res, next);
+					} catch (error) {
+						next(error);
+					}
+				} as unknown as F;
+
+				return descriptor;
+			};
+		},
+
+		mediaBody: <T extends SchemaTypes>(schema: T, optional = false, multiple = false) => {
+			return function <
+				F extends (
+					req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any; file?: any; media?: any },
+					res: Response<any, Record<string, any>>,
+					next: NextFunction
+				) => Promise<any> | void,
+			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
+				const originalMethod = descriptor.value!;
+
+				descriptor.value = async function (
+					this: unknown,
+					req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any; file?: any; media?: any },
+					res: Response,
+					next: NextFunction
+				) {
+					try {
+						const { data, media } = await RouterValidation.fn.validateMediaBody(schema, req, {
+							optional,
+							multiple,
+						});
+
+						req.body = data;
+						req.media = media;
+
+						return await originalMethod.call(this, req, res, next);
+					} catch (error) {
+						next(error);
+					}
+				} as unknown as F;
+
+				return descriptor;
+			};
+		},
+	};
 }

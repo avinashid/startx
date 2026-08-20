@@ -14,7 +14,6 @@ const credentials = {
 	SMTP_SENDER_NAME: z.string().default("Startx"),
 };
 const _SMTPConfigSchema = z.object(credentials);
-
 export type SMTPConfig = z.infer<typeof _SMTPConfigSchema>;
 
 class SMTPMailService {
@@ -54,7 +53,13 @@ class SMTPMailService {
 	}
 
 	static async sendMail(
-		props: { to: string; subject: string; text: string; html?: string },
+		props: {
+			to: string;
+			subject: string;
+			text: string;
+			html?: string;
+			attachments?: Array<{ filename: string; url: string }>;
+		},
 		customConfig?: SMTPConfig
 	) {
 		const config = customConfig || defineEnv(credentials);
@@ -66,6 +71,7 @@ class SMTPMailService {
 			subject: props.subject,
 			text: props.text,
 			html: props.html,
+			attachments: props.attachments?.map(attachment => ({ filename: attachment.filename, path: attachment.url })),
 		};
 
 		try {

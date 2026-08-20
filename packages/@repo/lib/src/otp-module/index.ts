@@ -6,16 +6,17 @@ import { RedisStore } from "@repo/redis";
 import { HashingModule } from "../hashing-module/index.js";
 import { SMTPMailService } from "../mail-module/nodemailer.js";
 import { Random } from "../utils.js";
-
-const redisOtpStore = new RedisStore<{
-	email: string;
-	otp: string;
-	status: "pending" | "verified";
-}>({
-	namespace: "otp",
-});
+const getRedis = () => {
+	return new RedisStore<{
+		email: string;
+		otp: string;
+		status: "pending" | "verified";
+	}>({
+		namespace: "otp",
+	});
+};
 export class OTPModule {
-	private static otpExpirationSeconds = 5 * 60;
+	private static otpExpirationMs = 5 * 60 * 1000;
 
 	static async sendMailOTP({ email }: { email: string }): Promise<void> {
 		const normalizedEmail = email.trim().toLowerCase();
@@ -25,10 +26,10 @@ export class OTPModule {
 		const hash = await HashingModule.hash(otpStr);
 
 		try {
-			await redisOtpStore.set(
+			await getRedis().set(
 				normalizedEmail,
 				{ email: normalizedEmail, otp: hash, status: "pending" },
-				this.otpExpirationSeconds
+				this.otpExpirationMs
 			);
 		} catch (err) {
 			logger?.error("otp: redis write failed", { email: normalizedEmail, err });
@@ -58,7 +59,7 @@ export class OTPModule {
 		// shortcut for test/dev environments — be careful with this in real dev
 		// if (["test"].includes(ENV.NODE_ENV)) return true;
 
-		const rows = await redisOtpStore.get(normalizedEmail);
+		const rows = await getRedis().get(normalizedEmail);
 		if (!rows?.otp) return false;
 
 		const firstOtp = rows.otp;
@@ -67,23 +68,23 @@ export class OTPModule {
 		if (!verified) return false;
 
 		if (deleteOtp) {
-			await redisOtpStore.del(normalizedEmail);
+			await getRedis().del(normalizedEmail);
 		} else {
-			await redisOtpStore.set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationSeconds);
+			await getRedis().set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationMs);
 		}
 		return true;
 	}
 
 	static async checkOTPStatus(email: string): Promise<boolean> {
 		const normalizedEmail = email.trim().toLowerCase();
-		const rows = await redisOtpStore.get(normalizedEmail);
+		const rows = await getRedis().get(normalizedEmail);
 		if (!rows?.otp) return false;
 		return rows.status === "verified";
 	}
 
 	static async deleteOTP(email: string): Promise<boolean> {
 		const normalizedEmail = email.trim().toLowerCase();
-		await redisOtpStore.del(normalizedEmail);
+		await getRedis().del(normalizedEmail);
 		return true;
 	}
 }

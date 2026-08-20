@@ -34,6 +34,8 @@
 		"@repo/env": "workspace:*",
 		"@types/express": "catalog:",
 		"@types/express-fileupload": "catalog:",
+		"blurhash": "catalog:",
+		"sharp": "catalog:",
 		"bcryptjs": "catalog:",
 		"firebase-admin": "catalog:",
 		"jsonwebtoken": "catalog:",

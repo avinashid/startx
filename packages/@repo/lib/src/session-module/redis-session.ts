@@ -1,6 +1,5 @@
 import { RedisStore } from "@repo/redis";
-import type { SessionRecord, SessionType } from "./i-session.js";
-import { constants, IUserSession } from "./i-session.js";
+import { IUserSession, type SessionRecord, type SessionType } from "./i-session.js";
 
 type SessionIndex = string[];
 
@@ -9,10 +8,7 @@ export class RedisUserSession extends IUserSession {
 	private sessionIndexStore: RedisStore<SessionIndex>;
 
 	constructor(type: SessionType) {
-		super();
-
-		this.type = type;
-
+		super(type);
 		this.sessionStore = new RedisStore<SessionRecord>({
 			namespace: "auth-session",
 		});
@@ -22,9 +18,26 @@ export class RedisUserSession extends IUserSession {
 		});
 	}
 
-	protected type: SessionType;
 	protected async setSession(sessionId: string, data: SessionRecord, ttl: number): Promise<void> {
 		await this.sessionStore.set(sessionId, data, ttl);
+	}
+
+	protected async updateSession(sessionId: string, data: Partial<SessionRecord>): Promise<void> {
+		const session = await this.sessionStore.get(sessionId);
+		if (session?.sessionId) {
+			await this.setSession(
+				sessionId,
+				{
+					...session,
+					...data,
+					user: {
+						...session.user,
+						...data.user,
+					},
+				},
+				this.type.sessionDuration
+			);
+		}
 	}
 
 	protected async getSession(sessionId: string): Promise<SessionRecord | null> {
@@ -45,7 +58,7 @@ export class RedisUserSession extends IUserSession {
 			sessions.push(sessionId);
 		}
 
-		await this.sessionIndexStore.set(key, sessions, constants.sessionDuration);
+		await this.sessionIndexStore.set(key, sessions, this.type.sessionDuration);
 	}
 
 	protected async removeUserSession(userId: string, sessionId: string): Promise<void> {
@@ -60,7 +73,7 @@ export class RedisUserSession extends IUserSession {
 			return;
 		}
 
-		await this.sessionIndexStore.set(key, filtered, constants.sessionDuration);
+		await this.sessionIndexStore.set(key, filtered, this.type.sessionDuration);
 	}
 
 	protected async getUserSessions(userId: string): Promise<string[]> {

@@ -1,10 +1,10 @@
 import fs from "fs/promises";
 import path from "path";
-import * as YAML from "yaml";
+import YAML from "yaml";
 
 import { __dirname } from "../utils.js";
 
-export class FStool {
+class FStool {
 	root = __dirname();
 
 	private async pathExists(target: string) {
@@ -32,12 +32,16 @@ export class FStool {
 		}
 
 		await fs.writeFile(destination, JSON.stringify(content, null, 2));
+
+		return destination;
 	}
 
 	async readFile({ file }: { file: string }) {
 		return await fs.readFile(path.resolve(this.root, file), "utf-8");
 	}
-
+	async getBuffer({ file }: { file: string }) {
+		return await fs.readFile(path.resolve(this.root, file));
+	}
 	async readJSONFile<T>({ file, dir }: { file: string; dir?: string }) {
 		try {
 			file = `${file}.json`;
@@ -122,8 +126,7 @@ export class FStool {
 			const srcPath = path.join(source, entry.name);
 			const destPath = path.join(destination, entry.name);
 
-			const shouldInclude =
-				(!include || include.test(entry.name)) && (!exclude || !exclude.test(entry.name));
+			const shouldInclude = (!include || include.test(entry.name)) && (!exclude || !exclude.test(entry.name));
 
 			if (entry.isDirectory()) {
 				if (recursive) {

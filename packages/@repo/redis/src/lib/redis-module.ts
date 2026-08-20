@@ -1,5 +1,5 @@
 import { logger } from "@repo/logger";
-import type { Redis } from "ioredis";
+import type { Cluster, Redis } from "ioredis";
 
 import { getRedis } from "./redis-client.js";
 
@@ -29,7 +29,7 @@ interface RedisStoreOptions {
 }
 
 export class RedisStore<T> {
-	private client: Redis;
+	private client: Redis | Cluster;
 	private namespace?: string;
 
 	constructor(options?: RedisStoreOptions) {

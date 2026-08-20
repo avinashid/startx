@@ -156,6 +156,8 @@ catalog:
   winston-daily-rotate-file: "^5.0.0"
   jsonwebtoken: "^9.0.3"
   yaml: "^2.8.2"
+  blurhash: "^2.0.5"
+  sharp: "^0.35.3"
 
   # aix
   js-tiktoken: "^1.0.21"

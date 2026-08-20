@@ -20,7 +20,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=lock
 COPY apps/core-server/ ./apps/core-server/
 COPY packages ./packages
 COPY configs ./configs
-COPY assets ./assets
+# COPY assets ./assets
 COPY turbo.json ./
 
 # Build the required packages with Turbo cache mounted

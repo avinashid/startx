@@ -1,19 +1,6 @@
-import { Time } from "@repo/common/time";
 import type { SessionUser } from "@repo/common/types/users";
-import { defineEnv } from "@repo/env";
 import crypto from "node:crypto";
-import { z } from "zod";
-import { TokenModule } from "../extra/token-module.js";
-
-export const sessionEnv = defineEnv({
-	SESSION_DURATION: z.number().default(Time.days(30).seconds),
-	SESSION_TYPE: z.enum(["single", "multi"]).default("multi"),
-	MAX_CONCURRENT_SESSIONS: z.number().default(1),
-});
-
-export const constants = {
-	sessionDuration: sessionEnv.SESSION_DURATION,
-};
+import { AccessToken, RefreshToken } from "../token-module/index.js";
 
 export type TokenPair = {
 	accessToken: string;
@@ -23,9 +10,11 @@ export type TokenPair = {
 export type SessionType =
 	| {
 			type: "single";
+			sessionDuration: number;
 	  }
 	| {
 			type: "multi";
+			sessionDuration: number;
 			maxConcurrentSessions: number;
 	  };
 
@@ -37,8 +26,14 @@ export type SessionRecord = {
 	lastSeenAt: number;
 };
 
+type PartialSessionRecord = Partial<SessionRecord>;
+
 export abstract class IUserSession {
-	protected abstract type: SessionType;
+	protected readonly type: SessionType;
+
+	constructor(type: SessionType) {
+		this.type = type;
+	}
 
 	protected sessionKey(sessionId: string) {
 		return `session:${sessionId}`;
@@ -53,6 +48,8 @@ export abstract class IUserSession {
 	}
 
 	protected abstract setSession(sessionId: string, data: SessionRecord, ttl: number): Promise<void>;
+
+	protected abstract updateSession(sessionId: string, data: PartialSessionRecord): Promise<void>;
 
 	protected abstract getSession(sessionId: string): Promise<SessionRecord | null>;
 
@@ -74,6 +71,12 @@ export abstract class IUserSession {
 		return crypto.randomUUID();
 	}
 
+	public async updateSessionData(userId: string, data: PartialSessionRecord): Promise<void> {
+		const sessions = await this.getUserSessions(userId);
+
+		await Promise.all(sessions.map(sessionId => this.updateSession(sessionId, data)));
+	}
+
 	public async startSession(user: Omit<SessionUser, "accessToken">): Promise<TokenPair> {
 		if (this.type.type === "single") {
 			await this.endAllSessions(user.id);
@@ -84,36 +87,41 @@ export abstract class IUserSession {
 
 			if (existing.length >= this.type.maxConcurrentSessions) {
 				const oldest = existing[0];
-				await this.endSession(oldest);
+
+				if (oldest) {
+					await this.endSession(oldest);
+				}
 			}
 		}
 
 		const sessionId = this.generateSessionId();
 		const refreshJti = this.generateRefreshJti();
 
-		const accessToken = TokenModule.signAccessToken({
+		const accessToken = AccessToken.generateToken({
 			userID: user.id,
 			email: user.email,
 			sessionID: sessionId,
 		});
 
-		const refreshToken = TokenModule.signRefreshToken({
+		const refreshToken = RefreshToken.generateToken({
 			userID: user.id,
 			email: user.email,
 			sessionID: sessionId,
 			jti: refreshJti,
 		});
 
+		const now = Date.now();
+
 		const record: SessionRecord = {
 			sessionId,
 			user,
 			refreshTokenHash: this.hashToken(refreshToken),
-			createdAt: Date.now(),
-			lastSeenAt: Date.now(),
+			createdAt: now,
+			lastSeenAt: now,
 		};
 
 		await Promise.all([
-			this.setSession(sessionId, record, constants.sessionDuration),
+			this.setSession(sessionId, record, this.type.sessionDuration),
 			this.addUserSession(user.id, sessionId),
 		]);
 
@@ -127,8 +135,31 @@ export abstract class IUserSession {
 		return await this.getSession(sessionId);
 	}
 
+	public async verifyRefreshToken(token?: string): Promise<SessionRecord | null> {
+		if (!token) return null;
+
+		const payload = RefreshToken.verifyToken(token);
+
+		if (!payload) return null;
+
+		return await this.getSession(payload.sessionID);
+	}
+
+	public async createAccessToken(sessionId: string): Promise<string | null> {
+		const session = await this.getSession(sessionId);
+
+		if (!session) return null;
+
+		return AccessToken.generateToken({
+			userID: session.user.id,
+			email: session.user.email,
+			sessionID: sessionId,
+		});
+	}
+
 	public async rotateRefreshToken(sessionId: string, refreshToken: string): Promise<TokenPair | null> {
 		const session = await this.getSession(sessionId);
+
 		if (!session) return null;
 
 		const incomingHash = this.hashToken(refreshToken);
@@ -140,13 +171,13 @@ export abstract class IUserSession {
 
 		const newRefreshJti = this.generateRefreshJti();
 
-		const accessToken = TokenModule.signAccessToken({
+		const accessToken = AccessToken.generateToken({
 			userID: session.user.id,
 			email: session.user.email,
 			sessionID: sessionId,
 		});
 
-		const newRefreshToken = TokenModule.signRefreshToken({
+		const newRefreshToken = RefreshToken.generateToken({
 			userID: session.user.id,
 			email: session.user.email,
 			sessionID: sessionId,
@@ -156,27 +187,17 @@ export abstract class IUserSession {
 		session.refreshTokenHash = this.hashToken(newRefreshToken);
 		session.lastSeenAt = Date.now();
 
-		await this.setSession(sessionId, session, constants.sessionDuration);
+		await this.setSession(sessionId, session, this.type.sessionDuration);
 
 		return {
 			accessToken,
 			refreshToken: newRefreshToken,
 		};
 	}
-	public async createAccessToken(sessionId: string): Promise<string | null> {
-		const session = await this.getSession(sessionId);
-		if (!session) return null;
 
-		const accessToken = TokenModule.signAccessToken({
-			userID: session.user.id,
-			email: session.user.email,
-			sessionID: sessionId,
-		});
-
-		return accessToken;
-	}
 	public async endSession(sessionId: string): Promise<void> {
 		const session = await this.getSession(sessionId);
+
 		if (!session) return;
 
 		await Promise.all([this.deleteSession(sessionId), this.removeUserSession(session.user.id, sessionId)]);
@@ -185,7 +206,7 @@ export abstract class IUserSession {
 	public async endAllSessions(userId: string): Promise<void> {
 		const sessions = await this.getUserSessions(userId);
 
-		await Promise.all(sessions.map(sid => this.deleteSession(sid)));
+		await Promise.all(sessions.map(sessionId => this.deleteSession(sessionId)));
 
 		await this.clearUserSessions(userId);
 	}
