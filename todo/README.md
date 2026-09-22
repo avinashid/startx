@@ -39,7 +39,7 @@ A CLI that scaffolds a production-ready TypeScript monorepo. This repository is 
 tool and the template** — `startx init` reads the very `apps/`, `packages/` and `configs/`
 directories you are looking at and copies a selected subset of them into a new workspace.
 
-- Published as [`startx`](https://www.npmjs.com/package/startx) on npm (`bin` → `apps/startx-cli/dist/index.mjs`).
+- Published as [`startx`](https://www.npmjs.com/package/startx) on npm (`bin` → `apps/startx-cli/bin/index.mjs`).
 - pnpm workspaces + Turborepo, Node ≥ 22, pnpm 11.5.1, MIT.
 
 ```bash
@@ -197,7 +197,7 @@ There is no test, lint, typecheck or version-change gate on this — [B30](bugs/
 
 ## 3. Current health
 
-Last full run: **2026-09-22**, HEAD `dcb2bb1`.
+Last full run: **2026-09-22**, HEAD `c104915` — `turbo typecheck lint test build`: **50 / 50** tasks, 0 errors. `@repo/lib` now has 130 tests.
 
 | Command | Result |
 |---|---|
@@ -306,10 +306,9 @@ run and passed. Only move to `verified` after actually running it.
 
 1. ~~**B1–B7**~~ — done, `caca799`.
 2. ~~**B8–B12**~~ — done. Toolchain is green; `turbo typecheck/lint/test/build` are now real gates.
-3. **B30** — gate publishing on a green build and a version change. Now unblocked: the checks it
-   would run actually pass.
-4. **B13–B21** — generator defects; each one silently degrades *every* repo scaffolded from here.
-5. **B22–B29** — server hardening defaults.
+3. ~~**B30**~~ — done, `c104915`. Publish is gated on the verify job and a version change.
+4. ~~**B13–B21**~~ — done, `c104915`.
+5. ~~**B22–B29**~~ — done, `c104915`.
 6. **E1** — tests for `startx-cli`. Snapshotting the emitted tree would have caught most of B13–B21.
 
 Outstanding from earlier rounds: [B3](bugs/function-bugs.md#b3)'s Redis round-trip is still

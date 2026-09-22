@@ -11,11 +11,11 @@ Contents: [B30](#b30) · [B31](#b31)
 
 ### B30 · CI publishes to npm on every push to `main` with no gate
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** ci
 - **File:** `.github/workflows/publish.yml`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Two failure modes, both live today:
 
@@ -92,11 +92,11 @@ publishing. Push a version bump: it must run the full check suite before publish
 
 ### B31 · `.npmignore` excludes the `bin` target; publishing works only by npm's force-include
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** ci / packaging
 - **File:** `.npmignore:30`, `package.json:10`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — None today. Filed because the package works by accident.
 

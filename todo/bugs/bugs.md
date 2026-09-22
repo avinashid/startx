@@ -6,7 +6,7 @@ are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
 - **Next free ID:** `B34`
 - **Last full audit:** 2026-09-22 against HEAD `dcb2bb1`
-- **Open:** 18 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 16
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 35
 
 Counts include the four sub-items of B12.
 
@@ -16,10 +16,10 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 0 | 9 | 9 | **18** |
+| open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 7 | 9 | 0 | 0 | **16** |
+| **verified** | 7 | 9 | 8 | 11 | **35** |
 
 **All P0 and P1 defects are closed. The toolchain is green for the first time:**
 
@@ -31,8 +31,8 @@ Counts include the four sub-items of B12.
 | `turbo build` | blocked by `lint` | **22 / 22** |
 
 ~90 lint *warnings* remain by design — burning them down is
-[E2](../enhancements/template-enhancements.md#e2), not a defect. Remaining open work is P2
-(generator defects B13–B21) and P3 (hardening B22–B29, CI B30–B31).
+[E2](../enhancements/template-enhancements.md#e2), not a defect. P2 (generator B13–B21) and
+P3 (hardening B22–B29, CI B30–B31) were closed in `c104915`; the register has no open bugs.
 
 ---
 
@@ -74,30 +74,30 @@ rules were silently not running for any package.
 
 | ID | Title | Area | Detail | Status |
 |---|---|---|---|---|
-| B13 | `FileCheck` key `.prettier.cjs` misspells `.prettierrc.cjs` — entry dead, file always copied | startx-cli | [config](config-bugs.md#b13) | open |
-| B14 | `.prettierignore` is gated on the `biome` tag instead of `prettier` | startx-cli | [config](config-bugs.md#b14) | open |
-| B15 | `web-client` gets the wrong `typecheck` script whenever a backend app is co-selected | startx-cli | [function](function-bugs.md#b15) | open |
-| B16 | `handlePackageJson` drops `private`, `bin`, `main`, `peerDependencies`, `startx` | startx-cli | [function](function-bugs.md#b16) | open |
-| B17 | `init` resolves only one level of the dependency closure; `package add` does full BFS | startx-cli | [function](function-bugs.md#b17) | open |
-| B18 | "Overwrite?" merges into the existing tree instead of overwriting | startx-cli | [function](function-bugs.md#b18) | open |
-| B19 | Renaming across scopes writes to the template's scope directory | startx-cli | [function](function-bugs.md#b19) | open |
-| B20 | `syncDepsWithCatalog` can emit an unresolvable `catalog:` with no warning | startx-cli | [function](function-bugs.md#b20) | open |
-| B21 | Dead ternary and a misleading log line in `installRootDependencies` | startx-cli | [function](function-bugs.md#b21) | open |
+| B13 | `FileCheck` key `.prettier.cjs` misspells `.prettierrc.cjs` — entry dead, file always copied | startx-cli | [config](config-bugs.md#b13) | **verified** |
+| B14 | `.prettierignore` is gated on the `biome` tag instead of `prettier` | startx-cli | [config](config-bugs.md#b14) | **verified** |
+| B15 | `web-client` gets the wrong `typecheck` script whenever a backend app is co-selected | startx-cli | [function](function-bugs.md#b15) | **verified** |
+| B16 | `handlePackageJson` drops `private`, `bin`, `main`, `peerDependencies`, `startx` | startx-cli | [function](function-bugs.md#b16) | **verified** |
+| B17 | `init` resolves only one level of the dependency closure; `package add` does full BFS | startx-cli | [function](function-bugs.md#b17) | **verified** |
+| B18 | "Overwrite?" merges into the existing tree instead of overwriting | startx-cli | [function](function-bugs.md#b18) | **verified** |
+| B19 | Renaming across scopes writes to the template's scope directory | startx-cli | [function](function-bugs.md#b19) | **verified** |
+| B20 | `syncDepsWithCatalog` can emit an unresolvable `catalog:` with no warning | startx-cli | [function](function-bugs.md#b20) | **verified** |
+| B21 | Dead ternary and a misleading log line in `installRootDependencies` | startx-cli | [function](function-bugs.md#b21) | **verified** |
 
 ## P3 — hardening, papercuts, dead code
 
 | ID | Title | Area | Detail | Status |
 |---|---|---|---|---|
-| B22 | `/files` serves the whole `storage/` directory with no authentication | core-server | [security](security-bugs.md#b22) | open |
-| B23 | `fileUpload()` has no size limits — unbounded in-memory uploads on every route | core-server | [security](security-bugs.md#b23) | open |
-| B24 | CORS is registered after the body parsers | core-server | [security](security-bugs.md#b24) | open |
-| B25 | `resolveSameSite` returns `"lax"` in both branches — dead ternary | @repo/lib | [security](security-bugs.md#b25) | open |
-| B26 | Cookie module throws at **import** time when `COOKIE_DOMAIN` is unset | @repo/lib | [runtime](runtime-bugs.md#b26) | open |
-| B27 | `Paginator.getPage` does no validation on user-controlled `page` / `limit` | @repo/lib | [function](function-bugs.md#b27) | open |
-| B28 | No helmet, no rate limiting, no request-size caps in the server template | core-server | [security](security-bugs.md#b28) | open |
-| B29 | `serve-static.ts` is dead code with a path that wouldn't resolve after bundling | core-server | [runtime](runtime-bugs.md#b29) | open |
-| B30 | CI publishes to npm on every push to `main` with no gate | ci | [ci](ci-bugs.md#b30) | open |
-| B31 | `.npmignore` excludes the `bin` target; publishing works only by npm's force-include | ci | [ci](ci-bugs.md#b31) | open |
+| B22 | `/files` serves the whole `storage/` directory with no authentication | core-server | [security](security-bugs.md#b22) | **verified** |
+| B23 | `fileUpload()` has no size limits — unbounded in-memory uploads on every route | core-server | [security](security-bugs.md#b23) | **verified** |
+| B24 | CORS is registered after the body parsers | core-server | [security](security-bugs.md#b24) | **verified** |
+| B25 | `resolveSameSite` returns `"lax"` in both branches — dead ternary | @repo/lib | [security](security-bugs.md#b25) | **verified** |
+| B26 | Cookie module throws at **import** time when `COOKIE_DOMAIN` is unset | @repo/lib | [runtime](runtime-bugs.md#b26) | **verified** |
+| B27 | `Paginator.getPage` does no validation on user-controlled `page` / `limit` | @repo/lib | [function](function-bugs.md#b27) | **verified** |
+| B28 | No helmet, no rate limiting, no request-size caps in the server template | core-server | [security](security-bugs.md#b28) | **verified** |
+| B29 | `serve-static.ts` is dead code with a path that wouldn't resolve after bundling | core-server | [runtime](runtime-bugs.md#b29) | **verified** |
+| B30 | CI publishes to npm on every push to `main` with no gate | ci | [ci](ci-bugs.md#b30) | **verified** |
+| B31 | `.npmignore` excludes the `bin` target; publishing works only by npm's force-include | ci | [ci](ci-bugs.md#b31) | **verified** |
 
 ---
 

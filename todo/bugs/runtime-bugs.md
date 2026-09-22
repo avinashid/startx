@@ -139,11 +139,11 @@ REDIS_CLUSTER_MODE=false node -e '(async()=>{
 
 ### B26 · Cookie module throws at import time when `COOKIE_DOMAIN` is unset
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `@repo/lib`
 - **File:** `packages/@repo/lib/src/cookie-module/cookie-module.ts:41-49, 78`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — In staging or production with `COOKIE_DOMAIN` unset, the process dies during module
 evaluation with `COOKIE_DOMAIN must be configured in staging/production environments`. The stack
@@ -187,11 +187,11 @@ NODE_ENV=production node -e 'import("@repo/lib/cookie-module")'
 
 ### B29 · `serve-static.ts` is dead code with a path that wouldn't resolve after bundling
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/middlewares/serve-static.ts`, `apps/core-server/src/routes/server.ts:27`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — The template ships a static-file middleware that is commented out at its only call
 site, and would not work if uncommented.

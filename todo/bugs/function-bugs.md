@@ -141,11 +141,11 @@ redis-cli TTL otp:a@b.c    # must be <= 300, not 300000
 
 ### B15 · `web-client` gets the wrong `typecheck` script whenever a backend app is co-selected
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/configs/scripts.ts:190-203`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Scaffold a workspace with both `web-client` and `core-server`. `web-client`'s
 generated `package.json` gets `"typecheck": "tsc --noEmit"`, and running it fails: React Router's
@@ -192,11 +192,11 @@ node -p "require('./<proj>/apps/web-client/package.json').scripts.typecheck"
 
 ### B16 · `handlePackageJson` drops `private`, `bin`, `main`, `peerDependencies` and `startx`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/utils/file-handler.ts:110-118`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Generated packages lose fields the template declared:
 - `ui` loses `peerDependencies: { react: "^19.0.0" }`, so nothing pins the React version.
@@ -247,11 +247,11 @@ node -p "require('./<proj>/packages/ui/package.json').private"            # true
 
 ### B17 · `init` resolves only one level of the dependency closure
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/init.ts:369-383`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — A generated workspace can be missing a transitive workspace package, so
 `pnpm install` fails on an unresolvable `workspace:^` dependency.
@@ -281,11 +281,11 @@ the leaf package exists in the output tree. Best covered by [E1](../enhancements
 
 ### B18 · "Overwrite?" merges into the existing tree instead of overwriting
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/init.ts:341-357`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Re-running `init` into an existing directory and answering **yes** to
 `Directory "<x>" already exists and is not empty. Overwrite?` leaves stale files behind. Files that
@@ -311,11 +311,11 @@ observed behaviour matches the prompt's wording.
 
 ### B19 · Renaming across scopes writes to the template's scope directory
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:558-562`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom**
 ```bash
@@ -358,11 +358,11 @@ test -f packages/@repo/analytics/package.json
 
 ### B20 · `syncDepsWithCatalog` can emit an unresolvable `catalog:` with no warning
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:658-662`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — After `startx package add`, `pnpm install` fails with an unresolved catalog entry, and
 nothing in the CLI output hinted at it.
@@ -402,11 +402,11 @@ version.
 
 ### B21 · Dead ternary and a misleading log line in `installRootDependencies`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:596-602`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — The CLI reports `Running pnpm install to install ESLint...` when it is installing
 something else entirely.
@@ -437,11 +437,11 @@ exercised. Either test the others or narrow the detection to pnpm and say so.
 
 ### B27 · `Paginator.getPage` does no validation on user-controlled input
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `@repo/lib`
 - **File:** `packages/@repo/lib/src/extra/pagination-module.ts:4-10`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 - **Security impact:** yes — unbounded `LIMIT` is a cheap DoS vector.
 
 **Symptom** — `page` and `limit` arrive straight from the query string and go into SQL

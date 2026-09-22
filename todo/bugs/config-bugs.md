@@ -323,11 +323,11 @@ pnpm --filter web-client test
 
 ### B13 · `FileCheck` key `.prettier.cjs` misspells `.prettierrc.cjs`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/configs/files.ts:11`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — The prettier config is copied into **every** generated workspace, including ones that
 did not select prettier. The `FileCheck` entry intended to gate it has no effect at all.
@@ -372,11 +372,11 @@ Tracked as [E3](../enhancements/cli-enhancements.md#e3).
 
 ### B14 · `.prettierignore` is gated on the `biome` tag instead of `prettier`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/configs/files.ts:17`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Exactly inverted behaviour:
 

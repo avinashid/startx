@@ -18,11 +18,11 @@ Contents: [B22](#b22) · [B23](#b23) · [B24](#b24) · [B25](#b25) · [B28](#b28
 
 ### B22 · `/files` serves the whole `storage/` directory with no authentication
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/routes/files/router.ts:6`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — Every file written to `storage/` is readable by anyone who knows or guesses its URL.
 There is no auth check, no ownership check, and no signed-URL mechanism.
@@ -71,11 +71,11 @@ curl -i http://localhost:3000/files/<known-upload>    # must be 401 without a se
 
 ### B23 · `fileUpload()` has no size limits — unbounded in-memory uploads on every route
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/routes/server.ts:17`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — A single unauthenticated `POST` with a large body buffers the whole thing into the
 Node process's memory. A handful of concurrent requests exhausts the heap and takes the server down.
@@ -119,11 +119,11 @@ curl -F file=@/tmp/big.bin http://localhost:3000/upload   # must 413, not OOM th
 
 ### B24 · CORS is registered after the body parsers
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/routes/server.ts:13-18`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — A cross-origin request from a disallowed origin has its body fully parsed — including
 multipart file uploads buffered into memory — before the origin is ever checked.
@@ -167,11 +167,11 @@ the body is consumed.
 
 ### B25 · `resolveSameSite` returns `"lax"` in both branches
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `@repo/lib`
 - **File:** `packages/@repo/lib/src/cookie-module/cookie-module.ts:52-60`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — The refresh-token cookie is always `SameSite=Lax`. In the deployment the file's own
 comment describes — frontend and API on different origins — the browser will not send the cookie on
@@ -224,11 +224,11 @@ COOKIE_CROSS_SITE=true NODE_ENV=production node -e '...'
 
 ### B28 · No helmet, no rate limiting, no request-size caps in the server template
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/routes/server.ts`
-- **Fixed in:** —
+- **Fixed in:** `c104915`
 
 **Symptom** — A project scaffolded from this template ships with no security headers
 (`X-Content-Type-Options`, `X-Frame-Options`, HSTS, CSP), no rate limiting on any route, and no
