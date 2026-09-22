@@ -37,6 +37,16 @@ export class Random {
 		return crypto.randomInt(10 ** (digits - 1), 10 ** digits);
 	}
 
+	/**
+	 * @description Generate a zero-padded numeric code drawn uniformly from the whole keyspace.
+	 * Unlike `generateNumber`, a code CAN start with 0 — `generateCode(6)` has 1_000_000 outcomes,
+	 * `generateNumber(6)` only 900_000. Use this for OTPs and anything else brute-forceable.
+	 * @param digits (default: 6)
+	 */
+	static generateCode(digits: number = 6) {
+		return String(crypto.randomInt(0, 10 ** digits)).padStart(digits, "0");
+	}
+
 	static generateBoolean() {
 		return crypto.randomInt(0, 2) === 1;
 	}

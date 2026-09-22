@@ -1,3 +1,4 @@
+import { Time } from "@repo/common/time";
 import { ENV } from "@repo/env";
 import { logger } from "@repo/logger";
 import { EmailTemplate } from "@repo/mail";
@@ -6,30 +7,54 @@ import { RedisStore } from "@repo/redis";
 import { HashingModule } from "../hashing-module/index.js";
 import { SMTPMailService } from "../mail-module/nodemailer.js";
 import { Random } from "../utils.js";
+
+type OtpRecord = {
+	email: string;
+	otp: string;
+	status: "pending" | "verified";
+	attempts: number;
+	/** Epoch ms. Lets a re-set preserve the remaining lifetime instead of extending it. */
+	expiresAt: number;
+};
+
 const getRedis = () => {
-	return new RedisStore<{
-		email: string;
-		otp: string;
-		status: "pending" | "verified";
-	}>({
+	return new RedisStore<OtpRecord>({
 		namespace: "otp",
 	});
 };
+
 export class OTPModule {
-	private static otpExpirationMs = 5 * 60 * 1000;
+	/** RedisStore.set takes SECONDS. The unit is in the name so it cannot drift again. */
+	private static otpExpirySeconds = Time.minutes(5).seconds;
+
+	private static otpDigits = 6;
+
+	/** The code is destroyed after this many failed guesses. */
+	private static maxAttempts = 5;
+
+	/** Seconds left before `expiresAt`, floored at 1 so a re-set never revives a dead key. */
+	private static remainingSeconds(expiresAt: number) {
+		return Math.max(1, Math.ceil((expiresAt - Date.now()) / 1000));
+	}
 
 	static async sendMailOTP({ email }: { email: string }): Promise<void> {
 		const normalizedEmail = email.trim().toLowerCase();
 
-		// Generate OTP as a 4-digit string (preserve leading zeros)
-		const otpStr = String(Random.generateNumber(4)).padStart(4, "0");
+		// Uniform over the whole keyspace, leading zeros included.
+		const otpStr = Random.generateCode(this.otpDigits);
 		const hash = await HashingModule.hash(otpStr);
 
 		try {
 			await getRedis().set(
 				normalizedEmail,
-				{ email: normalizedEmail, otp: hash, status: "pending" },
-				this.otpExpirationMs
+				{
+					email: normalizedEmail,
+					otp: hash,
+					status: "pending",
+					attempts: 0,
+					expiresAt: Date.now() + this.otpExpirySeconds * 1000,
+				},
+				this.otpExpirySeconds
 			);
 		} catch (err) {
 			logger?.error("otp: redis write failed", { email: normalizedEmail, err });
@@ -56,21 +81,29 @@ export class OTPModule {
 	static async verifyMailOTP(email: string, otp: string, deleteOtp = false): Promise<boolean> {
 		const normalizedEmail = email.trim().toLowerCase();
 
-		// shortcut for test/dev environments — be careful with this in real dev
-		// if (["test"].includes(ENV.NODE_ENV)) return true;
-
 		const rows = await getRedis().get(normalizedEmail);
 		if (!rows?.otp) return false;
 
-		const firstOtp = rows.otp;
+		const verified = await HashingModule.compare(otp, rows.otp);
 
-		const verified = await HashingModule.compare(otp, firstOtp);
-		if (!verified) return false;
+		if (!verified) {
+			const attempts = (rows.attempts ?? 0) + 1;
+
+			if (attempts >= this.maxAttempts) {
+				await getRedis().del(normalizedEmail);
+				logger?.warn("otp: max attempts reached, code destroyed", { email: normalizedEmail });
+				return false;
+			}
+
+			// Re-set with the REMAINING lifetime — a failed guess must never extend the window.
+			await getRedis().set(normalizedEmail, { ...rows, attempts }, this.remainingSeconds(rows.expiresAt));
+			return false;
+		}
 
 		if (deleteOtp) {
 			await getRedis().del(normalizedEmail);
 		} else {
-			await getRedis().set(normalizedEmail, { ...rows, status: "verified" }, this.otpExpirationMs);
+			await getRedis().set(normalizedEmail, { ...rows, status: "verified" }, this.remainingSeconds(rows.expiresAt));
 		}
 		return true;
 	}

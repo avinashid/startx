@@ -1,5 +1,5 @@
-import { TokenModule } from "@repo/lib/extra";
 import { defaultUserSession } from "@repo/lib/session-module";
+import { AccessToken, type AccessTokenPayload } from "@repo/lib/token-module";
 import type { NextFunction, Request, Response } from "express";
 
 type ExpressHandler = (req: Request, res: Response, next: NextFunction) => Promise<void> | void;
@@ -29,7 +29,13 @@ async function authenticateRequest(req: Request) {
 		};
 	}
 
-	const payload = TokenModule.verifyAccessToken(accessToken);
+	// jwt.verify throws on an expired/tampered token — that is a 401, not a 500.
+	let payload: AccessTokenPayload | null = null;
+	try {
+		payload = AccessToken.verifyToken(accessToken);
+	} catch {
+		payload = null;
+	}
 
 	if (!payload?.sessionID) {
 		return {

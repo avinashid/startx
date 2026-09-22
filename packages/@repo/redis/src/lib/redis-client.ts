@@ -6,10 +6,15 @@ import z from "zod";
 const connection = defineEnv({
 	REDIS_HOST: z.string().min(1),
 	REDIS_PORT: z.coerce.number(),
-	REDIS_USERNAME: z.string(),
-	REDIS_PASSWORD: z.string(),
+	// Unauthenticated Redis is the norm in local dev, so these must tolerate being unset.
+	REDIS_USERNAME: z.string().default(""),
+	REDIS_PASSWORD: z.string().default(""),
 	REDIS_DB: z.coerce.number().optional(),
-	REDIS_CLUSTER_MODE: z.coerce.boolean().default(false),
+	// NOT z.coerce.boolean(): that is Boolean(value), so the string "false" would coerce to true.
+	REDIS_CLUSTER_MODE: z
+		.enum(["true", "false", "1", "0"])
+		.default("false")
+		.transform(v => v === "true" || v === "1"),
 });
 
 const clients = new Map<number, Redis>();

@@ -8,3 +8,9 @@ export type SessionUser = {
 	currentProfile: SessionUserRole;
 	accessToken: string;
 };
+
+/**
+ * The user as persisted in a session record and attached to `req.user`.
+ * An access token is issued per request and is never stored in the session.
+ */
+export type RequestUser = Omit<SessionUser, "accessToken">;

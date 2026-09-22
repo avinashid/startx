@@ -1,4 +1,4 @@
-import type { SessionUser } from "@repo/common/types/users";
+import type { RequestUser } from "@repo/common/types/users";
 import crypto from "node:crypto";
 import { AccessToken, RefreshToken } from "../token-module/index.js";
 
@@ -20,7 +20,7 @@ export type SessionType =
 
 export type SessionRecord = {
 	sessionId: string;
-	user: Omit<SessionUser, "accessToken">;
+	user: RequestUser;
 	refreshTokenHash: string;
 	createdAt: number;
 	lastSeenAt: number;
@@ -77,7 +77,7 @@ export abstract class IUserSession {
 		await Promise.all(sessions.map(sessionId => this.updateSession(sessionId, data)));
 	}
 
-	public async startSession(user: Omit<SessionUser, "accessToken">): Promise<TokenPair> {
+	public async startSession(user: RequestUser): Promise<TokenPair> {
 		if (this.type.type === "single") {
 			await this.endAllSessions(user.id);
 		}

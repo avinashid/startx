@@ -28,8 +28,6 @@ function isZod(v: SpecEntry): v is ZodTypeAny {
 	return typeof v === "object" && v !== null && "parse" in v;
 }
 
-const tempEnv = new Map<string, string>();
-
 export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 	const rawEnv: Record<string, unknown> = {};
 	const zodShape: Record<string, ZodTypeAny> = {};
@@ -45,13 +43,11 @@ export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 					env: entry.env ?? (key as string),
 				};
 
-		if (process.env[normalized.env]) {
-			tempEnv.set(normalized.env, process.env[normalized.env] ?? "");
-			delete process.env[normalized.env];
-		}
-		const raw = tempEnv.get(normalized.env);
+		// Read only — never mutate process.env. Deleting keys here (NODE_ENV, PORT, ...) makes
+		// every library that reads process.env directly take its development path.
+		const raw = process.env[normalized.env];
 
-		rawEnv[key as string] = raw === undefined ? normalized.default : raw;
+		rawEnv[key as string] = raw === undefined || raw === "" ? normalized.default : raw;
 
 		zodShape[key as string] = normalized.schema;
 	}
