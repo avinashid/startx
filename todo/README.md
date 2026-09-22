@@ -201,9 +201,14 @@ Last full run: **2026-09-22**, HEAD `dcb2bb1`.
 
 | Command | Result |
 |---|---|
-| `turbo typecheck --continue` | **9 of 41 tasks fail** |
-| `turbo lint --continue` | **1 task fails**, ~90 warnings |
-| `turbo test --continue` | **1 of 8 fails**; 24 tests total, all in `eslint-config` |
+| `turbo typecheck` | **41 / 41** |
+| `turbo lint` | **17 / 17**, 0 errors, ~190 warnings |
+| `turbo test` | **8 / 8**, 24 tests, all in `eslint-config` |
+| `turbo build` | **22 / 22** |
+
+All P0 and P1 defects are closed. Warning count *rose* after [B33](bugs/config-bugs.md#b33) was
+fixed, because type-aware lint rules were previously not running at all; burning them down is
+[E2](enhancements/template-enhancements.md#e2).
 
 Packages reporting "No test files found": `core-server`, `queue-worker`, `cli`, `startx-cli`,
 `@repo/model`, `ui`. **`startx-cli` — the published product — has zero tests.**
@@ -299,10 +304,13 @@ run and passed. Only move to `verified` after actually running it.
 
 ## 7. Suggested order of work
 
-1. **B1–B7** — the generated backend is either non-compiling or wrong at runtime; B3 is a live
-   auth weakness.
-2. **B8–B12** — get lint / typecheck / test green so CI means something.
-3. **B30** — gate publishing on a green build and a version change before shipping anything else.
+1. ~~**B1–B7**~~ — done, `caca799`.
+2. ~~**B8–B12**~~ — done. Toolchain is green; `turbo typecheck/lint/test/build` are now real gates.
+3. **B30** — gate publishing on a green build and a version change. Now unblocked: the checks it
+   would run actually pass.
 4. **B13–B21** — generator defects; each one silently degrades *every* repo scaffolded from here.
 5. **B22–B29** — server hardening defaults.
 6. **E1** — tests for `startx-cli`. Snapshotting the emitted tree would have caught most of B13–B21.
+
+Outstanding from earlier rounds: [B3](bugs/function-bugs.md#b3)'s Redis round-trip is still
+unverified (no Redis was available).

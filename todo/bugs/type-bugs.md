@@ -5,11 +5,8 @@ Register: [`bugs.md`](bugs.md).
 
 Contents: [B4](#b4) · [B5](#b5) · [B12.1](#b121) · [B12.2](#b122) · [B12.3](#b123) · [B12.4](#b124)
 
-**Current state:** 8 of 41 typecheck tasks fail — `@db/drizzle`, `@repo/lib`, `@repo/ui`, `aix`,
-`web-client`, `eslint-config`, `tsdown-config` (plus `eslint-config#lint`, pulled in by the task
-graph). `core-server` now passes: B4 and B5 are fixed. `eslint-config`, `tsdown-config` and the
-`vitest-config` fallout are filed under [config-bugs.md](config-bugs.md) because the cause is a
-missing or wrong config file, not the code.
+**Current state: 41 of 41 typecheck tasks pass.** Every entry in this file is closed. Keep it
+that way — `turbo typecheck` is now a meaningful gate rather than a known-red command.
 
 ---
 
@@ -165,11 +162,28 @@ pnpm --filter core-server typecheck
 
 ### B12.1 · `UnwrapColumns` indexes an unconstrained generic
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `@db/drizzle`
 - **File:** `packages/@db/drizzle/src/functions.ts:113-115`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved, by deleting the hand-rolled type rather than constraining it.** The suggestion below —
+> constrain the `infer` to `ColumnBaseConfig<...>` — does not work here: in the installed Drizzle
+> version `ColumnBaseConfig` takes **one** type argument, and threading `C` back through `PgColumn`
+> then fails `TS2344`.
+>
+> Drizzle already exports `GetColumnData<TColumn>`, which *is* the
+> `notNull extends true ? data : data | null` mapping `UnwrapColumns` was reimplementing:
+>
+> ```ts
+> [K in keyof T]: T[K] extends AnyColumn
+>   ? GetColumnData<T[K]>
+>   : T[K] extends SQL<infer S> ? S : never;
+> ```
+>
+> `AnyColumn` was already imported. Fewer lines, no generic gymnastics, and it tracks upstream if
+> Drizzle changes its column internals.
 
 **Symptom**
 ```
@@ -210,11 +224,17 @@ pnpm --filter @db/drizzle typecheck
 
 ### B12.2 · `ZodTypeAny` / `QueryKey` need `import type` under `verbatimModuleSyntax`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `ui`
 - **File:** `packages/ui/src/api/use-api/` (4 sites)
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved.** All four switched to inline type specifiers — `import { z, type ZodTypeAny }` and
+> `import { type QueryKey, ... }` — which keeps the value imports in the same statement.
+>
+> Adding `@typescript-eslint/consistent-type-imports` to prevent recurrence was **not** done; it is
+> part of [E2](../enhancements/template-enhancements.md#e2).
 
 **Symptom**
 ```
@@ -252,11 +272,27 @@ pnpm --filter @repo/ui typecheck && pnpm --filter web-client typecheck
 
 ### B12.3 · `eslint-plugin-lodash` has no type declarations
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
-- **Area:** `eslint-config`
-- **File:** `configs/eslint-config/src/configs/base.ts:4`
-- **Fixed in:** —
+- **Area:** `ui`, `web-client`
+- **File:** `packages/ui/tsconfig.json`, `apps/web-client/tsconfig.json`
+- **Fixed in:** `1c91e1d`
+
+> **Resolved — the diagnosis below was wrong.** `configs/eslint-config/plugins.d.ts` **already
+> contains** `declare module "eslint-plugin-lodash";`. The shim was never missing.
+>
+> The real problem is *visibility*: an ambient declaration only applies where it is part of the
+> compilation. `plugins.d.ts` is in `eslint-config`'s own tsconfig `include`, but `ui` and
+> `web-client` compile `base.ts` **transitively** — via their `eslint.config.ts` — without it.
+>
+> Adding a `/// <reference>` to `base.ts` was tried and rejected: it trips
+> `@typescript-eslint/triple-slash-reference`.
+>
+> The actual fix is structural. All 16 other packages use `include: ["src/**/*.ts"]` and therefore
+> never typecheck their lint config at all; `ui` (`include: ["."]`) and `web-client`
+> (`include: ["**/*"]`) were the only outliers. Both now exclude `eslint.config.ts`, which matches
+> the rest of the repo and matches `base.ts`'s own ESLint `ignores` list. No app should be
+> typechecking its linter's dependency graph.
 
 **Symptom**
 ```
@@ -289,10 +325,24 @@ pnpm --filter @repo/ui typecheck
 
 ### B12.4 · Unused bindings fail `noUnusedLocals` / `noUnusedParameters`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `ui`, `aix`, `@repo/mail`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved.** Each site was checked for live references before touching it; all seven were
+> genuinely dead.
+>
+> | Site | Action |
+> |---|---|
+> | `openai.ts:14` `retries` | Parameter **removed** — `getCompletion()` is called twice, both with no argument, and the body never reads it. Abandoned retry intent, not a naming slip. |
+> | `OtpEmail.tsx` `imageSection`, `validityText` | **Deleted** — unreferenced style objects. |
+> | `form-wrapper.tsx` `safeFormat`, `safeParse` | **Deleted** (~35 lines) — two date helpers defined inside the component and never called; the field passes its value straight through. This also orphaned the `date-fns` `format` import, now removed. |
+> | `image-picker.tsx:93` `e` | Handler narrowed to `onClick={() => ...}`. |
+> | `multiple-select.tsx:124` `key` | `Object.entries` → `Object.values`. |
+>
+> Nothing was renamed to `_` to silence it, per the entry's own instruction. Raising
+> `unused-imports/no-unused-vars` to `error` remains [E2](../enhancements/template-enhancements.md#e2).
 
 **Symptom** — Seven `TS6133` errors across three packages:
 

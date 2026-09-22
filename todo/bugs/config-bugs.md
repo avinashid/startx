@@ -4,7 +4,8 @@ Wrong configuration files and wrong entries in the generator's static data table
 (`FileCheck`, `DepCheck`). The code is fine; the data it reads is not.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B7](#b7) · [B8](#b8) · [B9](#b9) · [B10](#b10) · [B11](#b11) · [B13](#b13) · [B14](#b14)
+Contents: [B7](#b7) · [B8](#b8) · [B9](#b9) · [B10](#b10) · [B11](#b11) · [B13](#b13) · [B14](#b14) ·
+[B32](#b32) · [B33](#b33)
 
 ---
 
@@ -78,11 +79,26 @@ cp .env.example .env && pnpm --filter core-server dev   # must not fail env vali
 
 ### B8 · `eslint-config`'s own flat config fails `eslint .`, failing lint and build repo-wide
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `eslint-config`
 - **File:** `configs/eslint-config/eslint.config.ts`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved.** `eslint.config.ts` now extends its own `baseConfig`, exactly like every other
+> package in the repo.
+>
+> Making the package lint itself for the first time exposed three further problems, all now fixed:
+> **(1)** [B33](#b33) — `tsconfigRootDir` was misconfigured, so all of `src/configs/**` failed with
+> `Parsing error: ... was not found by the project service`. **(2)** 21 × `no-unsafe-enum-comparison`
+> across 7 rule files, from comparing `node.type` (an `AST_NODE_TYPES` enum) against string literals;
+> all rewritten to use `AST_NODE_TYPES.X` members. **(3)** `import-x/default` on
+> `eslint-plugin-react-hooks@5`, which is CJS with no `default` key — suppressed at that one import
+> with the reason recorded inline.
+>
+> `eslint .` → **0 errors** (28 warnings, tracked as
+> [E2](../enhancements/template-enhancements.md#e2)). The 24 rule tests still pass, so the
+> `AST_NODE_TYPES` rewrite is behaviour-preserving. `turbo lint` 17/17 and `turbo build` 22/22.
 
 **Symptom**
 ```
@@ -131,11 +147,17 @@ pnpm exec turbo lint          # must exit 0
 
 ### B9 · `tsdown-config` runs `tsc --noEmit` with no `tsconfig.json`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `tsdown-config`
 - **File:** `configs/tsdown-config/package.json:9`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved.** Added `configs/tsdown-config/tsconfig.json` extending
+> `typescript-config/tsconfig.node.json`, plus the `typescript-config: "workspace:*"` devDependency
+> that `startx.requiredDevDeps` already claimed but `package.json` never declared.
+>
+> `pnpm --filter tsdown-config typecheck` exits 0.
 
 **Symptom** — `pnpm --filter tsdown-config typecheck` prints the full `tsc` help text and exits 1:
 
@@ -175,11 +197,27 @@ pnpm --filter tsdown-config typecheck   # must exit 0
 
 ### B10 · `vitest-config` uses `.ts` import specifiers without `allowImportingTsExtensions`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `vitest-config`
 - **File:** `configs/vitest-config/src/node.ts:1`, `configs/vitest-config/src/frontend.ts:1`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved — but not the way this entry originally proposed.** Both suggestions here were wrong:
+>
+> - *Extensionless* (`"./base"`) fails under `moduleResolution: nodenext`, which the shared config
+>   uses (`TS2835`).
+> - *`.js`* satisfies `tsc`, but **breaks at runtime**: Vite/Vitest resolve the specifier literally
+>   and there is no `base.js` on disk. Caught by running the test suite —
+>   `ERR_MODULE_NOT_FOUND: .../vitest-config/src/base.js`.
+>
+> The correct fix for a package that **ships raw TypeScript source** is to keep `./base.ts` and set
+> `"allowImportingTsExtensions": true` in `configs/typescript-config/tsconfig.common.json` (it was
+> explicitly `false`). That option requires `noEmit`, which the shared config already sets, so it is
+> legal for every consumer.
+>
+> Lesson for the next one of these: typecheck **and** run the suite. `tsc` passing proved nothing
+> about the loader.
 
 **Symptom**
 ```
@@ -221,11 +259,25 @@ pnpm --filter eslint-config typecheck && pnpm --filter @repo/ui typecheck
 
 ### B11 · `web-client`'s `test` script exits 1 on an empty suite, and the shared vitest config isn't applied
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** `web-client`
 - **File:** `apps/web-client/package.json`, `apps/web-client/vitest.config.ts`
-- **Fixed in:** —
+- **Fixed in:** `1c91e1d`
+
+> **Resolved — the diagnosis below is wrong about the cause.** It is not that the shared config was
+> "not being picked up": **`apps/web-client/vitest.config.ts` did not exist at all.** web-client was
+> the only one of 18 packages without one, so Vitest fell back to its built-in defaults — which is
+> exactly why the printed include patterns differed and why `passWithNoTests` (set in
+> `vitest-config/src/base.ts`) never applied.
+>
+> Created it, matching `ui`'s two-line form, and added the missing `vitest-config` devDependency.
+> No `--passWithNoTests` flag was needed — inheriting the shared config was the whole fix.
+>
+> This also surfaced [B32](#b32): the shared frontend config's `setupFiles` points at a file that
+> exists in no package.
+>
+> `pnpm --filter web-client test` exits 0; `turbo test` 8/8.
 
 **Symptom** — The only failing test task:
 ```
@@ -355,4 +407,91 @@ While here, review the rest of the table for the same kind of slip. `".prettieri
 ```bash
 # scaffold with formatter = "prettier", then:
 test -f <proj>/.prettierignore
+```
+
+---
+
+## B32
+
+### B32 · Shared frontend vitest config points `setupFiles` at a path that exists nowhere
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** `vitest-config`
+- **File:** `configs/vitest-config/src/frontend.ts`
+- **Fixed in:** `1c91e1d`
+- **Found while fixing:** [B11](#b11)
+
+**Symptom** — Latent. Any frontend package that writes its first test fails immediately with a
+missing-module error for a setup file it never created.
+
+**Cause**
+```ts
+export default baseVitestConfig({
+  environment: "jsdom",
+  setupFiles: ["./src/__tests__/setup.ts"],   // exists in no package in the repo
+  ...
+});
+```
+
+Confirmed by searching the whole tree: **no `setup.ts` exists anywhere**, and neither consumer
+(`ui`, `web-client`) has a `src/__tests__/` directory. Vitest only loads `setupFiles` when it has
+test files to run, so with zero tests everywhere the breakage stayed invisible.
+
+**Fix** — Removed the `setupFiles` line. A package that needs setup should declare it in its own
+`vitest.config.ts`, where the path is relative to something that actually exists. Re-adding it to
+the shared config means also shipping the file to every consumer.
+
+**Verify**
+```bash
+pnpm exec turbo test --continue   # 8/8, and a new frontend test must not fail on a missing setup file
+```
+
+---
+
+## B33
+
+### B33 · `tsconfigRootDir` points into `eslint-config`'s own internals, disabling type-aware linting
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** `eslint-config`
+- **File:** `configs/eslint-config/src/configs/base.ts:55`
+- **Fixed in:** `1c91e1d`
+- **Found while fixing:** [B8](#b8)
+
+**Symptom** — Every file in `configs/eslint-config/src/configs/` failed to lint with:
+
+```
+0:0  error  Parsing error: .../src/configs/base.ts was not found by the project service.
+            Consider either including it in the tsconfig.json or including it in allowDefaultProject
+```
+
+More importantly, this silently limited how many type-aware rules actually ran across the repo.
+After the fix `aix` alone reports 91 warnings where it previously reported far fewer — those rules
+had not been running.
+
+**Cause**
+```ts
+parserOptions: {
+  projectService: true,
+  tsconfigRootDir: import.meta.dirname,   // = configs/eslint-config/src/configs
+},
+```
+
+`import.meta.dirname` is the directory of **`base.ts` itself**, not of the package being linted.
+Because `base.ts` is the shared config every package imports, every package in the repo was telling
+the typescript-eslint project service to root itself in `configs/eslint-config/src/configs`.
+
+**Fix**
+```ts
+tsconfigRootDir: process.cwd(),
+```
+
+ESLint is invoked per-package by Turbo, so `cwd` is the package root — which is where each
+package's `tsconfig.json` lives.
+
+**Verify**
+```bash
+pnpm exec turbo lint --continue   # 17/17, 0 errors, no "project service" parsing errors
 ```

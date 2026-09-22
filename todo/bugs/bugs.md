@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B32`
+- **Next free ID:** `B34`
 - **Last full audit:** 2026-09-22 against HEAD `dcb2bb1`
-- **Open:** 27 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 7
+- **Open:** 18 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 16
 
 Counts include the four sub-items of B12.
 
@@ -16,14 +16,23 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 9 | 9 | 9 | **27** |
+| open | 0 | 0 | 9 | 9 | **18** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 7 | 0 | 0 | 0 | **7** |
+| **verified** | 7 | 9 | 0 | 0 | **16** |
 
-**All P0 defects are closed.** `turbo typecheck` now reports 33 of 41 tasks passing, up from 32 —
-`core-server` compiles for the first time. The 8 remaining failures are the P1 toolchain bugs
-(B8–B12), which are untouched.
+**All P0 and P1 defects are closed. The toolchain is green for the first time:**
+
+| command | before | after |
+|---|---|---|
+| `turbo typecheck` | 32 / 41 | **41 / 41** |
+| `turbo lint` | 16 / 17, 1 failing | **17 / 17, 0 errors** |
+| `turbo test` | 7 / 8, 1 failing | **8 / 8**, 24 tests |
+| `turbo build` | blocked by `lint` | **22 / 22** |
+
+~90 lint *warnings* remain by design — burning them down is
+[E2](../enhancements/template-enhancements.md#e2), not a defect. Remaining open work is P2
+(generator defects B13–B21) and P3 (hardening B22–B29, CI B30–B31).
 
 ---
 
@@ -47,14 +56,19 @@ fix was made. See the entry for exactly what remains unproven.
 
 | ID | Title | Area | Detail | Status |
 |---|---|---|---|---|
-| B8 | `eslint-config`'s own flat config fails `eslint .`, failing `turbo lint` and `turbo build` repo-wide | eslint-config | [config](config-bugs.md#b8) | open |
-| B9 | `tsdown-config` runs `tsc --noEmit` with no `tsconfig.json` | tsdown-config | [config](config-bugs.md#b9) | open |
-| B10 | `vitest-config` uses `.ts` import specifiers without `allowImportingTsExtensions` | vitest-config | [config](config-bugs.md#b10) | open |
-| B11 | `web-client`'s `test` script exits 1 on an empty suite; shared vitest config not applied | web-client | [config](config-bugs.md#b11) | open |
-| B12.1 | `UnwrapColumns` indexes an unconstrained generic — `TS2536` ×3 | @db/drizzle | [type](type-bugs.md#b121) | open |
-| B12.2 | `ZodTypeAny` / `QueryKey` need `import type` under `verbatimModuleSyntax` — `TS1485`/`TS1484` ×4 | ui | [type](type-bugs.md#b122) | open |
-| B12.3 | `eslint-plugin-lodash` has no types — `TS7016` | eslint-config | [type](type-bugs.md#b123) | open |
-| B12.4 | Unused bindings fail `noUnusedLocals`/`noUnusedParameters` — 7 sites | ui, aix, @repo/mail | [type](type-bugs.md#b124) | open |
+| B8 | `eslint-config`'s own flat config fails `eslint .`, failing `turbo lint` and `turbo build` repo-wide | eslint-config | [config](config-bugs.md#b8) | **verified** |
+| B9 | `tsdown-config` runs `tsc --noEmit` with no `tsconfig.json` | tsdown-config | [config](config-bugs.md#b9) | **verified** |
+| B10 | `vitest-config` uses `.ts` import specifiers without `allowImportingTsExtensions` | vitest-config | [config](config-bugs.md#b10) | **verified** |
+| B11 | `web-client`'s `test` script exits 1 on an empty suite; shared vitest config not applied | web-client | [config](config-bugs.md#b11) | **verified** |
+| B12.1 | `UnwrapColumns` indexes an unconstrained generic — `TS2536` ×3 | @db/drizzle | [type](type-bugs.md#b121) | **verified** |
+| B12.2 | `ZodTypeAny` / `QueryKey` need `import type` under `verbatimModuleSyntax` — `TS1485`/`TS1484` ×4 | ui | [type](type-bugs.md#b122) | **verified** |
+| B12.3 | `eslint-plugin-lodash` has no types — `TS7016` | eslint-config | [type](type-bugs.md#b123) | **verified** |
+| B12.4 | Unused bindings fail `noUnusedLocals`/`noUnusedParameters` — 7 sites | ui, aix, @repo/mail | [type](type-bugs.md#b124) | **verified** |
+| B32 | Shared frontend vitest config points `setupFiles` at a path that exists nowhere | vitest-config | [config](config-bugs.md#b32) | **verified** |
+| B33 | `tsconfigRootDir` points into `eslint-config`'s own internals, disabling type-aware linting | eslint-config | [config](config-bugs.md#b33) | **verified** |
+
+B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
+rules were silently not running for any package.
 
 ## P2 — the generator silently emits degraded output
 
