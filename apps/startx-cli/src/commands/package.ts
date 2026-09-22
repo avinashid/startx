@@ -9,8 +9,9 @@ import z from "zod";
 
 import { DepCheck } from "../configs/deps";
 import { FileCheck } from "../configs/files";
-import type { StartXPackageJson, TAGS } from "../types";
+import type { PnpmWorkspace, StartXPackageJson, TAGS } from "../types";
 import { CliUtils, type PackageItem } from "../utils/cli-utils";
+import { findPackageByName, resolvePackageClosure } from "../utils/closure";
 import { FileHandler } from "../utils/file-handler";
 import { CommonInquirer } from "../utils/inquirer";
 
@@ -101,20 +102,26 @@ export class PackageCommand {
 		}
 
 		const templateName = selectedPackage.packageJson?.name ?? selectedPackage.name;
+		// `--name` never went through the prompt, so it never went through the schema either:
+		// validate it here or an npm-invalid name (`../../.ssh/authorized_keys`) reaches the filesystem.
 		const overrideName =
-			options.name ??
-			(await CommonInquirer.getText({
-				message: "Name for the new package (leave unchanged to keep the original)",
-				name: "overrideName",
-				default: templateName,
-				schema: packageNameSchema,
-			}));
+			options.name !== undefined
+				? this.validatePackageName(options.name)
+				: await CommonInquirer.getText({
+						message: "Name for the new package (leave unchanged to keep the original)",
+						name: "overrideName",
+						default: templateName,
+						schema: packageNameSchema,
+					});
 
 		const directory = CliUtils.getDirectory();
+		const workspaceGlobs = await CliUtils.parsePnpmWorkspace({ dir: directory.workspace })
+			.then(workspace => workspace?.packages)
+			.catch(() => undefined);
 		const eslintEnabled = await this.resolveEslintPreference(options);
-		const packagesToInstall = this.resolvePackageClosure({
+		const packagesToInstall = resolvePackageClosure({
 			packages,
-			selectedPackage,
+			seeds: [selectedPackage],
 			includeEslintConfig: eslintEnabled,
 		});
 		const tags = await this.getInstallTags({
@@ -143,7 +150,9 @@ export class PackageCommand {
 				directory,
 				tags: Array.from(pkgTags),
 				overrideName: isMain ? overrideName : undefined,
-				overrideRelativePath: isMain ? this.getDestinationPath(pkg.relativePath, overrideName) : undefined,
+				overrideRelativePath: isMain
+					? this.getDestinationPath(pkg.relativePath, overrideName, workspaceGlobs)
+					: undefined,
 			});
 		}
 
@@ -158,9 +167,12 @@ export class PackageCommand {
 			schema: packageNameSchema,
 		});
 		const directory = CliUtils.getDirectory();
-		const packageDir = options.dir
-			? path.resolve(directory.workspace, options.dir)
-			: path.resolve(directory.workspace, this.getDefaultPackagePath(name));
+		// `--dir` is user input that reaches the filesystem directly: keep it inside the workspace.
+		const packageDir = this.assertInsideWorkspace(
+			directory.workspace,
+			options.dir ?? this.getDefaultPackagePath(name),
+			`package "${name}"`
+		);
 
 		if (await this.pathExists(packageDir)) {
 			throw new Error(`Package directory already exists: ${packageDir}`);
@@ -266,7 +278,7 @@ export class PackageCommand {
 		logger.info("Added eslint to the root devDependencies.");
 
 		if (options.install !== false) {
-			await this.installRootDependencies(directory.workspace);
+			await this.installRootDependencies(directory.workspace, "eslint was added to the root package.json");
 		}
 
 		return true;
@@ -287,36 +299,6 @@ export class PackageCommand {
 		}
 
 		return Array.from(tags);
-	}
-
-	private static resolvePackageClosure(props: {
-		packages: PackageItem[];
-		selectedPackage: PackageItem;
-		includeEslintConfig: boolean;
-	}) {
-		const resolved = new Map<string, PackageItem>();
-		const queue = [props.selectedPackage];
-		const enqueue = (name: string) => {
-			const pkg = this.findPackage(props.packages, name);
-			if (pkg && !resolved.has(pkg.name)) queue.push(pkg);
-		};
-
-		if (props.includeEslintConfig) enqueue("eslint-config");
-
-		while (queue.length > 0) {
-			const pkg = queue.shift()!;
-			if (resolved.has(pkg.name)) continue;
-
-			resolved.set(pkg.name, pkg);
-			for (const dep of [
-				...(pkg.packageJson?.startx?.requiredDeps ?? []),
-				...(pkg.packageJson?.startx?.requiredDevDeps ?? []),
-			]) {
-				enqueue(dep);
-			}
-		}
-
-		return Array.from(resolved.values());
 	}
 
 	private static async ensureTemplatePackage(props: {
@@ -350,7 +332,11 @@ export class PackageCommand {
 		}
 
 		const relativePath = props.overrideRelativePath ?? props.pkg.relativePath;
-		const destination = path.join(props.directory.workspace, relativePath);
+		const destination = this.assertInsideWorkspace(
+			props.directory.workspace,
+			relativePath,
+			`package "${props.overrideName ?? props.pkg.name}"`
+		);
 
 		if (await this.pathExists(path.join(destination, "package.json"))) {
 			const overwrite = await CommonInquirer.confirm({
@@ -459,9 +445,12 @@ export class PackageCommand {
 		const rootPackage = await this.readRootPackage(props.directory.workspace);
 		const pnpmWorkspace = await CliUtils.parsePnpmWorkspace({ dir: props.directory.workspace });
 
+		// Tracked separately so the install log names what actually changed, not a guess.
+		const changes: string[] = [];
 		let rootChanged = this.ensureMinimumPackageManager(rootPackage);
 		if (rootChanged) {
 			logger.info(`Bumped workspace packageManager to ${rootPackage.packageManager}.`);
+			changes.push(`packageManager was bumped to ${rootPackage.packageManager}`);
 		}
 
 		// These are opt-in via prompts elsewhere (formatter/test-runner choice); never force-install them here.
@@ -515,6 +504,7 @@ export class PackageCommand {
 				}
 
 				rootChanged = true;
+				changes.push(`${missingNpm.length} missing dependenc${missingNpm.length === 1 ? "y was" : "ies were"} added`);
 				logger.info("Added missing dependencies to root package.json.");
 			} else {
 				logger.warn("Skipping. Some features may not work correctly without these dependencies.");
@@ -526,7 +516,7 @@ export class PackageCommand {
 		await this.writeJson(path.join(props.directory.workspace, "package.json"), rootPackage);
 
 		if (props.install !== false) {
-			await this.installRootDependencies(props.directory.workspace);
+			await this.installRootDependencies(props.directory.workspace, changes.join(" and ") || "root package.json changed");
 		}
 	}
 	private static ensureMinimumPackageManager(rootPackage: StartXPackageJson): boolean {
@@ -555,10 +545,57 @@ export class PackageCommand {
 		return false;
 	}
 
-	private static getDestinationPath(templateRelativePath: string, newName: string): string {
-		const parentDir = path.dirname(templateRelativePath);
-		const leafName = newName.includes("/") ? newName.split("/").pop()! : newName;
-		return path.join(parentDir, leafName);
+	private static getDestinationPath(templateRelativePath: string, newName: string, workspaceGlobs?: string[]): string {
+		// Keep the template's top-level bucket (apps / packages / configs) but let the
+		// NEW name decide the scope directory, so `-n @repo/analytics` never lands in `@db/`.
+		const bucket = templateRelativePath.split(/[\\/]/).filter(Boolean)[0] ?? "packages";
+		const leaf = newName.includes("/") ? newName.split("/").pop()! : newName;
+
+		if (newName.startsWith("@") && this.bucketAllowsScopeDir(bucket, workspaceGlobs)) {
+			const scope = newName.split("/")[0];
+			return path.join(bucket, scope, leaf);
+		}
+
+		// The bucket has no two-level glob (`apps/*` but no `apps/*/*`), so a scope directory
+		// would put the package outside every workspace glob and pnpm would never link it.
+		return path.join(bucket, leaf);
+	}
+
+	/** Does the workspace declare a glob that reaches `<bucket>/<scope>/<leaf>`? */
+	private static bucketAllowsScopeDir(bucket: string, workspaceGlobs?: string[]): boolean {
+		// No pnpm-workspace.yaml to read: fall back to the layout startx itself ships.
+		if (!workspaceGlobs || workspaceGlobs.length === 0) return bucket === "packages";
+
+		return workspaceGlobs.some(glob => {
+			const parts = glob
+				.replace(/^\.\//, "")
+				.split("/")
+				.filter(Boolean);
+			const head = parts[0];
+			if (head !== bucket && head !== "*" && head !== "**") return false;
+			return parts.includes("**") || parts.length >= 3;
+		});
+	}
+
+	private static validatePackageName(name: string) {
+		const result = packageNameSchema.safeParse(name);
+		if (!result.success) {
+			throw new Error(`Invalid package name "${name}": ${result.error.issues[0]?.message ?? "invalid name"}.`);
+		}
+		return result.data;
+	}
+
+	/** Every filesystem destination derived from user input must land inside the workspace. */
+	private static assertInsideWorkspace(workspace: string, target: string, label: string) {
+		const root = path.resolve(workspace);
+		const resolved = path.resolve(root, target);
+		const relative = path.relative(root, resolved);
+
+		if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+			throw new Error(`Refusing to write ${label} to "${resolved}": it is not inside the workspace "${root}".`);
+		}
+
+		return resolved;
 	}
 
 	private static getDefaultPackagePath(name: string) {
@@ -571,7 +608,7 @@ export class PackageCommand {
 	}
 
 	private static findPackage(packages: PackageItem[], name: string) {
-		return packages.find(pkg => pkg.name === name || pkg.packageJson?.name === name);
+		return findPackageByName(packages, name);
 	}
 
 	private static hasDependency(packageJson: StartXPackageJson, dependency: string) {
@@ -593,13 +630,12 @@ export class PackageCommand {
 		return dependency === "eslint" ? "^9.0.0" : "latest";
 	}
 
-	private static async installRootDependencies(workspace: string) {
+	private static async installRootDependencies(workspace: string, reason: string) {
 		const rootPackage = await this.readRootPackage(workspace);
-		const packageManager = rootPackage.packageManager?.split("@")[0] || "pnpm";
-		const command = packageManager === "yarn" ? "yarn" : packageManager;
-		const args = packageManager === "yarn" ? ["install"] : ["install"];
+		const command = rootPackage.packageManager?.split("@")[0] || "pnpm";
+		const args = ["install"];
 
-		logger.info(`Running ${command} ${args.join(" ")} to install ESLint...`);
+		logger.info(`Running ${command} install (${reason})...`);
 
 		await new Promise<void>((resolve, reject) => {
 			const child = spawn(command, args, {
@@ -642,38 +678,73 @@ export class PackageCommand {
 			doc.set("catalog", doc.createNode({}));
 		}
 
-		const templateCatalog = await this.loadTemplateCatalog(props.templateDir);
+		const template = await this.loadTemplateCatalogs(props.templateDir);
 
 		const deps = props.packageJson.dependencies as Record<string, string> | undefined;
 		const devDeps = props.packageJson.devDependencies as Record<string, string> | undefined;
 		const newEntries: Record<string, string> = {};
+		const newNamedEntries: Array<{ catalog: string; name: string; version: string }> = [];
 
 		const processMap = (depMap: Record<string, string> | undefined) => {
 			if (!depMap) return;
 			for (const [name, version] of Object.entries(depMap)) {
 				if (version.startsWith("workspace:")) continue;
 
-				const existsInUserCatalog = doc.hasIn(["catalog", name]);
+				if (version.startsWith("catalog:")) {
+					// pnpm resolves bare `catalog:` against the DEFAULT catalog and `catalog:<name>`
+					// against `catalogs.<name>`. They are separate namespaces — never cross them.
+					const catalogName = version.slice("catalog:".length).trim();
 
-				if (version === "catalog:") {
-					if (!existsInUserCatalog) {
-						const templateVersion = templateCatalog[name];
-						if (templateVersion) newEntries[name] = templateVersion;
+					if (catalogName) {
+						if (doc.hasIn(["catalogs", catalogName, name])) continue;
+
+						const templateVersion = template.catalogs[catalogName]?.[name];
+						if (templateVersion) {
+							newNamedEntries.push({ catalog: catalogName, name, version: templateVersion });
+						} else {
+							logger.warn(
+								`No version found for ${name} in catalog "${catalogName}"; it stays as "${version}" and ` +
+									`pnpm install will fail. Add ${name} under catalogs.${catalogName} in pnpm-workspace.yaml.`
+							);
+						}
+						continue;
 					}
-				} else {
-					depMap[name] = "catalog:";
-					if (!existsInUserCatalog) newEntries[name] = version;
+
+					if (doc.hasIn(["catalog", name])) continue;
+
+					const templateVersion = template.catalog[name];
+					if (templateVersion) {
+						newEntries[name] = templateVersion;
+						continue;
+					}
+
+					// Nothing can resolve this entry — there is no version literal to fall back to
+					// once a template has pinned `catalog:`, so the only honest action is to say so.
+					logger.warn(
+						`No catalog version found for ${name}; it stays as "catalog:" and pnpm install will fail. ` +
+							`Add ${name} to the catalog in pnpm-workspace.yaml.`
+					);
+					continue;
 				}
+
+				depMap[name] = "catalog:";
+				if (!doc.hasIn(["catalog", name])) newEntries[name] = version;
 			}
 		};
 
 		processMap(deps);
 		processMap(devDeps);
 
-		if (Object.keys(newEntries).length === 0) return;
+		if (Object.keys(newEntries).length === 0 && newNamedEntries.length === 0) return;
 
 		for (const [name, version] of Object.entries(newEntries)) {
 			doc.setIn(["catalog", name], version);
+		}
+		for (const entry of newNamedEntries) {
+			if (!doc.hasIn(["catalogs", entry.catalog])) {
+				doc.setIn(["catalogs", entry.catalog], doc.createNode({}));
+			}
+			doc.setIn(["catalogs", entry.catalog, entry.name], entry.version);
 		}
 
 		await fs.writeFile(workspacePath, doc.toString());
@@ -681,19 +752,46 @@ export class PackageCommand {
 		for (const [name, version] of Object.entries(newEntries)) {
 			logger.info(`  + ${name}: ${version}`);
 		}
+		for (const entry of newNamedEntries) {
+			logger.info(`  + catalogs.${entry.catalog}.${entry.name}: ${entry.version}`);
+		}
 	}
 
-	private static async loadTemplateCatalog(templateDir: string): Promise<Record<string, string>> {
-		try {
-			const raw = await fs.readFile(path.join(templateDir, "pnpm-workspace.yaml"), "utf-8");
-			const doc = YAML.parseDocument(raw);
-			const catalogNode = doc.get("catalog") as YAML.Document | undefined;
+	private static async loadTemplateCatalogs(
+		templateDir: string
+	): Promise<{ catalog: Record<string, string>; catalogs: Record<string, Record<string, string>> }> {
+		const empty = { catalog: {}, catalogs: {} };
+		const file = path.join(templateDir, "pnpm-workspace.yaml");
 
-			return catalogNode ? (catalogNode.toJSON() as Record<string, string>) : {};
+		let raw: string;
+		try {
+			raw = await fs.readFile(file, "utf-8");
 		} catch {
 			logger.warn(`Could not find pnpm-workspace.yaml template in ${templateDir}.`);
-			return {};
+			return empty;
 		}
+
+		let parsed: Partial<PnpmWorkspace>;
+		try {
+			parsed = (YAML.parse(raw) ?? {}) as Partial<PnpmWorkspace>;
+		} catch (error) {
+			logger.warn(
+				`Could not parse ${file}: ${error instanceof Error ? error.message : String(error)}. ` +
+					`Catalog versions will not be resolved.`
+			);
+			return empty;
+		}
+
+		// YAML happily yields numbers for `foo: 1.2`; every catalog value must be a version string.
+		const asVersions = (entries?: Record<string, unknown>): Record<string, string> =>
+			Object.fromEntries(Object.entries(entries ?? {}).map(([name, version]) => [name, String(version)]));
+
+		return {
+			catalog: asVersions(parsed.catalog),
+			catalogs: Object.fromEntries(
+				Object.entries(parsed.catalogs ?? {}).map(([name, group]) => [name, asVersions(group)])
+			),
+		};
 	}
 	private static async writeJson(file: string, content: object) {
 		await fs.writeFile(file, `${JSON.stringify(content, null, 2)}\n`);

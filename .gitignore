@@ -33,6 +33,10 @@ out/
 build
 dist
 
+# The published startx binary. It is built output, but it cannot live in dist/:
+# the root package.json `files` allowlist excludes every build directory.
+apps/startx-cli/bin/
+
 
 # Debug
 npm-debug.log*

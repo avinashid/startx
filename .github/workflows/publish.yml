@@ -4,18 +4,80 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  # Gate 1: the repo's own checks. These run on every push to main, so a commit
+  # that does not bump the version still produces real CI signal. The bundle
+  # built here is the exact artefact the publish job ships - it is never rebuilt.
+  verify:
+    name: Verify
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
-      id-token: write
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install workspace
+        run: pnpm install --frozen-lockfile
+
+      # turbo.json wires build -> dependsOn [lint, ^build] and
+      # typecheck -> dependsOn [^typecheck, build], so these run in graph order
+      # and the later steps are served from turbo's local cache.
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Upload CLI bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: startx-cli-bin
+          path: apps/startx-cli/bin/
+          if-no-files-found: error
+          retention-days: 1
+
+  # Gate 2: only publish a version that is not on the registry yet, and only
+  # from main. Anything else exits green without publishing.
+  publish:
+    name: Publish
+    needs: verify
+    runs-on: ubuntu-latest
+    # workflow_dispatch can be fired from any branch. Without this, a feature
+    # branch could be published as startx@latest and tagged v<version>.
+    if: github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          # HEAD~1 is needed to report the previous commit's version.
+          fetch-depth: 2
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -26,13 +88,109 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Install CLI
-        run: pnpm install --frozen-lockfile
+      # The bundle verify built, not a fresh one. Nothing is rebuilt here, so
+      # what ships is byte-for-byte what the checks passed against.
+      - name: Download CLI bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: startx-cli-bin
+          path: apps/startx-cli/bin
 
-      - name: Build only CLI
-        run: pnpm --filter startx-cli build
+      - name: Restore bundle permissions
+        run: |
+          set -euo pipefail
+          # upload-artifact does not preserve the executable bit.
+          chmod +x apps/startx-cli/bin/index.mjs
+          head -c 20 apps/startx-cli/bin/index.mjs
 
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          LOCAL="$(node -p "require('./package.json').version")"
+          PREVIOUS="$(git show 'HEAD~1:package.json' 2>/dev/null | node -e "let s='';process.stdin.on('data',c=>s+=c).on('end',()=>{try{process.stdout.write(JSON.parse(s).version||'')}catch(e){}})" || true)"
+
+          # One registry call, classified from structured output only.
+          # `npm view <name> versions --json` prints, on stdout:
+          #   * a JSON array of every published version                (exit 0)
+          #   * {"error":{"code":"E404"}} if the package does not exist (exit 1)
+          #   * {"error":{"code":"..."}}  for any other failure         (exit 1)
+          # The routine release path is the first one: the package exists and we
+          # test membership of the local version in that array. E404 therefore
+          # means "never published", which for this repo is far more likely to be
+          # a broken registry, proxy or credential than a genuine first publish -
+          # so it is corroborated with `npm ping` before it may publish.
+          set +e
+          npm view "$NAME" versions --json > /tmp/versions.json 2>/tmp/versions.err
+          VIEW_STATUS=$?
+          npm ping --json > /tmp/ping.json 2>/tmp/ping.err
+          PING_STATUS=$?
+          set -e
+
+          VIEW_STATUS="$VIEW_STATUS" PING_STATUS="$PING_STATUS" LOCAL="$LOCAL" NAME="$NAME" \
+          node -e "
+          const fs = require('node:fs');
+          const name = process.env.NAME;
+          const local = process.env.LOCAL;
+          const viewStatus = Number(process.env.VIEW_STATUS);
+          const pingOk = Number(process.env.PING_STATUS) === 0;
+          const raw = fs.readFileSync('/tmp/versions.json', 'utf8').trim();
+          const fail = msg => { console.log('::error::' + msg); process.exit(1); };
+
+          let parsed = null;
+          try { parsed = JSON.parse(raw); } catch (e) { parsed = null; }
+          if (parsed === null) {
+            fail('npm view returned unparseable output (exit ' + viewStatus + '): ' + raw.slice(0, 300));
+          }
+
+          let published;
+          if (Array.isArray(parsed)) {
+            published = parsed;
+          } else if (typeof parsed === 'string') {
+            published = [parsed];
+          } else if (parsed && parsed.error && parsed.error.code === 'E404') {
+            if (!pingOk) {
+              fail('Registry returned E404 for ' + name + ' and npm ping failed. Treating this as a registry failure, not a first publish.');
+            }
+            console.log('::warning::' + name + ' is not on the registry at all; treating this as a first publish.');
+            published = [];
+          } else if (parsed && parsed.error) {
+            fail('Registry query failed with ' + parsed.error.code + ': ' + (parsed.error.summary || ''));
+          } else {
+            fail('npm view returned an unexpected shape: ' + raw.slice(0, 300));
+          }
+
+          const already = published.includes(local);
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,
+            'name=' + name + '\n' +
+            'version=' + local + '\n' +
+            'tag=v' + local + '\n' +
+            'should-publish=' + (already ? 'false' : 'true') + '\n');
+          console.log(name + '@' + local + (already
+            ? ' is already on the registry - nothing to publish.'
+            : ' is not on the registry - publishing.'));
+          console.log('registry knows ' + published.length + ' version(s) of ' + name);
+          "
+
+          {
+            echo "### Release gate"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| package | \`$NAME\` |"
+            echo "| version in this commit | \`$LOCAL\` |"
+            echo "| version in previous commit | \`${PREVIOUS:-n/a}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Deliberate, not a bug: the published bundle is self-contained, so the
+      # root dependency lists are dead weight in the tarball. startx.json keeps
+      # the real lists, and the generator merges them into every scaffolded
+      # workspace's root package.json. The bundle was built in `verify`, where
+      # package.json still carried the version that gets inlined for
+      # `startx --version`, so removing the dep lists here cannot affect it.
       - name: Clean root package.json
+        if: steps.version.outputs.should-publish == 'true'
         run: |
           node -e "
           const fs = require('fs');
@@ -42,7 +200,221 @@ jobs:
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
 
+      # Pack once, with the same packer that publishes, into a temp dir so no
+      # tarball is left in the working tree. Everything below inspects and runs
+      # this exact artefact.
+      - name: Pack tarball
+        id: pack
+        if: steps.version.outputs.should-publish == 'true'
+        run: |
+          set -euo pipefail
+          PACK_DIR="$(mktemp -d)"
+          pnpm pack --pack-destination "$PACK_DIR"
+          TARBALL="$(find "$PACK_DIR" -maxdepth 1 -name '*.tgz' | head -n 1)"
+          [ -n "$TARBALL" ] || { echo "::error::pnpm pack produced no tarball"; exit 1; }
+          tar -tzf "$TARBALL" | sed 's#^package/##' | grep -v '/$' | sort > "$PACK_DIR/files.txt"
+          {
+            echo "tarball=$TARBALL"
+            echo "list=$PACK_DIR/files.txt"
+          } >> "$GITHUB_OUTPUT"
+          echo "Packed $(wc -l < "$PACK_DIR/files.txt") files."
+
+      # Gate 3: the tarball carries the bin target and every template file the
+      # generator reads. The required root-file list is DERIVED from
+      # apps/startx-cli/src/configs/files.ts, not hardcoded, because that table
+      # changes whenever a template config file is added or renamed.
+      - name: Verify tarball contents
+        if: steps.version.outputs.should-publish == 'true'
+        env:
+          PACK_LIST: ${{ steps.pack.outputs.list }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/verify-tarball.mjs <<'SCRIPT'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import { pathToFileURL } from 'node:url';
+
+          const FILE_CHECK_SRC = 'apps/startx-cli/src/configs/files.ts';
+
+          // FileCheck decides which root files InitCommand copies into a scaffolded
+          // workspace. Import it if Node can strip the types; fall back to parsing
+          // the object literal so a Node quirk cannot block a release.
+          async function loadFileCheck() {
+            try {
+              const mod = await import(pathToFileURL(path.resolve(FILE_CHECK_SRC)).href);
+              if (mod.FileCheck) return { table: mod.FileCheck, how: 'import' };
+            } catch {}
+            const src = fs.readFileSync(FILE_CHECK_SRC, 'utf8');
+            const table = {};
+            for (const m of src.matchAll(/"([^"]+)"\s*:\s*\{\s*tags\s*:\s*\[([^\]]*)\]/g)) {
+              table[m[1]] = { tags: [...m[2].matchAll(/"([^"]+)"/g)].map(t => t[1]) };
+            }
+            if (Object.keys(table).length === 0) throw new Error('could not read FileCheck from ' + FILE_CHECK_SRC);
+            return { table, how: 'regex fallback' };
+          }
+
+          const { table: FileCheck, how } = await loadFileCheck();
+          console.log('FileCheck loaded via ' + how + ' (' + Object.keys(FileCheck).length + ' entries)');
+
+          const packed = new Set(fs.readFileSync(process.env.PACK_LIST, 'utf8').split('\n').filter(Boolean));
+          const problems = [];
+
+          // 1. the bin target, read from package.json rather than hardcoded
+          const bin = JSON.parse(fs.readFileSync('package.json', 'utf8')).bin.startx.replace(/^\.\//, '');
+          if (!packed.has(bin)) problems.push('bin target missing from tarball: ' + bin);
+
+          // 2. every root file the generator copies. npm can never ship .gitignore,
+          //    which is exactly why the template keeps _gitignore instead.
+          const UNPACKABLE = new Set(['.gitignore', '.npmignore', 'package.json']);
+          const RUNTIME_READS = ['startx.json', 'pnpm-workspace.yaml'];
+          const required = new Set(RUNTIME_READS);
+          for (const entry of fs.readdirSync('.', { withFileTypes: true })) {
+            if (!entry.isFile() || UNPACKABLE.has(entry.name)) continue;
+            const rule = FileCheck[entry.name];
+            if (rule && rule.tags.includes('never')) continue;
+            required.add(entry.name);
+          }
+          for (const f of [...required].sort()) {
+            if (!packed.has(f)) problems.push('root template file missing from tarball: ' + f);
+          }
+          console.log('required root files (' + required.size + '): ' + [...required].sort().join(', '));
+
+          // 3. every template package, mirroring CliUtils.getPackageList()'s scan
+          const subdirs = p => fs.existsSync(p)
+            ? fs.readdirSync(p, { withFileTypes: true }).filter(e => e.isDirectory() && e.name !== 'node_modules').map(e => e.name)
+            : [];
+          const templates = [];
+          for (const root of ['apps', 'configs', 'packages']) {
+            for (const name of subdirs(root)) {
+              if (root === 'packages' && (name === '@repo' || name === '@db')) {
+                for (const sub of subdirs(root + '/' + name)) templates.push(root + '/' + name + '/' + sub);
+              } else {
+                templates.push(root + '/' + name);
+              }
+            }
+          }
+          if (templates.length === 0) problems.push('no template directories found on disk');
+          for (const dir of templates) {
+            if (!packed.has(dir + '/package.json')) problems.push('template missing package.json: ' + dir);
+            if (fs.existsSync(dir + '/src')) {
+              const n = [...packed].filter(f => f.startsWith(dir + '/src/')).length;
+              if (n === 0) problems.push('template ships an empty src/: ' + dir);
+            }
+          }
+          console.log('templates checked: ' + templates.length);
+
+          // 4. a floor, so a collapsed allowlist cannot pass on structure alone
+          const FLOOR = 300;
+          if (packed.size < FLOOR) problems.push('tarball has ' + packed.size + ' files, floor is ' + FLOOR);
+
+          // 5. things that must never ship
+          const FORBIDDEN = [
+            [/(^|\/)node_modules\//, 'dependencies'],
+            [/(^|\/)\.env$/, 'env file'],
+            [/(^|\/)\.env\.(?!example$)/, 'env file'],
+            [/\.pem$/, 'private key'],
+            [/(^|\/)\.turbo\//, 'turbo cache'],
+            [/(^|\/)dist\//, 'build output'],
+            [/(^|\/)coverage\//, 'coverage output'],
+          ];
+          for (const f of packed) {
+            for (const [re, what] of FORBIDDEN) {
+              if (re.test(f)) problems.push('must not ship (' + what + '): ' + f);
+            }
+          }
+
+          if (problems.length > 0) {
+            for (const p of problems) console.log('::error::' + p);
+            console.error(problems.length + ' problem(s) with the tarball.');
+            process.exit(1);
+          }
+          console.log('Tarball OK: ' + packed.size + ' files.');
+          SCRIPT
+          node --experimental-strip-types /tmp/verify-tarball.mjs
+
+      # Install the real tarball and drive the real binary. `package list`
+      # resolves every template directory from the installed package root, so
+      # this fails loudly if the allowlist ever drops one.
+      - name: Smoke test packed CLI
+        if: steps.version.outputs.should-publish == 'true'
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+        run: |
+          set -euo pipefail
+          REPO="$PWD"
+          TMP="$(mktemp -d)"
+          cp "$TARBALL" "$TMP/pkg.tgz"
+          cd "$TMP"
+          npm init -y > /dev/null
+          npm install ./pkg.tgz --no-audit --no-fund > /dev/null
+          ./node_modules/.bin/startx --version | tee version.txt
+          ./node_modules/.bin/startx package list > list.txt 2>&1 || { cat list.txt; exit 1; }
+          REPO="$REPO" node -e "
+          const fs = require('node:fs');
+          const repo = process.env.REPO;
+          const out = fs.readFileSync('list.txt', 'utf8');
+          const version = fs.readFileSync('version.txt', 'utf8').trim();
+          const expected = JSON.parse(fs.readFileSync(repo + '/package.json', 'utf8')).version;
+          const problems = [];
+          if (version !== expected) problems.push('startx --version reported ' + version + ', expected ' + expected);
+          for (const section of ['apps:', 'packages:', 'configs:']) {
+            if (!out.includes(section)) problems.push('package list did not report ' + section);
+          }
+          const subdirs = p => fs.existsSync(p)
+            ? fs.readdirSync(p, { withFileTypes: true }).filter(e => e.isDirectory() && e.name !== 'node_modules').map(e => e.name)
+            : [];
+          const templates = [];
+          for (const root of ['apps', 'configs', 'packages']) {
+            for (const name of subdirs(repo + '/' + root)) {
+              if (root === 'packages' && (name === '@repo' || name === '@db')) {
+                for (const sub of subdirs(repo + '/' + root + '/' + name)) templates.push(root + '/' + name + '/' + sub);
+              } else {
+                templates.push(root + '/' + name);
+              }
+            }
+          }
+          for (const dir of templates) {
+            if (!out.includes('(' + dir + ')')) problems.push('installed CLI did not resolve template ' + dir);
+          }
+          if (problems.length > 0) {
+            for (const p of problems) console.log('::error::' + p);
+            process.exit(1);
+          }
+          console.log('Installed CLI resolved all ' + templates.length + ' templates.');
+          "
+
+      # --no-git-checks is required: the steps above intentionally leave the
+      # working tree dirty (rewritten package.json, downloaded bundle).
       - name: Publish to npm
+        id: publish
+        if: steps.version.outputs.should-publish == 'true'
         run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Gated independently of the publish step so a run that published but then
+      # failed to tag can be recovered: the re-run resolves should-publish=false
+      # (the version is on npm now) and still reaches this step, where ls-remote
+      # provides idempotency. A run whose publish attempt FAILED does not tag,
+      # because neither branch of the condition holds.
+      - name: Tag release
+        if: ${{ !cancelled() && steps.version.outputs.version != '' && (steps.publish.outcome == 'success' || steps.version.outputs.should-publish == 'false') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null 2>&1; then
+            echo "Tag $TAG already exists on origin - nothing to do."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --generate-notes
+
+      - name: Report skip
+        if: steps.version.outputs.should-publish != 'true'
+        run: |
+          echo "Version ${{ steps.version.outputs.version }} is already published - skipped."

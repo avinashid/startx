@@ -4,17 +4,20 @@ export const FileCheck: WHITELIST_FILES = {
 	"startx.json": {
 		tags: ["never"],
 	},
-	".npmignore": {
-		tags: ["never"],
-	},
 	".npmrc": {
 		tags: ["never"],
 	},
-	".prettier.cjs": {
+	".prettierrc.cjs": {
 		tags: ["prettier"],
 	},
+	// Resolved by prettier ahead of `.prettierrc.cjs`, which is how a prettier + biome
+	// workspace keeps prettier off the JS/TS files biome owns. It imports `.prettierrc.cjs`,
+	// so it must never ship without it — hence both tags.
+	".prettierrc.mjs": {
+		tags: ["prettier", "biome"],
+	},
 	".prettierignore": {
-		tags: ["biome"],
+		tags: ["prettier"],
 	},
 	"README.md": {
 		tags: ["never"],

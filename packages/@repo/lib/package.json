@@ -11,6 +11,7 @@
 		"format:check": "biome ci .",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"test": "vitest run",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": {

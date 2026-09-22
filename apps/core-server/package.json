@@ -32,7 +32,10 @@
 		"country-state-city": "catalog:",
 		"express": "catalog:",
 		"express-fileupload": "catalog:",
-		"express-list-endpoints": "catalog:"
+		"express-list-endpoints": "catalog:",
+		"express-rate-limit": "catalog:",
+		"helmet": "catalog:",
+		"zod": "catalog:"
 	},
 	"devDependencies": {
 		"@types/cookie-parser": "catalog:",

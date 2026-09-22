@@ -19,7 +19,7 @@
 				"tsconfig*.json",
 				"package.json"
 			],
-			"outputs": ["dist/**", "build/**"],
+			"outputs": ["dist/**", "build/**", "bin/**"],
 			"dependsOn": ["lint", "^build"]
 		},
 		"typecheck": {

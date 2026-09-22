@@ -1,11 +1,11 @@
+# Build output and generated files only — source is formatted, never ignored.
+# Workspaces that also chose biome get `.prettierrc.mjs`, which is what hands JS/TS to biome.
 coverage
 dist
+build
+.turbo
+.react-router
 pnpm-lock.yaml
 CHANGELOG.md
-# Ignored for now
+# Markdown is left to the author, as it was before.
 **/*.md
-# Handled by biome
-**/*.ts
-**/*.js
-**/*.tsx
-**/*.jsx

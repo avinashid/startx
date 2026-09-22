@@ -33,6 +33,9 @@ export class FileHandler {
 		const workspaceAttr: Record<string, unknown> = isWorkspace
 			? {
 					version: "1.0.0",
+					// A monorepo root is never the published artifact; the template root has no `private`
+					// to inherit because it *is* the published `startx` package.
+					private: true,
 					packageManager: Constants.packageManager,
 					engines: {
 						node: Constants.node,
@@ -105,28 +108,72 @@ export class FileHandler {
 			delete devDependencies[value];
 		}
 
-		const packageJson = {
+		// structuredClone so nested objects (exports, peerDependencies, bin …) are not aliased into
+		// the emitted package.json — a later mutation would otherwise poison the in-memory template
+		// for every package emitted afterwards in the same run.
+		const packageJson: Record<string, unknown> = {
+			...structuredClone(props.app),
 			name: props.name || props.app.name,
-			description: props.app.description,
 			type: "module",
-			exports: props.app.exports,
-			files: props.app.files,
 			scripts: packageScript,
 			dependencies,
 			devDependencies,
 			...workspaceAttr,
 		};
 
+		// Metadata describing the generator rather than the workspace being generated. `startx` blocks
+		// are only ever read back from the template directory (CliUtils.getPackageList), never from a
+		// user's workspace; the rest identify startx itself and must not be inherited.
+		const generatorFields = [
+			"startx",
+			"author",
+			"license",
+			"keywords",
+			"repository",
+			"homepage",
+			"bugs",
+			"publishConfig",
+		];
+
+		for (const field of generatorFields) {
+			delete packageJson[field];
+		}
+
+		// The template root package.json *is* the published `startx` package, so the workspace root is
+		// assembled from an allowlist: a field added to the template root later cannot leak silently.
+		const rootFields = [
+			"name",
+			"version",
+			"private",
+			"type",
+			"scripts",
+			"dependencies",
+			"devDependencies",
+			"packageManager",
+			"engines",
+		];
+
+		if (isWorkspace) {
+			for (const field of Object.keys(packageJson)) {
+				if (!rootFields.includes(field)) delete packageJson[field];
+			}
+		}
+
 		const sorter = [
 			"name",
 			"description",
 			"version",
+			"private",
 			"type",
+			"main",
+			"bin",
 			"scripts",
 			"files",
 			"exports",
+			"types",
 			"dependencies",
 			"devDependencies",
+			"peerDependencies",
 			"packageManager",
 			"engines",
 		];

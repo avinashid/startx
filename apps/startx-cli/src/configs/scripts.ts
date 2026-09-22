@@ -1,5 +1,8 @@
 import type { SCRIPT } from "../types";
 
+/** Everything prettier can format that legitimately sits at the top level of a package. */
+const topLevelSources = "*.{ts,tsx,js,jsx,cjs,mjs,json,css,md,yaml,yml}";
+
 export const scripts: SCRIPT = {
 	"dev": [
 		{
@@ -193,12 +196,12 @@ export const scripts: SCRIPT = {
 			tags: ["node", "root"],
 		},
 		{
-			script: "tsc --noEmit",
-			tags: ["node"],
-		},
-		{
 			script: "react-router typegen && tsc",
 			tags: ["react-router", "frontend"],
+		},
+		{
+			script: "tsc --noEmit",
+			tags: ["node"],
 		},
 	],
 	"format": [
@@ -211,7 +214,10 @@ export const scripts: SCRIPT = {
 			tags: ["node", "biome", "prettier"],
 		},
 		{
-			"script": "prettier --write .",
+			// Turbo runs this inside the package, and prettier reads ignore files from the cwd
+			// only — a root `.prettierignore` never reaches it. Naming the source directory is
+			// what keeps `dist/`, `build/` and `coverage/` out.
+			"script": `prettier --write src "${topLevelSources}" --no-error-on-unmatched-pattern`,
 			"tags": ["node", "prettier"],
 		},
 	],
@@ -225,7 +231,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "biome", "prettier"],
 		},
 		{
-			"script": "prettier --check .",
+			"script": `prettier --check src "${topLevelSources}" --no-error-on-unmatched-pattern`,
 			"tags": ["node", "prettier"],
 		},
 	],

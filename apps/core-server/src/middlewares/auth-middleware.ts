@@ -63,7 +63,8 @@ async function authenticateRequest(req: Request) {
 }
 
 export class AuthMiddlewares {
-	static async validateActiveSession(req: Request, res: Response, next: NextFunction) {
+	// `this: void` so the method can be handed straight to `app.use` / `router.use` unbound.
+	static async validateActiveSession(this: void, req: Request, res: Response, next: NextFunction) {
 		try {
 			const auth = await authenticateRequest(req);
 
