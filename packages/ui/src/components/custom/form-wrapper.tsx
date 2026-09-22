@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import {
@@ -320,40 +319,6 @@ export const FormDefaultDateField = <
 	>
 ) => {
 	const { label, description, control, name, ...rest } = props;
-
-	const safeFormat = (date: Date | string | undefined | null) => {
-		try {
-			if (!date) return undefined;
-
-			const parsedDate = typeof date === "string" ? new Date(date) : date;
-
-			const year = parsedDate.getUTCFullYear();
-			const month = parsedDate.getUTCMonth();
-			const day = parsedDate.getUTCDate();
-
-			const utcMidnight = new Date(Date.UTC(year, month, day));
-			return format(utcMidnight, "yyyy-MM-dd");
-		} catch (error) {
-			return undefined;
-		}
-	};
-
-	const safeParse = (dateString: string | undefined | null) => {
-		try {
-			if (!dateString) return undefined;
-
-			const localDate = new Date(dateString);
-
-			const year = localDate.getFullYear();
-			const month = localDate.getMonth();
-			const day = localDate.getDate();
-
-			return new Date(Date.UTC(year, month, day));
-		} catch (error) {
-			console.error(error);
-			return undefined;
-		}
-	};
 
 	return (
 		<FormField

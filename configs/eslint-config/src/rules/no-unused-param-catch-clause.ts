@@ -1,4 +1,4 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 export const NoUnusedParamInCatchClauseRule = ESLintUtils.RuleCreator.withoutDocs({
 	name: "no-unused-param-catch-clause",
@@ -17,7 +17,7 @@ export const NoUnusedParamInCatchClauseRule = ESLintUtils.RuleCreator.withoutDoc
 	create(context) {
 		return {
 			CatchClause(node) {
-				if (node.param?.type === 'Identifier' && node.param.name.startsWith('_')) {
+				if (node.param?.type === AST_NODE_TYPES.Identifier && node.param.name.startsWith('_')) {
 					const start = node.range[0] + 'catch '.length;
 					const end = node.param.range[1] + '()'.length;
 

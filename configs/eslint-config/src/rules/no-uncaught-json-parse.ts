@@ -1,4 +1,4 @@
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
 import { isJsonParseCall, isJsonStringifyCall } from "../utils/json.js";
 
 export const NoUncaughtJsonParseRule = ESLintUtils.RuleCreator.withoutDocs({
@@ -27,7 +27,7 @@ export const NoUncaughtJsonParseRule = ESLintUtils.RuleCreator.withoutDocs({
 				}
 
 				if (
-					sourceCode.getAncestors(node).find(node => node.type === "TryStatement") !== undefined
+					sourceCode.getAncestors(node).find(node => node.type === AST_NODE_TYPES.TryStatement) !== undefined
 				) {
 					return;
 				}

@@ -1,4 +1,4 @@
-import { ZodTypeAny, z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 import type { QueryKey, TimeString, TimeUnit, ZParams, ZQuery } from "./api-types";
 
 type AnyObject = Record<PropertyKey, unknown>;

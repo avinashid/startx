@@ -1,4 +1,4 @@
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoArgumentSpreadRule = ESLintUtils.RuleCreator.withoutDocs({
   name: "no-argument-spread",
@@ -24,12 +24,12 @@ export const NoArgumentSpreadRule = ESLintUtils.RuleCreator.withoutDocs({
     return {
       CallExpression(node) {
         for (const arg of node.arguments) {
-          if (arg.type !== "SpreadElement") continue;
+          if (arg.type !== AST_NODE_TYPES.SpreadElement) continue;
 
           const spreadArg = arg.argument;
 
           // Allow spread of inline arrays
-          if (spreadArg.type === "ArrayExpression") return;
+          if (spreadArg.type === AST_NODE_TYPES.ArrayExpression) return;
 
           // Only autofix if it's the sole argument
           const canFix = node.arguments.length === 1;
@@ -41,7 +41,7 @@ export const NoArgumentSpreadRule = ESLintUtils.RuleCreator.withoutDocs({
               ? (fixer) => {
                   const source = context.sourceCode;
 
-                  if (node.callee.type === "MemberExpression") {
+                  if (node.callee.type === AST_NODE_TYPES.MemberExpression) {
                     // Preserve `this`
                     const thisText = source.getText(node.callee.object);
                     const calleeText = source.getText(node.callee);
@@ -66,11 +66,11 @@ export const NoArgumentSpreadRule = ESLintUtils.RuleCreator.withoutDocs({
 
       NewExpression(node) {
         for (const arg of node.arguments || []) {
-          if (arg.type !== "SpreadElement") continue;
+          if (arg.type !== AST_NODE_TYPES.SpreadElement) continue;
 
           const spreadArg = arg.argument;
 
-          if (spreadArg.type === "ArrayExpression") return;
+          if (spreadArg.type === AST_NODE_TYPES.ArrayExpression) return;
 
           const canFix = node.arguments.length === 1;
 

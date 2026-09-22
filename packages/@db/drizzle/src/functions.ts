@@ -1,4 +1,4 @@
-import { type AnyColumn, sql, type SQL } from "drizzle-orm";
+import { type AnyColumn, type GetColumnData, sql, type SQL } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
 export const increment = (column: AnyColumn, value = 1) => {
@@ -109,10 +109,8 @@ export function objectBuilder<T extends Record<string, PgColumn | SQL>>(
 
 type UnwrapColumns<T> = T extends Record<string, unknown>
   ? {
-      [K in keyof T]: T[K] extends PgColumn<infer C>
-        ? C["notNull"] extends true
-          ? C["data"]
-          : C["data"] | null
+      [K in keyof T]: T[K] extends AnyColumn
+        ? GetColumnData<T[K]>
         : T[K] extends SQL<infer S>
         ? S
         : never;

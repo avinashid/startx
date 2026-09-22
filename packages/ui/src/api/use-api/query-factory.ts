@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import { ApiHelper } from "./api-helpers";
-import { QueryKey, type RawSchema, type SchemaQueryKeys, type ZParams, type ZQuery } from "./api-types";
+import { type QueryKey, type RawSchema, type SchemaQueryKeys, type ZParams, type ZQuery } from "./api-types";
 
 export type QueryKeyFactory<ZQ extends ZQuery, ZP extends ZParams> = {
 	(input?: { params?: z.input<ZP>; query?: z.input<ZQ> }): QueryKey<string>;

@@ -2,6 +2,8 @@ import { fixupPluginRules } from "@eslint/compat";
 import eslintConfigPrettier from "eslint-config-prettier";
 import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
 import reactPlugin from "eslint-plugin-react";
+// eslint-plugin-react-hooks@5 is CJS with no `default` key; esModuleInterop resolves it at runtime.
+// eslint-disable-next-line import-x/default
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import globals from "globals";
 import tseslint from "typescript-eslint";

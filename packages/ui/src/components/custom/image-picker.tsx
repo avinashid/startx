@@ -90,7 +90,7 @@ const ImagePicker = ({
 					type="button"
 					className="px-8 border-dotted"
 					disabled={disabled}
-					onClick={e => {
+					onClick={() => {
 						// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 						selectedImage.length === 0 ? fileInputRef.current?.click() : setSelectedImage([]);
 						onChange?.(null);

@@ -11,6 +11,9 @@
 		"format": "biome format --write .",
 		"format:check": "biome ci ."
 	},
+	"devDependencies": {
+		"typescript-config": "workspace:*"
+	},
 	"startx": {
 		"gTags": [
 			"tsdown"

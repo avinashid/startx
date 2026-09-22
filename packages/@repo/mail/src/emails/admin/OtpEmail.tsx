@@ -111,14 +111,6 @@ const text = {
 	margin: "24px 0",
 };
 
-const imageSection = {
-	backgroundColor: "#fff",
-	display: "flex",
-	padding: "20px 0",
-	alignItems: "center",
-	justifyContent: "center",
-};
-
 const coverSection = { backgroundColor: "#fff" };
 
 const upperSection = { padding: "12px 35px" };
@@ -143,12 +135,6 @@ const codeText = {
 	fontWeight: "bold",
 	fontSize: "36px",
 	margin: "10px 0",
-	textAlign: "center" as const,
-};
-
-const validityText = {
-	...text,
-	margin: "0px",
 	textAlign: "center" as const,
 };
 

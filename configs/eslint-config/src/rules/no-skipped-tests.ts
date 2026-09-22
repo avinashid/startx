@@ -1,4 +1,4 @@
-import { ESLintUtils } from "@typescript-eslint/utils";
+import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoSkippedTestsRule = ESLintUtils.RuleCreator.withoutDocs({
   name: "no-skipped-tests",
@@ -29,9 +29,9 @@ export const NoSkippedTestsRule = ESLintUtils.RuleCreator.withoutDocs({
     return {
       MemberExpression(node) {
         if (
-          node.object.type === "Identifier" &&
+          node.object.type === AST_NODE_TYPES.Identifier &&
           TESTING_FUNCTIONS.has(node.object.name) &&
-          node.property.type === "Identifier" &&
+          node.property.type === AST_NODE_TYPES.Identifier &&
           SKIPPING_METHODS.has(node.property.name)
         ) {
           context.report({
@@ -46,7 +46,7 @@ export const NoSkippedTestsRule = ESLintUtils.RuleCreator.withoutDocs({
       },
       CallExpression(node) {
         if (
-          node.callee.type === "Identifier" &&
+          node.callee.type === AST_NODE_TYPES.Identifier &&
           PREFIXED_TESTING_FUNCTIONS.has(node.callee.name)
         ) {
           context.report({

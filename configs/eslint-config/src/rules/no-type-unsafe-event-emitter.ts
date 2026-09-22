@@ -1,4 +1,4 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 export const NoTypeUnsafeEventEmitterRule = ESLintUtils.RuleCreator.withoutDocs({
 	name: 'no-type-unsafe-event-emitter',
@@ -18,7 +18,7 @@ export const NoTypeUnsafeEventEmitterRule = ESLintUtils.RuleCreator.withoutDocs(
 			ClassDeclaration(node) {
 				if (
 					node.superClass &&
-					node.superClass.type === 'Identifier' &&
+					node.superClass.type === AST_NODE_TYPES.Identifier &&
 					node.superClass.name === 'EventEmitter' &&
 					node.id?.name !== 'TypedEmitter'
 				) {

@@ -37,7 +37,8 @@
 		"eslint-config": "workspace:*",
 		"tailwindcss": "catalog:",
 		"typescript-config": "workspace:^",
-		"vite": "catalog:"
+		"vite": "catalog:",
+		"vitest-config": "workspace:*"
 	},
 	"startx": {
 		"gTags": [

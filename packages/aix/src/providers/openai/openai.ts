@@ -11,7 +11,7 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 		return (await this.ai.models.list()).data.map(e => ({ name: e.id, provider: "openAi" }));
 	}
 	async handleAi() {
-		const getCompletion = async (retries = 1): Promise<OpenAI.Chat.ChatCompletion> => {
+		const getCompletion = async (): Promise<OpenAI.Chat.ChatCompletion> => {
 			try {
 				const tools = this.tools.getActiveTools().map(tool => ({
 					type: "function" as const,

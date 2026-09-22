@@ -51,7 +51,7 @@ export const baseConfig = tseslint.config(
 			},
 			parserOptions: {
 				projectService: true,
-				tsconfigRootDir: import.meta.dirname,
+				tsconfigRootDir: process.cwd(),
 			},
 		},
 		settings: {

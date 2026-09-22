@@ -1,5 +1,5 @@
 import type { AxiosError, AxiosInstance } from "axios";
-import { z, ZodTypeAny } from "zod";
+import { z, type ZodTypeAny } from "zod";
 import type {
 	IFetchOptions,
 	IPaginatedFetchOptions,

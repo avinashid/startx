@@ -1,4 +1,4 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
 
 export const NoUselessCatchThrowRule = ESLintUtils.RuleCreator.withoutDocs({
 	name: 'no-useless-catch-throw',
@@ -19,9 +19,9 @@ export const NoUselessCatchThrowRule = ESLintUtils.RuleCreator.withoutDocs({
 			CatchClause(node) {
 				if (
 					node.body.body.length === 1 &&
-					node.body.body[0].type === 'ThrowStatement' &&
-					node.body.body[0].argument.type === 'Identifier' &&
-					node.param?.type === 'Identifier' &&
+					node.body.body[0].type === AST_NODE_TYPES.ThrowStatement &&
+					node.body.body[0].argument.type === AST_NODE_TYPES.Identifier &&
+					node.param?.type === AST_NODE_TYPES.Identifier &&
 					node.body.body[0].argument.name === node.param.name
 				) {
 					context.report({

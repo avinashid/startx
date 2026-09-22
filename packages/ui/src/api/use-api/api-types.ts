@@ -1,5 +1,5 @@
 import type { AxiosError } from "axios";
-import { z, ZodTypeAny, type ZodObject, type ZodType } from "zod";
+import { z, type ZodObject, type ZodType, type ZodTypeAny } from "zod";
 
 export type ApiType = "fetch" | "mutation" | "paginated-fetch" | "infinite-paginated";
 export type ApiMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";

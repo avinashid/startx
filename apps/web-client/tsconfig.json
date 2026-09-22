@@ -1,6 +1,7 @@
 {
 	"extends": "typescript-config/tsconfig.frontend.json",
 	"include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
+	"exclude": ["node_modules", "build", "eslint.config.ts", "src/eslint.config.ts"],
 	"compilerOptions": {
 		"lib": ["DOM", "DOM.Iterable", "ES2022"],
 		"types": ["node", "vite/client"],
