@@ -3,8 +3,8 @@
 Repo hygiene, docs and maintenance. No user-visible behaviour change.
 Not bugs, not features — just things that should be tidy and currently aren't.
 
-- **Next free ID:** `C6`
-- **Open:** 5 · **In progress:** 0 · **Done:** 0
+- **Next free ID:** `C7`
+- **Open:** 6 · **In progress:** 0 · **Done:** 0
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -15,6 +15,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | [C3](#c3) | Pin the Node version consistently | S | open |
 | [C4](#c4) | Catalog freshness pass | M | open |
 | [C5](#c5) | Fill in the root `package.json` metadata | S | open |
+| [C6](#c6) | `README.md` is out of date with `c104915` — `--force` and `.prettierrc.mjs` | S | open |
 
 ---
 
@@ -166,3 +167,44 @@ Note `apps/startx-cli/package.json` also has `"author": ""`, `"license": "ISC"` 
 `"main": "index.js"` pointing at a file that doesn't exist. That package is private and never
 published, so none of it reaches users — but it's inconsistent with the root's `MIT` and worth
 tidying in the same pass.
+
+> **Partly done in `c104915`.** The `files` allowlist landed with [B31](../bugs/ci-bugs.md#b31),
+> and the dangling `"main": "index.js"` was deleted from both `apps/cli/package.json` and
+> `apps/startx-cli/package.json` with [B16](../bugs/function-bugs.md#b16). Still outstanding:
+> `description` is still `""`, `homepage` and `bugs` are still absent, `keywords` is still the
+> original four, and `apps/startx-cli` still has `"author": ""` / `"license": "ISC"`.
+
+---
+
+## C6
+
+### C6 · `README.md` is out of date with `c104915` — `--force` and `.prettierrc.mjs`
+
+- **Status:** open · **Effort:** S
+
+`c104915` added a destructive CLI flag and a second Prettier config file. Neither reached the
+README, which is the only documentation a user of the published package ever sees.
+
+**`startx init --force` is undocumented.** The README's `init` section has a dedicated **Options**
+table (`README.md:40-42`) that lists exactly one flag:
+
+```
+| `-d, --dir <path>` | Output directory (defaults to `./<projectName>`) |
+```
+
+`-f, --force` is missing from it. That is the flag that lets `init` clear a non-empty target
+directory — the single most destructive thing the CLI can do. It is guarded (see
+[B17](../bugs/function-bugs.md#b17)), but a guard is not a substitute for telling people it exists.
+
+**`.prettierrc.mjs` is undocumented.** The "What Gets Generated" table lists `.prettierrc.cjs`
+(`README.md:202`) but never mentions `.prettierrc.mjs`, even though it is a real generated file
+whenever both `prettier` and `biome` are selected, and it *changes formatting behaviour* rather
+than just adding to it — it carries a `requirePragma` override. A user who finds an unexplained
+second config file in their workspace, and then finds that `format` appears to do nothing, has no
+documentation to resolve it. See [B36](../bugs/config-bugs.md#b36), which is the same override
+misfiring inside this repo.
+
+**What to do** — Add `-f, --force` to the Options table, add `.prettierrc.mjs` to the generated-files
+table with a one-line note on when it appears and what `requirePragma` means, and make a habit of
+treating the README's two tables as part of the definition of done for any flag or template-file
+change.

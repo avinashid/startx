@@ -24,6 +24,23 @@ Contents: [B22](#b22) · [B23](#b23) · [B24](#b24) · [B25](#b25) · [B28](#b28
 - **File:** `apps/core-server/src/routes/files/router.ts:6`
 - **Fixed in:** `c104915`
 
+> **Resolved, choosing the private-by-default branch.** `createFilesRouter()` now runs
+> `AuthMiddlewares.validateActiveSession` followed by a new `enforceOwnership` guard, against an
+> ownership layout of `STORAGE_ROOT/<userId>/…` rather than a flat shared directory. The root itself
+> comes from `path.resolve(ENV.FILE_STORAGE_PATH)` (`STORAGE_ROOT`, new
+> `apps/core-server/src/config/server-config.ts`) instead of the relative `"storage"` literal, so it
+> no longer moves with `process.cwd()`.
+>
+> `enforceOwnership` decodes `req.path` and rejects it if it contains a `..` segment or its first
+> segment isn't `req.user.id` — decoding **before** that check, because `express.static` normalizes
+> the path only after it resolves, so a raw prefix check alone would let
+> `/<own-id>/../<other-id>/x` through. `dotfiles: "deny"` and `index: false` were added as proposed.
+>
+> One thing the entry's Fix didn't ask for: `setHeaders` now forces
+> `Content-Disposition: attachment` on every response. Uploads are untrusted bytes served from the
+> API's own origin, so without it an uploaded `.html` would render in place and inherit `'self'` in
+> any CSP the origin sets.
+
 **Symptom** — Every file written to `storage/` is readable by anyone who knows or guesses its URL.
 There is no auth check, no ownership check, and no signed-URL mechanism.
 
@@ -77,6 +94,23 @@ curl -i http://localhost:3000/files/<known-upload>    # must be 401 without a se
 - **File:** `apps/core-server/src/routes/server.ts:17`
 - **Fixed in:** `c104915`
 
+> **Resolved, and the entry's proposed options list undersold what was missing.** The literal
+> suggestion — pass `limits: { fileSize }` plus `abortOnLimit`/`useTempFiles` to `fileUpload()` —
+> would still have left busboy's own defaults in place for everything **except** file size: `fields`
+> and `parts` default to `Infinity`, and `fieldSize`/`fieldNameSize` default low but unbounded in
+> count. The new `apps/core-server/src/middlewares/upload-middleware.ts` sets all of them —
+> `fieldSize`, `fieldNameSize`, `headerPairs`, `files`, `fields`, `parts` — the last three capped at
+> `ServerConfig.MAX_UPLOAD_FILES`/`MAX_UPLOAD_FIELDS` **+ 1**, so an overflow is detected and answered
+> with a real 413 instead of busboy silently discarding the extra parts.
+>
+> It also does more than the entry asked for: a `content-length` over `MAX_MULTIPART_SIZE_MB` is
+> rejected before any parsing starts, a running byte count catches the chunked-transfer case that has
+> no declared length, and each request gets its own randomly-named temp dir (`UPLOAD_TEMP_ROOT/<uuid>`)
+> that is `rm -rf`'d on `res.close` regardless of how the request ended — a fixed shared
+> `tempFileDir` was not used. It stays mounted globally in `server.ts` rather than scoped to a
+> specific upload route as the Fix suggested; it self-guards by short-circuiting non-multipart
+> requests (`isMultipart`) instead.
+
 **Symptom** — A single unauthenticated `POST` with a large body buffers the whole thing into the
 Node process's memory. A handful of concurrent requests exhausts the heap and takes the server down.
 
@@ -125,6 +159,20 @@ curl -F file=@/tmp/big.bin http://localhost:3000/upload   # must 413, not OOM th
 - **File:** `apps/core-server/src/routes/server.ts:13-18`
 - **Fixed in:** `c104915`
 
+> **Resolved, but not with the order this entry proposed.** The Fix section said "move
+> `corsMiddleware` directly after `loggerMiddleware`, ahead of every parser." The shipped order in
+> `apps/core-server/src/routes/server.ts` is instead: `loggerMiddleware` → `helmet()` →
+> `apiRateLimiter` → `corsMiddleware` → `cookieParser` → `urlencoded`/`json` → `uploadMiddleware`.
+>
+> The rate limiter — new in this same commit, see [B28](#b28) — sits **before** `corsMiddleware`,
+> not after it as a literal reading of "ahead of every parser" would put a security header/limiter
+> pair. That's deliberate: a disallowed `Origin` is rejected via `next(error)`, which jumps straight
+> to the error middleware, skipping everything downstream — including a limiter placed after `cors`.
+> Measured before fixing the order: 150 requests with a bad `Origin` produced 150×403 and **zero**
+> 429s, i.e. the limiter never engaged for exactly the traffic an attacker controls. With the limiter
+> ahead of `cors`, an unauthorized-origin flood is throttled the same as any other request, and
+> `cors` still runs ahead of every body parser as the entry originally asked.
+
 **Symptom** — A cross-origin request from a disallowed origin has its body fully parsed — including
 multipart file uploads buffered into memory — before the origin is ever checked.
 
@@ -172,6 +220,21 @@ the body is consumed.
 - **Area:** `@repo/lib`
 - **File:** `packages/@repo/lib/src/cookie-module/cookie-module.ts:52-60`
 - **Fixed in:** `c104915`
+
+> **Resolved along the lines proposed, with a couple of changes.** `resolveSameSite` now takes a
+> `crossSite` boolean and returns `"none"` when true, `"lax"` otherwise; a new `COOKIE_CROSS_SITE`
+> env var drives it. Unlike the entry's suggested `z.enum(["true","false"])`, the shipped schema is
+> `z.string().optional()` with a manual `TRUTHY`/`FALSY` set-membership check (`"1"/"true"/"yes"/"on"`
+> vs `"0"/"false"/"no"/"off"`) that throws on anything else. `secure` is now derived as
+> `sameSite === "none" || env !== "development"` — the pairing the entry asked to "assert explicitly"
+> is now structural rather than two independent expressions that could drift apart.
+>
+> One change outside the entry's scope: building the cookie descriptor moved from eager,
+> module-load-time (`const refreshTokenCookie = createRefreshTokenCookie()`) to a lazy
+> `getRefreshTokenCookie()`, memoized on first call and exposed via a new `CookieModule.validateConfig()`
+> for startup to call explicitly. Previously, any import of this module in an environment missing
+> `COOKIE_DOMAIN` — including unrelated tooling — crashed at import time; now that only happens when
+> a cookie is actually built, or when `validateConfig()` is called deliberately during boot.
 
 **Symptom** — The refresh-token cookie is always `SameSite=Lax`. In the deployment the file's own
 comment describes — frontend and API on different origins — the browser will not send the cookie on
@@ -229,6 +292,20 @@ COOKIE_CROSS_SITE=true NODE_ENV=production node -e '...'
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/routes/server.ts`
 - **Fixed in:** `c104915`
+
+> **Resolved directly, not deferred as the entry proposed.** The Fix section tracked this as a
+> separate feature ([F4](../features/template-features.md#f4)) and said the entry "stays open as the
+> record of the gap." Instead `helmet()` and a new
+> `apps/core-server/src/middlewares/rate-limit-middleware.ts` (`apiRateLimiter`, `authRateLimiter`)
+> landed in this same commit, wired into `server.ts`, with the window/limit values pulled from new
+> `ServerConfig` env vars (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `AUTH_RATE_LIMIT_WINDOW_MS`,
+> `AUTH_RATE_LIMIT_MAX`) rather than hardcoded. `authRateLimiter` is mounted on `/auth` ahead of the
+> router itself, with `skipSuccessfulRequests: true` — not in the original Fix sketch.
+>
+> What the entry flagged as a caveat is still true: the store is `express-rate-limit`'s in-memory
+> default, so a multi-replica deployment does not share counters. `rate-limit-redis` on top of
+> `@repo/redis` was not added. See [B24](#b24) for why the limiter had to be placed **before**
+> `corsMiddleware` rather than after it.
 
 **Symptom** — A project scaffolded from this template ships with no security headers
 (`X-Content-Type-Options`, `X-Frame-Options`, HSTS, CSP), no rate limiting on any route, and no

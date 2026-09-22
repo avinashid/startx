@@ -61,18 +61,21 @@ the limiter is shared across replicas when redis is present.
 ### F5 · Supported "serve the SPA from the API" mode
 
 - **Status:** open · **Value:** low · **Effort:** M
-- **Supersedes the dead code in** [B29](../bugs/runtime-bugs.md#b29)
+- **Supersedes the dead code removed in** [B29](../bugs/runtime-bugs.md#b29)
 
 **The idea** — Make single-origin deployment — Express serving both the API and the built
-`web-client` — a real, tested option rather than commented-out code.
+`web-client` — a real, tested option, built from scratch rather than resurrecting old code.
 
-**Why** — `apps/core-server/src/middlewares/serve-static.ts` exists, is commented out at its only
-call site, and wouldn't work if uncommented: it resolves `./frontend` relative to `__dirname`, which
-after the tsdown bundle points at `dist/`, and nothing ever puts a frontend build there.
+**Why** — `apps/core-server/src/middlewares/serve-static.ts` used to exist, but was commented out at
+its only call site and wouldn't have worked if uncommented: it resolved `./frontend` relative to
+`__dirname`, which after the tsdown bundle points at `dist/`, and nothing ever put a frontend build
+there. [B29](../bugs/runtime-bugs.md#b29) deleted both the file and the commented-out call site
+rather than fixing the path, so this feature now starts from nothing.
 
 Meanwhile `web-client` ships an `nginx.conf` and its own Dockerfile, which suggests two-origin
-deployment behind nginx is the intended path. So the first decision is whether this mode is wanted
-at all — **if not, delete the file and close B29.** The rest of this entry assumes yes.
+deployment behind nginx is the intended path. So the first decision is still whether this mode is
+wanted at all — **if not, this entry can be closed with no further work.** The rest of it assumes
+yes.
 
 **What to build**
 

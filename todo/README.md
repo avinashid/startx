@@ -119,7 +119,10 @@ All three use the same predicate: an entry applies when **`entry.tags ⊆ curren
    `../../../` in production, `../../../../` when `STARTX_ENV=development` (`cli-utils.ts:24`).
 2. **Project prefs** — `getPrefs()`: prompt for an npm-valid project name; target dir is
    `--dir` or `cwd/<projectName>`; checkbox of apps where `mode !== "silent"`.
-3. **Guard the target dir** — `checkTargetDirectory()` confirms if the directory is non-empty.
+3. **Guard the target dir** — `checkTargetDirectory()` confirms if the directory is non-empty. By
+   default a non-empty target is a **merge** (new files written on top, nothing deleted); the
+   `--force` flag switches this to a confirmed, permanent delete of the target's contents before
+   scaffolding.
 4. **Resolve configs** — `getConfigPrefs()`: seed `gTags` with `common`; absorb the selected
    apps' `gTags`; pull in their `requiredDeps`; offer remaining configs whose `iTags ⊆ gTags`;
    prompt for the formatter (`prettier` or `prettier + biome`); re-resolve; absorb config `gTags`.
@@ -154,8 +157,9 @@ No install is run. The user finishes with `pnpm install`.
 
 - Reads the **user's** workspace to decide tags: `getInstallTags()` detects biome / prettier /
   vitest / tsdown / eslint from their root `package.json` rather than prompting.
-- `resolvePackageClosure()` (`package.ts:292`) does a proper **BFS** over `requiredDeps` — unlike
-  `init`, which only goes one level deep ([B17](bugs/function-bugs.md#b17)).
+- `resolvePackageClosure()` (`utils/closure.ts:16`) does a proper **BFS** over `requiredDeps` —
+  shared with `init`, which now calls the same closure instead of only going one level deep
+  ([B17](bugs/function-bugs.md#b17)).
 - `checkAndInstallMissingDeps()` diffs `DepCheck` against the user's root `package.json` and the
   pnpm catalog; missing npm deps are offered for install, missing **workspace** deps are reported
   as `run: startx package add <name>`.

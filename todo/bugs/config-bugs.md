@@ -5,7 +5,7 @@ Wrong configuration files and wrong entries in the generator's static data table
 Register: [`bugs.md`](bugs.md).
 
 Contents: [B7](#b7) · [B8](#b8) · [B9](#b9) · [B10](#b10) · [B11](#b11) · [B13](#b13) · [B14](#b14) ·
-[B32](#b32) · [B33](#b33)
+[B32](#b32) · [B33](#b33) · [B36](#b36) · [B37](#b37) · [B42](#b42)
 
 ---
 
@@ -329,6 +329,10 @@ pnpm --filter web-client test
 - **File:** `apps/startx-cli/src/configs/files.ts:11`
 - **Fixed in:** `c104915`
 
+> **Resolved.** Key corrected to `.prettierrc.cjs` with `tags: ["prettier"]`, exactly as proposed
+> below. The same pass also added a sibling entry, `.prettierrc.mjs`, gated on
+> `["prettier", "biome"]` — see [B14](#b14) for why it needs both tags.
+
 **Symptom** — The prettier config is copied into **every** generated workspace, including ones that
 did not select prettier. The `FileCheck` entry intended to gate it has no effect at all.
 
@@ -378,6 +382,26 @@ Tracked as [E3](../enhancements/cli-enhancements.md#e3).
 - **File:** `apps/startx-cli/src/configs/files.ts:17`
 - **Fixed in:** `c104915`
 
+> **Resolved — not by the re-gate below, which was tried and rejected as a regression.** Simply
+> swapping `tags: ["biome"]` for `["prettier"]` ships the file's existing *contents* unchanged, and
+> those contents are biome-specific: they exclude `**/*.ts`/`.tsx`/`.js`/`.jsx` as "handled by
+> biome." Copied as-is into a prettier-only workspace, that measured **0** `.ts`/`.tsx` files
+> formatted, against 91 files (76 of them `.ts`/`.tsx`) with the file absent entirely.
+>
+> What shipped instead: `.prettierignore` slimmed to build output plus `pnpm-lock.yaml` and
+> `CHANGELOG.md` — no source exclusions — and a new `.prettierrc.mjs` carrying a `requirePragma`
+> override, gated on **both** `["prettier", "biome"]`. It has to be gated on both: it `import`s
+> `.prettierrc.cjs`, so shipping it to a workspace without that file makes prettier exit 2 with
+> "Cannot find module." The same pass narrowed the per-package `format`/`format:check` scripts to
+> `src` plus a top-level glob with `--no-error-on-unmatched-pattern` — the original symptom
+> (prettier rewriting `dist/`/`coverage/`) was still live otherwise, and the unmatched-pattern flag
+> is load-bearing because `configs/typescript-config` has no `src/`.
+>
+> One thing this pass didn't anticipate: `.prettierrc.mjs` sits at the startx repo's own root (it
+> has to, to be templated), and prettier resolves it ahead of `.prettierrc.cjs` there too — so the
+> `requirePragma` override written for generated biome+prettier workspaces also silently suppresses
+> the master repo's own `format`/`format:check` for every `.ts`/`.js` file. Filed as [B36](#b36).
+
 **Symptom** — Exactly inverted behaviour:
 
 | Formatter chosen | `.prettierrc.cjs` | `.prettierignore` |
@@ -385,8 +409,11 @@ Tracked as [E3](../enhancements/cli-enhancements.md#e3).
 | `prettier` | copied | **missing** |
 | `prettier + biome` | copied | copied |
 
-A prettier-only workspace gets a prettier config with no ignore file, so `prettier --write .`
-formats build output and generated files.
+A prettier-only workspace gets a prettier config with no ignore file. This does **not** reach
+`pnpm format` / `turbo run format`: turbo runs prettier inside each package, and a root-level
+`.prettierignore` is never read from there. The real impact is editor integrations (format-on-save
+reads ignore files from the workspace root) and any `prettier` invocation run directly from the
+repo root — both would format build output and generated files as if they were source.
 
 **Cause**
 ```ts
@@ -421,6 +448,13 @@ test -f <proj>/.prettierignore
 - **File:** `configs/vitest-config/src/frontend.ts`
 - **Fixed in:** `1c91e1d`
 - **Found while fixing:** [B11](#b11)
+
+> **Resolved.** The `setupFiles` line was removed from `configs/vitest-config/src/frontend.ts`
+> rather than repaired. Repairing it means picking a path, and any path the *shared* config names
+> has to exist in every consumer — so the config would have to ship a `setup.ts` into `ui`,
+> `web-client` and every frontend package the generator emits, whether or not they want one. A
+> package that genuinely needs setup now declares it in its own `vitest.config.ts`, where the
+> relative path resolves against something that exists.
 
 **Symptom** — Latent. Any frontend package that writes its first test fails immediately with a
 missing-module error for a setup file it never created.
@@ -460,6 +494,16 @@ pnpm exec turbo test --continue   # 8/8, and a new frontend test must not fail o
 - **Fixed in:** `1c91e1d`
 - **Found while fixing:** [B8](#b8)
 
+> **Resolved.** `tsconfigRootDir` is now `process.cwd()`. Turbo invokes ESLint once per package, so
+> `cwd` is the package root — the directory that actually holds that package's `tsconfig.json`.
+>
+> The parsing error was the visible half of this. The larger half was silent: because `base.ts` is
+> the config every package imports, every package in the repo had been pointing the
+> typescript-eslint project service at `configs/eslint-config/src/configs`, so type-aware rules
+> were not running repo-wide. `aix` alone reports 91 warnings after the fix. Those warnings are not
+> a regression — they are the first output from rules that had never executed, and burning them
+> down is tracked as [E2](../enhancements/template-enhancements.md#e2), not as a defect here.
+
 **Symptom** — Every file in `configs/eslint-config/src/configs/` failed to lint with:
 
 ```
@@ -494,4 +538,142 @@ package's `tsconfig.json` lives.
 **Verify**
 ```bash
 pnpm exec turbo lint --continue   # 17/17, 0 errors, no "project service" parsing errors
+```
+
+---
+
+## B36
+
+### B36 · `.prettierrc.mjs`'s `requirePragma` makes the repo's own `format:check` a no-op
+
+- **Status:** open
+- **Severity:** P1
+- **Area:** root / `startx-cli`
+- **File:** `.prettierrc.mjs:14-15`
+- **Found while fixing:** [B14](#b14)
+
+**Symptom** — `pnpm format` / `pnpm format:check` at the repo root, and inside any package, report
+success across the whole master repo without actually checking a single `.ts`/`.js` file's
+formatting. A deliberately mangled file (`const    x=1;;;`, no trailing commas) dropped at the repo
+root **passes** `pnpm exec prettier --check` with exit 0.
+
+**Cause** — `.prettierrc.mjs:14-15` sets `overrides: [{ files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"],
+options: { requirePragma: true } }]`. `requirePragma: true` tells prettier to skip any file that
+does not carry an `@format` (or `@prettier`) comment — and no source file anywhere in the repo
+carries one, so every `.ts`/`.js`/etc. file is silently skipped, not verified.
+
+That override exists on purpose: [B14](#b14)'s fix introduced `.prettierrc.mjs` specifically so a
+generated **prettier + biome** workspace can hand JS/TS files to biome while still using prettier
+for JSON/CSS/markdown — `requirePragma` is how it keeps prettier off files nothing tags with
+`@format`. The problem is placement, not intent: `.prettierrc.mjs` has to live at the *root* of the
+startx repo, because that root is itself the template source the generator copies from. Prettier
+resolves `.prettierrc.mjs` ahead of `.prettierrc.cjs`
+(`pnpm exec prettier --find-config-path apps/startx-cli/src/configs/files.ts` → `.prettierrc.mjs`,
+not `.prettierrc.cjs`), so the override written for *generated workspaces* also silently governs the
+master repo's own `format`/`format:check`, where no `@format` pragma convention exists and none was
+ever intended.
+
+The drift this has masked is not hypothetical: `pnpm exec prettier --check --config .prettierrc.cjs
+"apps/**/src/**/*.{ts,tsx}" "packages/**/src/**/*.{ts,tsx}" "configs/**/src/**/*.{ts,tsx}"` — i.e.
+the ruleset the repo actually intends to enforce on itself — reports **128 files** with style
+issues that `format:check` has been reporting clean.
+
+**Fix** — The override is wanted in a *generated* biome+prettier workspace, but must never apply to
+startx's own source, and one file can't have two different `requirePragma` values depending on who
+resolves it. Recommended approach: stop shipping the override as a discoverable root config file at
+all. Move the `requirePragma` block into the template-writing code path (e.g. synthesize it into the
+generated `.prettierrc.mjs`'s contents at copy time, alongside the existing `.prettierrc.cjs` import
+rewrite that `files.ts` already performs) rather than keeping it as a literal file prettier can find
+by walking up from the startx repo's own source tree. That keeps the override real for consumers
+while removing the config prettier resolves when linting startx itself. A cheaper interim mitigation
+— pin `.prettierrc.cjs` explicitly via `--config` in the root `format`/`format:check` scripts — treats
+the symptom but leaves the same trap for the next contributor who runs bare `prettier --check`.
+
+**Verify**
+```bash
+pnpm exec prettier --find-config-path apps/startx-cli/src/configs/files.ts   # must not print .prettierrc.mjs
+pnpm format:check   # must fail once real drift exists, not pass unconditionally
+```
+
+---
+
+## B37
+
+### B37 · A freshly scaffolded prettier-only workspace fails its own `format:check`
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** `startx-cli` + template sources
+- **File:** `packages/@repo/lib/src/file-system-module/index.ts:34`
+
+**Symptom** — Scaffolding a real workspace (`cli` + `web-client`, formatter = `prettier` only),
+running `pnpm install`, then `pnpm format:check` fails immediately: **9 of 10 packages** report
+"Code style issues found", exit code 1, on a stock scaffold that never had a single file hand-edited.
+
+**Cause** — Two independent causes, not one:
+
+(a) Every generated `package.json` is mis-indented against the workspace's own prettier config.
+`fsTool.writeJSONFile` hardcodes 2-space JSON —
+```ts
+await fs.writeFile(destination, JSON.stringify(content, null, 2));
+```
+(`packages/@repo/lib/src/file-system-module/index.ts:34`) — while the shipped `.prettierrc.cjs`
+mandates `useTabs: true`. Every `package.json` the generator writes therefore disagrees with the
+formatting rule the generated workspace enforces on itself.
+
+(b) Real source drift in template `src/*.ts` files (e.g. missing trailing commas per
+`trailingComma: "all"`) that the master repo's own `format:check` never caught, because it has been
+silently skipping those files — see [B36](#b36)'s `requirePragma` masking. A workspace that
+actually runs prettier for real (no `requirePragma` override, since it's prettier-only) is the first
+place this drift surfaces.
+
+**Fix** — For (a), route `writeJSONFile`'s serialization through the workspace's chosen prettier
+options (or, simpler, run the generated tree through `prettier --write` once at the end of `init`,
+after all files are on disk, so indentation always matches whatever `.prettierrc.cjs` the workspace
+received). For (b), fix [B36](#b36) first so the master repo's `format:check` is a real gate again,
+then run `pnpm exec prettier --write` on the 128 drifted files it will newly report and commit the
+result.
+
+**Verify**
+```bash
+# scaffold cli + web-client with formatter = prettier only, then:
+pnpm install && pnpm format:check   # must exit 0, not fail on 9/10 packages
+```
+
+---
+
+## B42
+
+### B42 · Shared `eslint-config` ignores `**/dist/**` but not `**/bin/**`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `eslint-config`
+- **File:** `configs/eslint-config/src/configs/base.ts:15-28`
+- **Found while fixing:** [B31](ci-bugs.md#b31)
+
+**Symptom** — Any package that bundles its build output into `bin/` needs its own
+`--ignore-pattern` to keep ESLint from linting compiled output, instead of getting it for free from
+the shared config the way `**/dist/**` already is. Live today: `apps/startx-cli/package.json`
+carries a local workaround on both scripts —
+```json
+"lint": "eslint . --ignore-pattern 'bin/**'",
+"lint:fix": "eslint . src/**/*.ts --fix --ignore-pattern 'bin/**'",
+```
+— that should be unnecessary once the shared config ignores `**/bin/**` itself.
+
+**Cause** — `configs/eslint-config/src/configs/base.ts:15-28`'s global `ignores` list covers
+`**/node_modules/**`, `**/dist/**`, `**/build/**`, `**/.next/**`, plus assorted config filenames,
+but has no `**/bin/**` entry, in `base.ts` or in `frontend.ts` (the only other file with an
+`ignores` key). [B31](ci-bugs.md#b31) repointed the CLI's own build output to `apps/startx-cli/bin/`
+(`tsdown.config.ts`'s `outDir: "bin"`), but nothing updated `base.ts`'s ignore list to match, leaving
+the CLI to work around it locally instead of the shared config covering it for everyone.
+
+**Fix** — Add `"**/bin/**"` to the global `ignores` array in `base.ts` (and `frontend.ts` if it
+maintains its own build-output convention), then remove the now-redundant
+`--ignore-pattern 'bin/**'` from `apps/startx-cli/package.json`'s `lint` and `lint:fix` scripts.
+
+**Verify**
+```bash
+pnpm exec turbo lint --continue   # still green with the local --ignore-pattern removed from apps/startx-cli/package.json
 ```

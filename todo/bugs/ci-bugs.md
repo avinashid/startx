@@ -17,6 +17,27 @@ Contents: [B30](#b30) · [B31](#b31)
 - **File:** `.github/workflows/publish.yml`
 - **Fixed in:** `c104915`
 
+> **Resolved, and the shipped pipeline goes well beyond the three-item Fix.** `publish.yml` is now
+> two jobs. `verify` runs `lint`, `build`, `typecheck`, `test` on **every** push to `main` (not just
+> version-bump pushes), then uploads the built `apps/startx-cli/bin/` as an artifact. `publish` needs
+> `verify`, only runs `if: github.ref == 'refs/heads/main'`, and downloads that same artifact rather
+> than rebuilding — what ships is byte-for-byte what `verify` passed.
+>
+> The entry's item 2 proposed either a tag trigger or a simple `npm view <pkg> version` string
+> compare. Neither shipped as written: the trigger is still a push to `main` (plus `workflow_dispatch`
+> added), and the version check instead calls `npm view <pkg> versions --json` (the full published
+> list, not just the latest) and corroborates an `E404` with a separate `npm ping` before treating it
+> as "never published" — a bare compare would treat a registry outage that returns 404 the same as a
+> genuine first release.
+>
+> Two gates exist that the entry never asked for: a "Verify tarball contents" step that packs the
+> real tarball and checks it against `FileCheck` from `apps/startx-cli/src/configs/files.ts` (bin
+> target present, every non-`never`-tagged root file present, every template dir has a
+> `package.json`, a 300-file floor, and a forbidden-pattern denylist for `node_modules`/`.env`/
+> `*.pem`/`dist`/etc.), and a "Smoke test packed CLI" step that installs the real tarball and runs
+> `startx --version` and `startx package list` against it. Item 3 (tag + release) shipped as
+> proposed, plus idempotent re-tagging logic for a run that published but failed before tagging.
+
 **Symptom** — Two failure modes, both live today:
 
 1. **Every push that doesn't bump `version` fails the workflow.** `pnpm publish` rejects a version
@@ -97,6 +118,26 @@ publishing. Push a version bump: it must run the full check suite before publish
 - **Area:** ci / packaging
 - **File:** `.npmignore:30`, `package.json:10`
 - **Fixed in:** `c104915`
+
+> **Resolved as proposed, plus a step the Fix section didn't anticipate.** `.npmignore` is deleted
+> and `package.json:10` now carries a `files` allowlist (`apps/`, `configs/`, `packages/`, plus
+> negations and a short list of root dotfiles). But an allowlist alone would not have fixed this: the
+> CLI build output stayed at `apps/startx-cli/dist/`, which the negation `!**/dist/` now explicitly
+> excludes, so the same accidental force-include this entry warned about would just have recurred
+> under a different mechanism. `apps/startx-cli/tsdown.config.ts` therefore sets `outDir: "bin"`, so
+> the built binary lands at `apps/startx-cli/bin/index.mjs` — matched by the plain `"apps/"` entry
+> like any other source file, with no packer-specific re-include or bin force-include involved.
+> `package.json`'s own `bin` field and root `startx` script were repointed to `bin/index.mjs` to
+> match, and `turbo.json`'s `build.outputs` gained `"bin/**"`.
+>
+> The other thing an allowlist changes silently: `files` is consulted **instead of** `.gitignore`,
+> not in addition to it, so `.env`, `.env.*`, `*.pem`, `.vercel/` and `logs/` needed their own
+> explicit negations in the `files` array — they're in `package.json` now alongside the build-output
+> negations, where previously `.gitignore` covered them for free.
+>
+> Verified by running `npm pack --dry-run` against the current tree: **345 files, 386.9 kB** packed
+> (1.4 MB unpacked), `apps/startx-cli/bin/index.mjs` present at 772.3 kB — versus the 3.4 MB tarball
+> that shipped as `startx@1.1.60` on the registry before this fix.
 
 **Symptom** — None today. Filed because the package works by accident.
 

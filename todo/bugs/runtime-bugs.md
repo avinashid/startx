@@ -4,7 +4,7 @@ Defects that only surface when a generated app is actually running — the code 
 (such as they are) pass, and the wrong thing happens in production.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29)
+Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29) · [B41](#b41)
 
 ---
 
@@ -145,6 +145,20 @@ REDIS_CLUSTER_MODE=false node -e '(async()=>{
 - **File:** `packages/@repo/lib/src/cookie-module/cookie-module.ts:41-49, 78`
 - **Fixed in:** `c104915`
 
+> **Resolved — not the way this entry proposed.** Requiring `COOKIE_DOMAIN` inside `defineEnv`
+> changes only the error *message*, never the *timing*: `defineEnv` itself runs at module scope,
+> so the throw would still fire on import, just with different text. This was checked by applying
+> the proposed fix verbatim — it did not move the crash to boot.
+>
+> What shipped instead: `createRefreshTokenCookie()` is now built behind a lazy getter,
+> `getRefreshTokenCookie()`, which memoises the descriptor on first call rather than at module
+> load. `CookieModule.validateConfig()` is the explicit opt-in entry point — call it during server
+> boot to get the same fail-fast validation on demand, without every importer paying for it.
+>
+> Related, in the same file: a new `COOKIE_CROSS_SITE` env var (default `false`) now decides
+> `sameSite` explicitly instead of the previous hardcoded `"lax"`, and when cross-site is true,
+> `sameSite: "none"` forces `secure: true` — browsers reject `SameSite=None` without `Secure`.
+
 **Symptom** — In staging or production with `COOKIE_DOMAIN` unset, the process dies during module
 evaluation with `COOKIE_DOMAIN must be configured in staging/production environments`. The stack
 points at an `import`, not at startup validation, so it reads like a module resolution failure
@@ -160,20 +174,35 @@ and `resolveCookieDomain` throws inside it. Any module that transitively imports
 `@repo/lib/cookie-module` — including tooling, tests and codegen that never touch cookies — inherits
 the failure.
 
-**Fix** — Either declare the requirement where every other env requirement lives, so it surfaces as
-a normal validation error:
+**Fix** — Declaring the requirement inside `defineEnv` (the first idea that comes to mind) does
+**not** work: `defineEnv` evaluates at module scope too, so the schema throw fires on import same
+as today, just with different wording.
+
+Make the descriptor lazy instead — build it on first use, not at module load:
 
 ```ts
-const credentials = defineEnv({
-  COOKIE_DOMAIN: ENV.NODE_ENV === "development"
-    ? z.string().optional()
-    : z.string().min(1, "COOKIE_DOMAIN is required in staging/production"),
+let refreshTokenCookie: CookieDescriptor | undefined;
+
+function getRefreshTokenCookie(): CookieDescriptor {
+  refreshTokenCookie ??= createRefreshTokenCookie();
+  return refreshTokenCookie;
+}
+```
+
+and give callers an explicit, named place to opt into fail-fast validation at boot:
+
+```ts
+export const CookieModule = Object.freeze({
+  validateConfig(): void {
+    getRefreshTokenCookie();
+  },
+  // ...other methods call getRefreshTokenCookie() instead of the eager constant
 });
 ```
 
-or make the descriptor lazy (build it on first use inside the `CookieModule` methods). The first
-option is better: it fails fast at boot, alongside every other env error, with a message the
-operator can act on.
+This keeps every non-cookie import (tooling, tests, codegen) crash-free, while giving the server
+entrypoint a one-line call — `CookieModule.validateConfig()` — that fails exactly as loudly as the
+original eager throw did, at a time the operator expects a config error.
 
 **Verify**
 ```bash
@@ -192,6 +221,12 @@ NODE_ENV=production node -e 'import("@repo/lib/cookie-module")'
 - **Area:** `core-server`
 - **File:** `apps/core-server/src/middlewares/serve-static.ts`, `apps/core-server/src/routes/server.ts:27`
 - **Fixed in:** `c104915`
+
+> **Resolved by deletion** — the second option below, not the configurable-path option. Both
+> `apps/core-server/src/middlewares/serve-static.ts` and its commented-out call site in
+> `apps/core-server/src/routes/server.ts` (`// app.use(serveStatic());`) are gone outright. The
+> template is API-only again; the "supported single-origin mode" variant stays tracked as
+> [F5](../features/template-features.md#f5) for anyone who wants to build it from scratch.
 
 **Symptom** — The template ships a static-file middleware that is commented out at its only call
 site, and would not work if uncommented.
@@ -223,3 +258,55 @@ Track the "supported mode" variant as a feature rather than leaving dead code in
 [F5](../features/template-features.md#f5).
 
 **Verify** — Either the route serves `index.html` from a configured root, or the file is gone.
+
+---
+
+## B41
+
+### B41 · Two incompatible boolean env dialects: `@repo/redis` vs `@repo/lib`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `@repo/redis`, `@repo/lib`
+- **File:** `packages/@repo/redis/src/lib/redis-client.ts:14-17`, `packages/@repo/lib/src/cookie-module/cookie-module.ts:37-88`
+
+**Symptom** — The same conceptual "boolean env var" is validated with different accepted spellings
+and different error types depending on which package's env var it is. This is a design
+inconsistency, not a live breakage against today's `.env.example` values.
+
+**Cause** — `@repo/redis` validates `REDIS_CLUSTER_MODE` with a strict, case-sensitive zod enum:
+```ts
+REDIS_CLUSTER_MODE: z
+  .enum(["true", "false", "1", "0"])
+  .default("false")
+  .transform(v => v === "true" || v === "1"),
+```
+Anything outside those four exact literals (`"YES"`, `"on"`, `"True"`) fails zod validation and
+throws a `ZodError` at module import.
+
+`@repo/lib`'s cookie module validates `COOKIE_CROSS_SITE` with a hand-rolled, case-insensitive set:
+```ts
+const TRUTHY = new Set(["1", "true", "yes", "on"]);
+const FALSY = new Set(["0", "false", "no", "off"]);
+...
+throw new Error(`COOKIE_CROSS_SITE must be a boolean ("true" or "false"), received "${raw}"`);
+```
+applied to `raw.trim().toLowerCase()` — lenient, accepts `"YES"`, `"On"`, `"  true  "`, and throws a
+plain `Error`, not a `ZodError`, for anything outside both sets.
+
+`todo/bugs/security-bugs.md:266` documents the originally *planned* fix for `COOKIE_CROSS_SITE` as a
+strict `z.enum(["true","false"])` matching the redis style; the code that actually shipped diverged
+from that plan into the more lenient custom parser above. Each was fixed independently (redis via
+B6, the cookie module separately) with no shared boolean-env-parsing helper between them.
+
+**Fix** — Extract a single shared boolean-env helper (e.g. in `@repo/env`) with one accepted
+vocabulary and one error type, and have both `@repo/redis` and `@repo/lib` call it instead of
+maintaining parallel implementations.
+
+**Verify**
+```bash
+# same literal accepted/rejected by both packages' boolean env vars, e.g.:
+REDIS_CLUSTER_MODE=yes pnpm --filter @repo/redis exec node -e "require('./src/lib/redis-client')"
+COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cookie-module/cookie-module')"
+# both should behave the same way (both accept, or both reject) once fixed
+```

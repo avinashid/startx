@@ -4,7 +4,8 @@ Defects in executable logic — a function computes or decides the wrong thing.
 Register: [`bugs.md`](bugs.md). Entry template: [`../README.md`](../README.md#6-how-to-work-this-folder).
 
 Contents: [B2](#b2) · [B3](#b3) · [B15](#b15) · [B16](#b16) · [B17](#b17) · [B18](#b18) ·
-[B19](#b19) · [B20](#b20) · [B21](#b21) · [B27](#b27)
+[B19](#b19) · [B20](#b20) · [B21](#b21) · [B27](#b27) · [B34](#b34) · [B35](#b35) · [B38](#b38) ·
+[B39](#b39) · [B40](#b40)
 
 ---
 
@@ -147,6 +148,16 @@ redis-cli TTL otp:a@b.c    # must be <= 300, not 300000
 - **File:** `apps/startx-cli/src/configs/scripts.ts:190-203`
 - **Fixed in:** `c104915`
 
+> **Resolved.** Reorder only — Fix option 1. The `["react-router","frontend"]` entry now sits
+> above `["node"]` in the `typecheck` array (`configs/scripts.ts:198-203`).
+>
+> Option 2 (most-specific-wins selection) was **not** adopted. The root package's own tag set is
+> a superset of every selected app's broadcast tags, so "longest satisfied tag array wins" would
+> also win there: for `build` it would hand the root `tsdown --config-loader unrun` instead of
+> `turbo run build`, and for `format`/`format:check` it would hand the root `biome format --write .`
+> instead of `turbo run format`. Rejected as a regression to those three generated root scripts,
+> not pursued.
+
 **Symptom** — Scaffold a workspace with both `web-client` and `core-server`. `web-client`'s
 generated `package.json` gets `"typecheck": "tsc --noEmit"`, and running it fails: React Router's
 generated route types (`.react-router/types/**`) were never produced.
@@ -197,6 +208,24 @@ node -p "require('./<proj>/apps/web-client/package.json').scripts.typecheck"
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/utils/file-handler.ts:110-118`
 - **Fixed in:** `c104915`
+
+> **Resolved.** Rebuilt from a source spread instead of a fixed whitelist: `packageJson` now starts
+> as `...structuredClone(props.app)` (`file-handler.ts:111-118`) — `structuredClone` so a later
+> mutation of the emitted object can't alias back into the in-memory template and poison every
+> other package emitted in the same run.
+>
+> The shipped fix is **asymmetric by design**. Non-root packages: spread, then delete a denylist of
+> generator-only fields — `startx`, `author`, `license`, `keywords`, `repository`, `homepage`,
+> `bugs`, `publishConfig` (`file-handler.ts:127-141`). The root package: an explicit **allowlist**
+> instead (`rootFields`, `file-handler.ts:144-159`) — anything not named is deleted. A denylist for
+> root was tried first and rejected: it's a snapshot that silently passes through any field added to
+> the template root later. A synthetic test that added `workspaces`, `pnpm`, `resolutions` and
+> `overrides` to the template root's `package.json` leaked all four straight into the generated
+> workspace root under the denylist version.
+>
+> Also fixed in the same pass: the bogus `"main": "index.js"` — pointing at a file that does not
+> exist in generated output — was deleted from `apps/cli/package.json` and
+> `apps/startx-cli/package.json`.
 
 **Symptom** — Generated packages lose fields the template declared:
 - `ui` loses `peerDependencies: { react: "^19.0.0" }`, so nothing pins the React version.
@@ -253,6 +282,13 @@ node -p "require('./<proj>/packages/ui/package.json').private"            # true
 - **File:** `apps/startx-cli/src/commands/init.ts:369-383`
 - **Fixed in:** `c104915`
 
+> **Resolved.** `getPackageDeps` (`commands/init.ts:456-462`) now delegates to a shared
+> `resolvePackageClosure` BFS in the new `utils/closure.ts`, seeded with the caller's packages and
+> filtered to drop the seeds themselves afterward. `startx package add`'s own closure resolver was
+> deleted from `package.ts` and replaced with a call to the same shared function
+> (`commands/package.ts:59-65`), so `init` and `package add` now agree on what "required" means for
+> a multi-level chain.
+
 **Symptom** — A generated workspace can be missing a transitive workspace package, so
 `pnpm install` fails on an unresolvable `workspace:^` dependency.
 
@@ -287,6 +323,20 @@ the leaf package exists in the output tree. Best covered by [E1](../enhancements
 - **File:** `apps/startx-cli/src/commands/init.ts:341-357`
 - **Fixed in:** `c104915`
 
+> **Resolved.** Kept merge as the default and matched the wording to it, then added the destructive
+> variant behind an explicit `-f, --force` flag, per the Fix section's preferred option. Without
+> `--force`, the prompt now reads "...already exists and is not empty (N entries). Merge the new
+> workspace into it? ... (re-run with --force to clear the directory first)" (`init.ts:357-368`) —
+> nothing is removed. With `--force`, a second, explicitly-worded confirmation ("PERMANENTLY DELETE
+> all N entries... This cannot be undone.") gates an actual clear.
+>
+> The clear path shipped far stronger than a lexical path check, because a lexical check is not
+> safe: `path.resolve` does not dereference symlinks, but `fs.readdir`/`fs.rm` do —
+> `ln -s ~ ./h && startx init x -d h --force` would have emptied `$HOME`. `assertSafeToClear`
+> (`init.ts:408-449`) is async, resolves the real path via `fs.realpath`, refuses when the target is
+> an ancestor of `cwd`, and refuses an exact-match denylist of filesystem roots, `$HOME`, `$TMPDIR`
+> and well-known subdirectories (`Documents`, `Desktop`, …) before any `fs.rm` runs.
+
 **Symptom** — Re-running `init` into an existing directory and answering **yes** to
 `Directory "<x>" already exists and is not empty. Overwrite?` leaves stale files behind. Files that
 the previous run produced but the new selection does not include survive, so the result is a
@@ -316,6 +366,21 @@ observed behaviour matches the prompt's wording.
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:558-562`
 - **Fixed in:** `c104915`
+
+> **Resolved**, together with a related `--name`/`--dir` containment gap found in the same area.
+> `getDestinationPath` (`package.ts:548-563`) now derives the scope directory from the **new** name,
+> not the template's, while keeping the template's top-level bucket (`apps`/`packages`/`configs`).
+> This is gated by `bucketAllowsScopeDir` (`package.ts:565-577`), which reads the user's real
+> `pnpm-workspace.yaml` globs — fetched via `CliUtils.parsePnpmWorkspace` (`package.ts:120-122`) —
+> and only creates a scope directory when a glob actually reaches `<bucket>/<scope>/<leaf>`;
+> otherwise the package would land outside every workspace glob and pnpm would never link it.
+>
+> Separately: `--name` previously bypassed `packageNameSchema` entirely (only the interactive prompt
+> validated it), so `package add drizzle -n ../../.ssh/authorized_keys` wrote outside the workspace.
+> Shipped: `validatePackageName` (`package.ts:580-587`) runs the schema against `--name` too, and
+> every filesystem destination derived from user input (`--name`, `--dir`) is passed through the new
+> `assertInsideWorkspace` (`package.ts:171, 335, 589-598`), which refuses to write outside the
+> resolved workspace root.
 
 **Symptom**
 ```bash
@@ -364,6 +429,28 @@ test -f packages/@repo/analytics/package.json
 - **File:** `apps/startx-cli/src/commands/package.ts:658-662`
 - **Fixed in:** `c104915`
 
+> **Resolved — the Fix section above was wrong and is superseded by this note; neither of its two
+> steps shipped.**
+>
+> Step 1 ("falling back to the version literal from the template `package.json`") is unreachable
+> dead code: every `DepCheck` entry's `version` is either `"catalog:"` or `"workspace:^"`
+> (`configs/deps.ts`), so there is never a version literal to fall back to once a template has
+> pinned `catalog:`.
+>
+> Step 2 ("merge named `catalogs` into the lookup, preferring the default `catalog` on conflict")
+> is itself a bug, not a fix: pnpm resolves a bare `catalog:` specifier against the **default**
+> catalog only, never against a named one. Merging named catalogs into the same lookup would
+> silently resolve dependencies to versions pnpm itself would never choose, and it would suppress
+> the exact warning this entry exists to add.
+>
+> What shipped instead (`package.ts:690-736`): a bare `catalog:` is resolved against the default
+> catalog only and, if unresolvable, logs `No catalog version found for <name>; it stays as
+> "catalog:" and pnpm install will fail...` rather than writing a dangling entry silently. A
+> separate, symmetric branch handles `catalog:<name>`, resolving against `catalogs.<name>` and
+> warning the same way when that named catalog has no matching entry. `loadTemplateCatalogs`
+> (`package.ts:760-786`, renamed from `loadTemplateCatalog`) returns `catalog` and `catalogs` as two
+> distinct namespaces instead of merging them.
+
 **Symptom** — After `startx package add`, `pnpm install` fails with an unresolved catalog entry, and
 nothing in the CLI output hinted at it.
 
@@ -408,6 +495,15 @@ version.
 - **File:** `apps/startx-cli/src/commands/package.ts:596-602`
 - **Fixed in:** `c104915`
 
+> **Resolved** as prescribed. `installRootDependencies` (`package.ts:633-651`) now takes a
+> `reason: string` parameter and logs `Running ${command} install (${reason})...`; both no-op
+> ternaries are gone. Both call sites were updated: `resolveEslintPreference` passes
+> `"eslint was added to the root package.json"` (`package.ts:281`), and
+> `checkAndInstallMissingDeps` builds a `changes[]` array describing what actually changed —
+> a packageManager bump and/or added dependencies — and passes `changes.join(" and ")`
+> (`package.ts:519`). The "while here" suggestion to test or narrow npm/yarn/bun support was not
+> acted on; only pnpm remains exercised.
+
 **Symptom** — The CLI reports `Running pnpm install to install ESLint...` when it is installing
 something else entirely.
 
@@ -443,6 +539,17 @@ exercised. Either test the others or narrow the detection to pnpm and say so.
 - **File:** `packages/@repo/lib/src/extra/pagination-module.ts:4-10`
 - **Fixed in:** `c104915`
 - **Security impact:** yes — unbounded `LIMIT` is a cheap DoS vector.
+
+> **Resolved**, more thoroughly than the Fix section sketched. `Paginator.getPage`
+> (`pagination-module.ts`) gained a `toPositiveInt` parser that rejects non-decimal notation
+> (`0x10`, `0b111`) via an explicit `NUMERIC` regex, trims and rejects blank strings before
+> coercion, and floors the result through `clampPositive` into `[1, Number.MAX_SAFE_INTEGER]`.
+> `limit` is capped by a configurable `maxLimit` (default `MAX_PAGE_LIMIT = 100`, as the Fix
+> proposed) via a new `PageOptions` argument on both `getPage` and `paginate`, with a
+> `toOptionInt` guard so a caller passing `NaN`/non-finite options can't collapse the clamp. `page`
+> is additionally capped so `(page - 1) * limit` can never overflow past `Number.MAX_SAFE_INTEGER`,
+> and `paginate`'s `total` is sanitized the same way before computing `totalPages`, closing the
+> `?limit=0` → `Infinity` case named in the Cause section.
 
 **Symptom** — `page` and `limit` arrive straight from the query string and go into SQL
 `LIMIT`/`OFFSET` unchecked:
@@ -484,4 +591,239 @@ dependency-free logic and is the easiest thing in the repo to cover.
 expect(Paginator.getPage({ page: "abc" })).toEqual({ page: 1, limit: 10, offset: 0 });
 expect(Paginator.getPage({ page: "0" }).offset).toBe(0);
 expect(Paginator.getPage({ limit: "999999" }).limit).toBe(100);
+```
+
+---
+
+## B34
+
+### B34 · Frontend-only selection never broadcasts the `"node"` gTag — every non-root package loses lint/format/format:check/test, and the formatter/config prompts are skipped
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** `startx-cli`
+- **File:** `apps/startx-cli/src/configs/scripts.ts:83-247`
+
+**Symptom** — Scaffold a workspace selecting only a frontend app (e.g. `web-client` alone, no
+backend/CLI app). The generated root `package.json` ends up with only `dev`/`build`/`start`/
+`clean`/`deep:clean` — no `typecheck`, `lint`, `format`, `format:check`, or `test`. Every non-root
+package in the same workspace is similarly degraded: `packages/ui`'s generated scripts are `clean`
+alone, and even a backend-flavored library pulled in as a hard dependency (`packages/common`, a
+`requiredDeps` of `web-client`) ends up with the same missing set. `web-client` itself is a partial
+exception, not a total one: it keeps `typecheck` (`react-router typegen && tsc`, matched via the
+`["react-router","frontend"]` script entry, which carries no `"node"` requirement) but still loses
+`lint`, `lint:fix`, `format`, `format:check`, `test`, and `deep:clean`. On top of this, the
+"Select formatter" prompt and the "Select configs to install" (eslint-config/vitest-config) prompt
+are both silently skipped — there is no way to opt into either in a frontend-only run.
+
+**Cause** — `"node"` is a **gTag**, contributed only by an app's own `startx.gTags` (backend/CLI
+apps such as `core-server`, `cli`, `queue-worker`) or downstream by the formatter prompt adding
+`"prettier"`/`"biome"`. In `InitCommand.getConfigPrefs`
+(`apps/startx-cli/src/commands/init.ts:160`, `if (gTags.has("node"))`), the formatter prompt is
+itself gated on `"node"` already being present — so a purely frontend selection can never reach it,
+which means `"prettier"`/`"biome"` never enter `gTags` either. `availableConfigs`
+(eslint-config/vitest-config, gated on `iTags: ["node"]`) is empty for the same reason, so that
+prompt is skipped too. Downstream, almost every quality-script entry in `scripts.ts:83-247`
+(`lint`, `lint:fix`, `format`, `format:check`, `test`, and the generic `tsc --noEmit` `typecheck`
+fallback) requires `"node"` in the package's own tag set (broadcast gTags plus the package's own
+`startx.tags`) — which, in a frontend-only run, never happens for any package, root included. The
+one entry that escapes this is `typecheck`'s `["react-router","frontend"]` case, which is why
+`web-client` keeps a typecheck script while everything else loses it.
+
+**Fix** — Three options, weighed:
+1. *Ungate the quality scripts from `"node"`.* Add frontend-appropriate fallback entries for
+   `lint`/`format`/`format:check`/`test` the way `typecheck` already has one for
+   `["react-router","frontend"]`. Most surgical, but means auditing and duplicating four script
+   families instead of one, and risks a B15-style ordering hazard in each.
+2. *Broadcast `"node"` whenever any package is selected* — treat it as a baseline rather than an
+   opt-in contributed only by backend apps. Collapses the backend-vs-frontend axis and the
+   node-tooling-vs-not axis into one; the cost is losing the ability to express "this workspace has
+   zero Node-based tooling" — but every template package already assumes Node tooling (ESLint,
+   TypeScript, a package manager) regardless of what runs in the browser, so that distinction isn't
+   real today.
+3. *Give frontend packages their own script entries* for `lint`/`format`/`format:check`/`test`
+   gated on `["frontend"]`, mirroring the existing `typecheck` entry.
+
+**Recommended: option 2.** It is a one-line change (add `"node"` to the base tag set in
+`getConfigPrefs`, or drop the `"node"` requirement from the formatter/config prompts specifically)
+and it fixes every script and every package from one place, instead of patching each script family
+separately as in option 1 or 3. It is also the only option that restores the two skipped prompts
+(formatter, eslint/vitest configs) as a side effect, rather than leaving that half of the bug
+untouched.
+
+**Verify**
+```bash
+# scaffold selecting only web-client, then:
+node -p "require('./<proj>/package.json').scripts"                     # expect lint/format/format:check/test
+node -p "require('./<proj>/apps/web-client/package.json').scripts"     # expect lint/format/format:check/test
+node -p "require('./<proj>/packages/ui/package.json').scripts"         # expect more than just 'clean'
+```
+
+---
+
+## B35
+
+### B35 · `.vscode/settings.json` defaults to Prettier even when no formatter was ever chosen
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** `startx-cli`
+- **File:** `apps/startx-cli/src/commands/init.ts:315-343`
+- **Found while fixing:** [B34](#b34)
+
+**Symptom** — In the same frontend-only scaffold as B34 (formatter prompt skipped, so neither
+`"prettier"` nor `"biome"` ever enters `gTags`), the generated `.vscode/settings.json` still sets
+`"editor.defaultFormatter": "esbenp.prettier-vscode"`, and `.vscode/extensions.json` still
+recommends `esbenp.prettier-vscode` — in a workspace with no `.prettierrc.*` file and no `prettier`
+dependency anywhere. VS Code is told to format-on-save with a formatter that was never installed.
+
+**Cause** — `writeVscodeSettings` (`apps/startx-cli/src/commands/init.ts:315-343`) only ever
+distinguishes two cases:
+```ts
+const usesBiome = props.tags.includes("biome");
+...
+"editor.defaultFormatter": usesBiome ? "biomejs.biome" : "esbenp.prettier-vscode",
+```
+There is no branch for "neither formatter was installed." Since `usesBiome` is the only condition
+tested, "not biome" is silently treated as "must be prettier," which is false whenever the
+formatter prompt itself was skipped (see B34).
+
+**Fix** — Add a genuine "no formatter at all" branch — not a different default. Check for
+`"prettier"` explicitly as well as `"biome"`, and when neither tag is present: omit
+`"editor.defaultFormatter"` entirely, drop the biome/prettier entries from `codeActionsOnSave`, and
+omit the formatter extension from `extensions.recommendations`, leaving only the ESLint-related
+entries. There is no correct fallback formatter to pick here; the fix is to stop asserting one.
+
+**Verify**
+```bash
+# scaffold a frontend-only workspace (formatter prompt skipped), then:
+node -p "require('./<proj>/.vscode/settings.json')['editor.defaultFormatter']"  # must be undefined
+node -p "require('./<proj>/.vscode/extensions.json').recommendations"          # must not list a formatter extension
+```
+
+---
+
+## B38
+
+### B38 · `startx package new` emits no `format`/`format:check` script
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** `startx-cli`
+- **File:** `apps/startx-cli/src/commands/package.ts:398-436`
+
+**Symptom** — Run `startx package new` in a workspace that uses Prettier or Biome everywhere else.
+The generated package's `package.json` gets `typecheck` and `clean`, plus `lint`/`lint:fix` and
+`test` when those are enabled — but never a `format` or `format:check` script, regardless of the
+workspace's formatter. `turbo run format`/`format:check` at the root silently skips the new
+package, and there is no per-package way to format-check it either.
+
+**Cause** — `PackageCommand.createPackageJson` (`apps/startx-cli/src/commands/package.ts:398-436`)
+builds `scripts` from a fixed `typecheck`/`clean` pair plus conditional `lint`/`lint:fix` (if
+`eslintEnabled`) and `test` (if `vitestEnabled`) — there is no equivalent conditional for a
+formatter. Contrast with `getInstallTags`
+(`apps/startx-cli/src/commands/package.ts:287-302`), used by the same command's `package add` path,
+which inspects the root `package.json` for `@biomejs/biome`/`prettier` via `hasDependency`.
+`createPackageJson` never performs that check, so `format`/`format:check` keys are never added.
+
+**Fix** — Have `createPackageJson` (or its caller) read the root package.json's formatter
+dependency the same way `getInstallTags` already does, and conditionally add:
+```ts
+if (hasBiome) {
+  scripts.format = "biome format --write .";
+  scripts["format:check"] = "biome ci .";
+} else if (hasPrettier) {
+  scripts.format = "prettier --write src --no-error-on-unmatched-pattern";
+  scripts["format:check"] = "prettier --check src --no-error-on-unmatched-pattern";
+}
+```
+mirroring the tag-gated `format`/`format:check` entries already in `configs/scripts.ts`.
+
+**Verify**
+```bash
+# in a workspace with prettier or biome installed at the root:
+startx package new my-pkg
+node -p "require('./packages/my-pkg/package.json').scripts['format:check']"  # must be defined
+```
+
+---
+
+## B39
+
+### B39 · `startx package new` leaks generator-only `startx` metadata into user packages
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `startx-cli`
+- **File:** `apps/startx-cli/src/commands/package.ts:212-215`
+
+**Symptom** — A package created via `startx package new` carries a `startx` block (e.g.
+`{ iTags: ["node"], requiredDevDeps: [...] }`) in its committed `package.json`. The exact same kind
+of package installed via `startx init` or `startx package add` does not — those paths strip it.
+
+**Cause** — `PackageCommand.create` writes the new package's `package.json` via
+`this.createPackageJson(...)` directly (`apps/startx-cli/src/commands/package.ts:212-215`:
+`this.writeJson(path.join(packageDir, "package.json"), this.createPackageJson({...}))`), bypassing
+`FileHandler.handlePackageJson` entirely. `createPackageJson` (`package.ts:398-436`) explicitly
+returns a `startx: {...}` block as part of its result. Every other install path (`init`,
+`package add`) routes through `FileHandler.handlePackageJson`, whose `generatorFields` allowlist
+(`apps/startx-cli/src/utils/file-handler.ts:127-140` — "Metadata describing the generator rather
+than the workspace being generated... must not be inherited") deletes the `startx` field before
+writing. `PackageCommand.create` never passes through that strip step.
+
+**Fix** — Route `PackageCommand.create`'s package.json through the same `generatorFields`
+deletion `FileHandler.handlePackageJson` already applies — either by calling `handlePackageJson`
+itself, or by extracting the delete step into a small shared helper both call — rather than writing
+`createPackageJson`'s return value verbatim via `writeJson`.
+
+**Verify**
+```bash
+startx package new my-pkg
+node -p "require('./packages/my-pkg/package.json').startx"   # must be undefined
+```
+
+---
+
+## B40
+
+### B40 · `peerDependencies` bypasses `filterDeps` and `syncDepsWithCatalog`
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** `startx-cli`
+- **File:** `apps/startx-cli/src/utils/file-handler.ts:55-61`
+- **Found while fixing:** [B16](#b16)
+
+**Symptom** — A `peerDependencies` entry in a template package ships into generated output
+completely unfiltered: it is never tag-checked (so it always ships regardless of whether the
+consuming package's tags actually warrant it) and never catalog-synced (so a `catalog:`/
+`workspace:` specifier in a peer dependency would ship unresolved and break `pnpm install`). This
+is currently latent — the only template `peerDependencies` block, `packages/ui/package.json`'s
+`{ "react": "^19.0.0" }`, is a plain semver literal — but the gap is real and will surface the
+moment a future peer dependency uses `catalog:` syntax.
+
+**Cause** — `FileHandler.handlePackageJson`'s `filterDeps`
+(`apps/startx-cli/src/utils/file-handler.ts:55-61`) is applied only to `props.app.dependencies` and
+`props.app.devDependencies`; `peerDependencies` passes through raw via `structuredClone(props.app)`
+(line 115) with no tag-based filtering at all. `PackageCommand.syncDepsWithCatalog`
+(`apps/startx-cli/src/commands/package.ts:683-736`) has the same gap: `processMap` is called only
+on `deps`/`devDeps` (lines 735-736); `peerDependencies` is never passed in. Both functions were
+written to only ever look at `dependencies`/`devDependencies`; `peerDependencies` was reintroduced
+into the emitted output by [B16](#b16)'s fix (which changed `handlePackageJson` to spread
+`props.app` instead of rebuilding from a fixed whitelist) without extending either `filterDeps` or
+`syncDepsWithCatalog` to cover the newly-restored field.
+
+**Fix** — Extend both functions to treat `peerDependencies` like the other two dependency maps: run
+it through `filterDeps` in `handlePackageJson`, and pass it to `processMap` in
+`syncDepsWithCatalog` — while reviewing whether the tag-filter and catalog-sync behavior need
+peer-specific semantics (peer deps are conventionally left broad/unpinned) rather than being copied
+verbatim from the `dependencies` handling.
+
+**Verify**
+```bash
+# add a template peerDependencies entry using catalog:, e.g. packages/ui/package.json:
+#   "peerDependencies": { "react": "catalog:" }
+startx init   # or: startx package add
+node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
+# must resolve to a real version/catalog entry, not the literal string "catalog:"
 ```

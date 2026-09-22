@@ -43,12 +43,21 @@ snapshot-testable shape of program there is.
    | `add @db/x -n @repo/y` lands in `packages/@repo/y` | B19 |
    | Every emitted `workspace:^` dep resolves to a directory that exists | B17, B20 |
    | `pnpm install --frozen-lockfile=false` succeeds in the output | B20 |
+   | Selecting `web-client` alone still emits `typecheck`/`lint`/`format`/`test` at the root | B34 |
+   | A stock prettier-only scaffold passes its own `format:check` | B37 |
+
+   **Pin the ordering invariant explicitly.** Selection is *first-match-wins* —
+   `value.find(e => e.tags.every(...))` in `file-handler.ts` — so the order of the arrays in
+   `scripts.ts`, `files.ts` and `deps.ts` is semantic, not cosmetic. B15 was caused by a wrong order
+   and fixed by a reorder, and nothing today would catch a future reorder undoing it. Asserting the
+   *selected entry* for a handful of representative tag sets costs almost nothing and pins the one
+   property most likely to be broken by an innocent-looking edit.
 
 4. **One end-to-end test** that runs the real `init` into a temp dir and then runs `pnpm install`
    and `pnpm typecheck` in the result. Slow — mark it and run it in CI only.
 
 **Done when** — `pnpm --filter startx-cli test` runs a meaningful suite, and the fixture snapshot
-fails if any of B13–B19 is reintroduced.
+fails if any of B13–B19 or B34–B40 is reintroduced.
 
 ---
 
@@ -191,3 +200,35 @@ same treatment — and the same stack trace — as a genuine internal error.
    `UnhandledPromiseRejection`.
 
 **Done when** — Aborting at a prompt exits `3` with one line and no stack trace.
+
+---
+
+## E11
+
+### E11 · Publish with npm provenance
+
+- **Status:** open · **Value:** med · **Effort:** S
+- **Area:** `.github/workflows/publish.yml`
+
+**Today** — The workflow publishes with `pnpm publish --no-git-checks` and no `--provenance`
+(`grep -n "provenance" .github/workflows/publish.yml` matches nothing). Released `startx` tarballs
+therefore carry no attestation linking them to the commit and workflow run that built them, and the
+npm page shows no provenance badge. For a scaffolding tool — one whose whole output is code that
+lands in other people's repos — that link is worth more than it is for an average package.
+
+**What to build**
+
+1. Add `--provenance` to the publish step.
+2. Restore `permissions: id-token: write` **on the publish job only**. It was deliberately dropped
+   in `c104915` when the workflow was split into `verify` and `publish`, because nothing needed it
+   at the time; provenance is the thing that needs it. Keep `verify` on `contents: read`.
+3. Requires the package to be published from a public repo with a `repository` field in
+   `package.json` — see [C5](../chores/chores.md#c5), which is still outstanding, so it is a
+   prerequisite rather than an afterthought.
+
+**Not to be confused with** [F-series "Provenance"](../features/cli-features.md) for the generator,
+which is about recording a template version and content hash per emitted file. Different mechanism,
+different goal; this one is npm supply-chain attestation.
+
+**Done when** — A published version shows the provenance badge on npmjs.com and
+`npm audit signatures` verifies it.

@@ -88,7 +88,15 @@ While here, two related items in the same package:
   deployment that forgets to set them gets a silently wrong CORS allowlist rather than an error.
   Consider requiring them when `NODE_ENV !== "development"`.
 
-**Done when** — No `z.coerce.boolean()` remains, and `REDIS_CLUSTER_MODE=false` means false.
+There is now a second, concrete reason to build this: [B41](../bugs/runtime-bugs.md#b41). Fixing B6
+and hardening the cookie module were done independently, and the two landed on incompatible boolean
+dialects — `@repo/redis` accepts a strict, case-sensitive `z.enum(["true","false","1","0"])`, while
+`@repo/lib` accepts a lenient, case-insensitive set that also takes `yes`/`no`/`on`/`off`, and the
+two throw different error types. That divergence is the predictable result of having no shared
+helper, and this enhancement is the fix for it.
+
+**Done when** — No `z.coerce.boolean()` remains, `REDIS_CLUSTER_MODE=false` means false, and every
+boolean env var in the template accepts the same spellings and fails the same way (closing B41).
 
 ---
 
