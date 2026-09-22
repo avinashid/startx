@@ -1,0 +1,159 @@
+# CI and packaging bugs
+
+Defects in the release pipeline and in what actually ends up in the published tarball.
+Register: [`bugs.md`](bugs.md).
+
+Contents: [B30](#b30) · [B31](#b31)
+
+---
+
+## B30
+
+### B30 · CI publishes to npm on every push to `main` with no gate
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** ci
+- **File:** `.github/workflows/publish.yml`
+- **Fixed in:** —
+
+**Symptom** — Two failure modes, both live today:
+
+1. **Every push that doesn't bump `version` fails the workflow.** `pnpm publish` rejects a version
+   that already exists on the registry, so routine commits produce a red pipeline that everyone
+   learns to ignore.
+2. **Every push that does bump `version` ships immediately, unverified.** Nothing runs the tests,
+   the linter or the typechecker first — and given that 9 of 41 typecheck tasks currently fail, a
+   broken `startx` could be published right now.
+
+There is also no git tag and no GitHub release, so there is no way to map a published version back
+to a commit.
+
+**Cause** — The workflow is a straight line with no conditions:
+
+```yaml
+on:
+  push:
+    branches: [main]
+jobs:
+  publish:
+    steps:
+      - checkout / setup-node 22 / corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter startx-cli build        # the only check of any kind
+      - run: node -e "...delete pkg.dependencies; delete pkg.devDependencies..."
+      - run: pnpm publish --no-git-checks
+```
+
+The `build` step does exercise `lint` transitively for `startx-cli` only, via
+`turbo.json`'s `build.dependsOn: ["lint"]`. Nothing else is checked, and `--no-git-checks` disables
+pnpm's own safety rails.
+
+Note the package.json rewrite step is **correct and deliberate**, not a bug: the CLI bundle is
+self-contained, and `startx.json` preserves the real dependency lists that the generator copies into
+scaffolded workspaces. Keep it, but comment it — it looks alarming without that context.
+
+**Fix** — Three changes, in order of value:
+
+1. **Gate on a green build.** Add `pnpm typecheck`, `pnpm lint` and `pnpm test` as steps before
+   publish. This is blocked until the P1 toolchain bugs ([B8–B12](bugs.md)) are fixed — until then
+   the pipeline would never go green. Do those first.
+
+2. **Only publish when the version actually changed.** Either trigger on tags instead of pushes:
+   ```yaml
+   on:
+     push:
+       tags: ["v*"]
+   ```
+   or keep the push trigger and guard the publish step:
+   ```yaml
+   - id: check
+     run: |
+       LOCAL=$(node -p "require('./package.json').version")
+       REMOTE=$(npm view startx version 2>/dev/null || echo "none")
+       echo "changed=$([ "$LOCAL" != "$REMOTE" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+   - if: steps.check.outputs.changed == 'true'
+     run: pnpm publish --no-git-checks
+   ```
+   The tag trigger is preferable — it makes releasing an explicit act.
+
+3. **Tag and release.** On a successful publish, push `v<version>` and create a GitHub release. Pair
+   this with the CHANGELOG in [C2](../chores/chores.md#c2).
+
+Consider also adding a separate `ci.yml` that runs lint/typecheck/test on pull requests, so the
+signal exists independently of releasing.
+
+**Verify** — Push a commit to `main` with no version change: the workflow must succeed and skip
+publishing. Push a version bump: it must run the full check suite before publishing.
+
+---
+
+## B31
+
+### B31 · `.npmignore` excludes the `bin` target; publishing works only by npm's force-include
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** ci / packaging
+- **File:** `.npmignore:30`, `package.json:10`
+- **Fixed in:** —
+
+**Symptom** — None today. Filed because the package works by accident.
+
+**Cause** — `package.json` points the binary at a path that `.npmignore` excludes:
+
+```json
+"bin": { "startx": "./apps/startx-cli/dist/index.mjs" }
+```
+```
+# .npmignore
+apps/*/dist
+```
+
+npm force-includes the `bin` target regardless of ignore rules, which is why this has never broken.
+Confirmed by unpacking the published artefact:
+
+```
+$ npm pack startx@latest && tar -tzf startx-1.1.60.tgz | grep dist
+package/apps/startx-cli/dist/index.mjs      ← present
+```
+
+343 files in the tarball, and the binary is one of them. So it ships correctly — but the packaging
+intent and the packaging rules contradict each other, and the behaviour that reconciles them is
+npm-specific. Any other packer, or a future npm change, breaks the published CLI with a
+`command not found` that would be very hard to trace.
+
+**Fix** — Replace the exclude-list with an explicit allowlist in `package.json`, which is both
+unambiguous and smaller:
+
+```json
+"files": [
+  "apps/",
+  "packages/",
+  "configs/",
+  "assets/",
+  "startx.json",
+  "pnpm-workspace.yaml",
+  "turbo.json",
+  "biome.json",
+  ".prettierrc.cjs",
+  ".prettierignore",
+  ".editorconfig",
+  ".env.example",
+  "_gitignore",
+  ".vscode/"
+]
+```
+
+`files` takes precedence over `.npmignore`, so delete `.npmignore` once the allowlist is in place.
+Take care here: the published tarball **is** the template the CLI copies from, so anything omitted
+silently disappears from every scaffolded project. Diff the tarball before and after.
+
+**Verify**
+```bash
+npm pack --dry-run 2>&1 | wc -l         # compare against the current 343 entries
+npm pack --dry-run 2>&1 | grep 'startx-cli/dist/index.mjs'
+```
+
+Better: add a CI step that packs the tarball, installs it into a temp dir, and runs
+`startx --version`. That turns this from a reasoning exercise into a test.

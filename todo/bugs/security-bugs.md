@@ -1,0 +1,269 @@
+# Security bugs
+
+Defects with a security impact in the **generated** backend. These are template defaults, so every
+scaffolded project inherits them.
+Register: [`bugs.md`](bugs.md).
+
+Contents: [B22](#b22) · [B23](#b23) · [B24](#b24) · [B25](#b25) · [B28](#b28)
+
+**Cross-references** — filed elsewhere, but security-relevant:
+- [B3](function-bugs.md#b3) — OTP valid for 3.5 days over a 9 000-code space with no attempt limit. **The most serious item in this folder.**
+- [B1](runtime-bugs.md#b1) — stack traces leak to clients because the error handler never runs.
+- [B27](function-bugs.md#b27) — unvalidated `limit` allows an unbounded query.
+- [B2](function-bugs.md#b2) — `NODE_ENV` is deleted, so libraries take their development path in production.
+
+---
+
+## B22
+
+### B22 · `/files` serves the whole `storage/` directory with no authentication
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `core-server`
+- **File:** `apps/core-server/src/routes/files/router.ts:6`
+- **Fixed in:** —
+
+**Symptom** — Every file written to `storage/` is readable by anyone who knows or guesses its URL.
+There is no auth check, no ownership check, and no signed-URL mechanism.
+
+**Cause**
+```ts
+export function createFilesRouter(): Router {
+  const router = Router();
+  router.get("/*splat", expressStatic("storage"));
+  return router;
+}
+```
+
+mounted at `app.use("/files", createFilesRouter())` (`routes/server.ts:20`) — before any auth
+middleware, and `AuthMiddlewares.validateActiveSession` is not applied to it.
+
+Two aggravating details:
+- `expressStatic("storage")` is a **relative** path, resolved against `process.cwd()`. Where files
+  land therefore depends on where the process was started, which differs between `pnpm dev` (package
+  dir) and a Docker container (`/app`).
+- The `@repo/lib` storage module writes user uploads here, so this is the upload sink, not a
+  public-assets directory.
+
+**Fix** — Decide the model explicitly and implement it:
+- *Private by default* (recommended for an upload sink): put `AuthMiddlewares.validateActiveSession`
+  in front of the router and add an ownership check before streaming.
+- *Public assets*: keep it open, but move it to a clearly named `public/` directory that is separate
+  from the upload sink, and document that anything written there is world-readable.
+
+Either way, resolve the root from config rather than `cwd`:
+```ts
+expressStatic(path.resolve(ENV.FILE_STORAGE_PATH))
+```
+`FILE_STORAGE_PATH` already exists in `packages/@repo/env/src/default-env.ts:11` and is unused here.
+
+Also set `dotfiles: "deny"` and `index: false` on the static handler.
+
+**Verify**
+```bash
+curl -i http://localhost:3000/files/<known-upload>    # must be 401 without a session
+```
+
+---
+
+## B23
+
+### B23 · `fileUpload()` has no size limits — unbounded in-memory uploads on every route
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `core-server`
+- **File:** `apps/core-server/src/routes/server.ts:17`
+- **Fixed in:** —
+
+**Symptom** — A single unauthenticated `POST` with a large body buffers the whole thing into the
+Node process's memory. A handful of concurrent requests exhausts the heap and takes the server down.
+
+**Cause**
+```ts
+app.use(fileUpload());
+```
+
+Defaults with no options: no `limits`, no `abortOnLimit`, no `useTempFiles`. `express-fileupload`
+buffers to memory unless told otherwise. It is also applied **globally**, so every route pays the
+multipart-parsing cost, not just the ones that accept uploads.
+
+The adjacent body parsers have the same gap: `json()` and `urlencoded()` are called with no `limit`,
+so they use the 100 kb default — fine — but that default does not extend to the file upload path.
+
+**Fix**
+```ts
+app.use(fileUpload({
+  limits: { fileSize: 10 * 1024 * 1024 },   // pick a real number, make it configurable
+  abortOnLimit: true,
+  useTempFiles: true,
+  tempFileDir: path.resolve(ENV.FILE_STORAGE_PATH, ".tmp"),
+  safeFileNames: true,
+  preserveExtension: true,
+}));
+```
+
+Then scope it to the routes that need it — `app.use("/upload", fileUpload({...}), uploadRouter)` —
+rather than globally. Expose the size cap as an env var so deployments can tune it.
+
+**Verify**
+```bash
+head -c 200M /dev/zero > /tmp/big.bin
+curl -F file=@/tmp/big.bin http://localhost:3000/upload   # must 413, not OOM the process
+```
+
+---
+
+## B24
+
+### B24 · CORS is registered after the body parsers
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `core-server`
+- **File:** `apps/core-server/src/routes/server.ts:13-18`
+- **Fixed in:** —
+
+**Symptom** — A cross-origin request from a disallowed origin has its body fully parsed — including
+multipart file uploads buffered into memory — before the origin is ever checked.
+
+**Cause** — Middleware order:
+```ts
+app.use(loggerMiddleware);
+app.use(cookieParser());
+app.use(urlencoded({ extended: true }));
+app.use(json());
+app.use(fileUpload());
+app.use(corsMiddleware);        // ← last
+```
+
+Combined with [B23](#b23), this means an attacker on any origin can force unbounded memory
+allocation before the CORS layer has a say.
+
+**Fix** — Move `corsMiddleware` directly after `loggerMiddleware`, ahead of every parser:
+```ts
+app.use(loggerMiddleware);
+app.use(corsMiddleware);
+app.use(cookieParser());
+app.use(urlencoded({ extended: true }));
+app.use(json());
+```
+
+Note this is defence in depth, not a complete fix — CORS is enforced by browsers and does not stop a
+direct client. The real protection against the memory issue is the size limit in B23.
+
+While here: `corsMiddleware` uses `origin: [ENV.CLIENT_URL, ENV.CORS_URL]` with
+`credentials: true`, and both default to localhost URLs (`default-env.ts:8-10`). A deployment that
+forgets to set them gets a silently misconfigured allowlist rather than an error. Consider requiring
+them when `NODE_ENV !== "development"`.
+
+**Verify** — Send a disallowed-origin request with a large body and confirm it is rejected before
+the body is consumed.
+
+---
+
+## B25
+
+### B25 · `resolveSameSite` returns `"lax"` in both branches
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `@repo/lib`
+- **File:** `packages/@repo/lib/src/cookie-module/cookie-module.ts:52-60`
+- **Fixed in:** —
+
+**Symptom** — The refresh-token cookie is always `SameSite=Lax`. In the deployment the file's own
+comment describes — frontend and API on different origins — the browser will not send the cookie on
+cross-site requests, so refresh silently fails in production while working locally.
+
+**Cause** — A ternary whose branches are identical, directly contradicting the comment above it:
+
+```ts
+function resolveSameSite(env: RuntimeEnv): CookieOptions["sameSite"] {
+  /**
+   * If frontend and API are on different origins:
+   * use "none" + secure=true
+   *
+   * Otherwise lax is safer.
+   */
+  return env === "production" || env === "staging" ? "lax" : "lax";
+}
+```
+
+Someone intended `"none"` for the cross-origin case and either never finished or reverted it without
+removing the ternary.
+
+**Fix** — Make it a real decision driven by configuration, since only the deployer knows whether the
+origins differ:
+
+```ts
+const credentials = defineEnv({
+  COOKIE_DOMAIN: z.string().optional(),
+  COOKIE_CROSS_SITE: z.enum(["true","false"]).default("false").transform(v => v === "true"),
+});
+
+function resolveSameSite(env: RuntimeEnv): CookieOptions["sameSite"] {
+  if (env === "development") return "lax";
+  return credentials.COOKIE_CROSS_SITE ? "none" : "lax";
+}
+```
+
+`secure` is already `env !== "development"`, which satisfies the `SameSite=None` requirement. Assert
+that pairing explicitly — `SameSite=None` without `Secure` is rejected by every current browser.
+
+**Verify**
+```bash
+COOKIE_CROSS_SITE=true NODE_ENV=production node -e '...'
+# Set-Cookie must contain "SameSite=None; Secure"
+```
+
+---
+
+## B28
+
+### B28 · No helmet, no rate limiting, no request-size caps in the server template
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** `core-server`
+- **File:** `apps/core-server/src/routes/server.ts`
+- **Fixed in:** —
+
+**Symptom** — A project scaffolded from this template ships with no security headers
+(`X-Content-Type-Options`, `X-Frame-Options`, HSTS, CSP), no rate limiting on any route, and no
+per-route body-size caps. The login and OTP endpoints are unthrottled, which is what makes
+[B3](function-bugs.md#b3) practically exploitable rather than merely theoretical.
+
+**Cause** — Not a coding error; a missing default. The template's middleware stack is logger,
+cookies, parsers, upload, CORS, routes, 404, error. Nothing else.
+
+**Fix** — Add to the `core-server` template, with catalog entries in `pnpm-workspace.yaml` and the
+matching `DepCheck` entries so the generator wires them up:
+
+```ts
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+
+app.use(helmet());
+app.use(rateLimit({ windowMs: 60_000, limit: 100, standardHeaders: "draft-7" }));
+```
+
+and a tighter limiter on the auth and OTP routes specifically:
+```ts
+const authLimiter = rateLimit({ windowMs: 15 * 60_000, limit: 10 });
+```
+
+`express-rate-limit` uses an in-memory store by default, which does not work across replicas.
+Since `@repo/redis` is already a template package, ship `rate-limit-redis` as the store when the
+`redis` package is selected.
+
+Because this adds dependencies and a config surface rather than correcting existing code, the
+implementation is tracked as a feature: [F4](../features/template-features.md#f4). This entry stays
+open as the record of the gap.
+
+**Verify**
+```bash
+curl -I http://localhost:3000/test | grep -i x-content-type-options
+for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:3000/test; done | grep -c 429
+```
