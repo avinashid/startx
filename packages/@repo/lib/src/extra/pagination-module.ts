@@ -90,7 +90,7 @@ export class Paginator {
 			Array<{
 				count: number;
 			}>
-		>
+		>,
 	) {
 		const result = await promise;
 		return result[0]?.count || 0;

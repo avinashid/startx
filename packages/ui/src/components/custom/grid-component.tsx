@@ -12,7 +12,7 @@ const Grid = (props: GridProps) => {
 			className={cn(
 				"grid sm:grid-cols-12 gap-2 grid-cols-1",
 				props.grow ? "min-h-[calc(100vh-60px)] py-2" : "",
-				props.className
+				props.className,
 			)}
 		>
 			{props.children}

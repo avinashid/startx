@@ -46,5 +46,5 @@ export const nodeConfig = tseslint.config(
 			// (This inherits from baseConfig, but I am noting it here as a critical backend safeguard).
 			// "@typescript-eslint/no-floating-promises": "error",
 		},
-	}
+	},
 );

@@ -21,7 +21,7 @@ const snake = (s: string) =>
 
 function uniqueNames(headers: string[]): string[] {
 	const used = new Map<string, number>();
-	return headers.map(h => {
+	return headers.map((h) => {
 		let base = snake(h || "col");
 		if (!base) base = "col";
 		let name = base;
@@ -85,12 +85,12 @@ function parseDateFlexible(v: unknown): Date | null {
 }
 
 function inferKind(values: unknown[]): InferredKind {
-	const nonNull = values.filter(v => v !== undefined && v !== null && v !== "");
+	const nonNull = values.filter((v) => v !== undefined && v !== null && v !== "");
 	if (nonNull.length === 0) return "TEXT";
 
-	const allDates = nonNull.every(v => isExcelDate(v) || parseDateFlexible(v) !== null);
+	const allDates = nonNull.every((v) => isExcelDate(v) || parseDateFlexible(v) !== null);
 	if (allDates) {
-		const anyHasTime = nonNull.some(v => {
+		const anyHasTime = nonNull.some((v) => {
 			const d = isExcelDate(v) ? v : parseDateFlexible(v);
 			if (!d) return false;
 			return d.getUTCHours() !== 0 || d.getUTCMinutes() !== 0 || d.getUTCSeconds() !== 0;
@@ -101,9 +101,9 @@ function inferKind(values: unknown[]): InferredKind {
 	const allBool = nonNull.every(isBooleanish);
 	if (allBool) return "BOOLEAN";
 
-	const allNumbers = nonNull.every(v => typeof v === "number" || (!isNaN(Number(v)) && String(v).trim() !== ""));
+	const allNumbers = nonNull.every((v) => typeof v === "number" || (!isNaN(Number(v)) && String(v).trim() !== ""));
 	if (allNumbers) {
-		const anyFloat = nonNull.some(v => String(v).includes("."));
+		const anyFloat = nonNull.some((v) => String(v).includes("."));
 		return anyFloat ? "REAL" : "INTEGER";
 	}
 
@@ -146,7 +146,7 @@ export class ExcelToSqlite {
 		sheetName?: string,
 		drop = false,
 		headerRow = 1,
-		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT"
+		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT",
 	) {
 		const workbook = XLSX.read(fs.readFileSync(filePath), {
 			type: "buffer",
@@ -163,7 +163,7 @@ export class ExcelToSqlite {
 		sheetName?: string,
 		drop = false,
 		headerRow = 1,
-		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT"
+		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT",
 	) {
 		const workbook = XLSX.read(buffer, {
 			type: "buffer",
@@ -180,7 +180,7 @@ export class ExcelToSqlite {
 		sheetName?: string,
 		drop = false,
 		headerRow = 1,
-		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT"
+		dateAs: "TEXT" | "INTEGER" | "REAL" = "TEXT",
 	) {
 		const sheet = sheetName || workbook.SheetNames[0];
 		const worksheet = workbook.Sheets[sheet];
@@ -194,14 +194,14 @@ export class ExcelToSqlite {
 		});
 		if (rows.length < headerRow) throw new Error(`Sheet has no header at row ${headerRow}`);
 
-		const header = (rows[headerRow - 1] as unknown[]).map(v => JSON.stringify(v ?? "").trim());
+		const header = (rows[headerRow - 1] as unknown[]).map((v) => JSON.stringify(v ?? "").trim());
 		const dataRows = rows
 			.slice(headerRow)
-			.filter(r => Array.isArray(r) && r.some(c => c !== "" && c !== null && c !== undefined));
+			.filter((r) => Array.isArray(r) && r.some((c) => c !== "" && c !== null && c !== undefined));
 
 		const sanitizedNames = uniqueNames(header);
 		const columns: ColumnDef[] = sanitizedNames.map((name, idx) => {
-			const colValues = dataRows.map(r => r[idx]);
+			const colValues = dataRows.map((r) => r[idx]);
 			return {
 				name,
 				original: header[idx] || name,
@@ -210,7 +210,7 @@ export class ExcelToSqlite {
 		});
 
 		const tblName = snake(tableName || sheet);
-		const columnDecls = columns.map(c => `"${c.name}" ${c.kind}`);
+		const columnDecls = columns.map((c) => `"${c.name}" ${c.kind}`);
 		const ddl = `CREATE TABLE IF NOT EXISTS "${tblName}" ( ${columnDecls.join(", ")} );`;
 
 		const db = new SqliteModule(dbPath);
@@ -221,7 +221,7 @@ export class ExcelToSqlite {
 			if (dataRows.length === 0) return;
 
 			const placeholders = columns.map(() => "?").join(",");
-			const insertSql = `INSERT INTO "${tblName}" (${columns.map(c => `"${c.name}"`).join(", ")}) VALUES (${placeholders});`;
+			const insertSql = `INSERT INTO "${tblName}" (${columns.map((c) => `"${c.name}"`).join(", ")}) VALUES (${placeholders});`;
 			const stmt = db.db.prepare(insertSql);
 			for (const row of dataRows) {
 				const values = columns.map((c, idx) => coerceValue(c.kind, row[idx], dateAs));

@@ -16,6 +16,10 @@ export const FileCheck: WHITELIST_FILES = {
 	".prettierrc.mjs": {
 		tags: ["prettier", "biome"],
 	},
+	// startx's own shadow of `.prettierrc.mjs` — repo-local only, see the file's own comment.
+	".prettierrc.js": {
+		tags: ["never"],
+	},
 	".prettierignore": {
 		tags: ["prettier"],
 	},
@@ -34,7 +38,7 @@ export const FileCheck: WHITELIST_FILES = {
 	"turbo.json": {
 		tags: ["root"],
 	},
-	"LICENSE": {
+	LICENSE: {
 		tags: ["never"],
 	},
 	".env": {

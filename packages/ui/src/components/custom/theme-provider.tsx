@@ -59,7 +59,7 @@ export function ThemeProvider({
 	const [mode, setModeState] = React.useState<Mode>(() => (localStorage.getItem(modeKey) as Mode) || defaultMode);
 
 	const [color, setColorState] = React.useState<ThemeColor>(
-		() => (localStorage.getItem(colorKey) as ThemeColor) || defaultColor
+		() => (localStorage.getItem(colorKey) as ThemeColor) || defaultColor,
 	);
 
 	// --- Actions ---
@@ -76,7 +76,7 @@ export function ThemeProvider({
 				setModeState(newMode);
 			});
 		},
-		[modeKey]
+		[modeKey],
 	);
 
 	const setColor = React.useCallback(
@@ -92,7 +92,7 @@ export function ThemeProvider({
 				setColorState(newColor);
 			});
 		},
-		[colorKey]
+		[colorKey],
 	);
 
 	// --- Apply Mode (Light/Dark) ---

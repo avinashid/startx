@@ -14,7 +14,7 @@ export class BullMQProvider implements IQueueProvider {
 		private connection: ConnectionOptions = {
 			host: "localhost",
 			port: 6379,
-		}
+		},
 	) {}
 
 	private mapOptions(options?: JobOptions): JobsOptions {
@@ -43,7 +43,7 @@ export class BullMQProvider implements IQueueProvider {
 	async enqueue<K extends keyof JobRegistry>(
 		queueName: K,
 		params: JobRegistry[K]["params"],
-		options?: JobOptions
+		options?: JobOptions,
 	): Promise<string> {
 		const validated = JobSchemas[queueName].params.parse(params);
 		const queue = this.getQueue(queueName);
@@ -55,7 +55,7 @@ export class BullMQProvider implements IQueueProvider {
 	async enqueueMany<K extends keyof JobRegistry>(
 		queueName: K,
 		paramsList: Array<JobRegistry[K]["params"]>,
-		options?: JobOptions
+		options?: JobOptions,
 	): Promise<string[]> {
 		if (options?.jobId && paramsList.length > 1) {
 			throw new Error("`jobId` cannot be shared across multiple jobs in enqueueMany()");
@@ -63,14 +63,14 @@ export class BullMQProvider implements IQueueProvider {
 
 		const queue = this.getQueue(queueName);
 		const jobs = await queue.addBulk(
-			paramsList.map(params => ({
+			paramsList.map((params) => ({
 				name: "job",
 				data: JobSchemas[queueName].params.parse(params),
 				opts: this.mapOptions(options),
-			}))
+			})),
 		);
 
-		return jobs.map(job => String(job.id));
+		return jobs.map((job) => String(job.id));
 	}
 
 	async registerCron<K extends keyof JobRegistry>(config: RegisterCronConfig<K>): Promise<void> {
@@ -86,7 +86,7 @@ export class BullMQProvider implements IQueueProvider {
 				name: "cron-job",
 				data: validated,
 				opts: this.mapOptions(options),
-			}
+			},
 		);
 
 		this.registerWorker(queueName, handler, options);
@@ -100,7 +100,7 @@ export class BullMQProvider implements IQueueProvider {
 	registerWorker<K extends keyof JobRegistry>(
 		queueName: K,
 		handler: JobHandler<JobRegistry[K]["params"], JobRegistry[K]["result"]>,
-		options?: Omit<WorkerOptions, "connection">
+		options?: Omit<WorkerOptions, "connection">,
 	): void {
 		if (this.workers.has(queueName)) {
 			return;
@@ -110,7 +110,7 @@ export class BullMQProvider implements IQueueProvider {
 
 		const worker = new Worker(
 			queueName,
-			async job => {
+			async (job) => {
 				try {
 					const validData = JobSchemas[queueName].params.parse(job.data) as JobRegistry[K]["params"];
 					const context: JobContext = {
@@ -132,27 +132,27 @@ export class BullMQProvider implements IQueueProvider {
 			{
 				connection: this.connection,
 				...options,
-			}
+			},
 		);
 
 		worker.on("ready", () => logger.info(`Worker ready`, { queue: queueName }));
-		worker.on("active", job => logger.debug(`Job started`, { queue: queueName, jobId: job.id }));
-		worker.on("completed", job =>
-			logger.info(`Job completed`, { queue: queueName, jobId: job.id, attemptsMade: job.attemptsMade })
+		worker.on("active", (job) => logger.debug(`Job started`, { queue: queueName, jobId: job.id }));
+		worker.on("completed", (job) =>
+			logger.info(`Job completed`, { queue: queueName, jobId: job.id, attemptsMade: job.attemptsMade }),
 		);
 		worker.on("failed", (job, error) =>
-			logger.error(`Job failed`, { queue: queueName, jobId: job?.id, attemptsMade: job?.attemptsMade, error })
+			logger.error(`Job failed`, { queue: queueName, jobId: job?.id, attemptsMade: job?.attemptsMade, error }),
 		);
-		worker.on("stalled", jobId => logger.warn(`Job stalled`, { queue: queueName, jobId }));
+		worker.on("stalled", (jobId) => logger.warn(`Job stalled`, { queue: queueName, jobId }));
 		worker.on("closing", () => logger.warn(`Worker closing`, { queue: queueName }));
 		worker.on("closed", () => logger.warn(`Worker closed`, { queue: queueName }));
-		worker.on("error", error => logger.error(`Worker error`, { queue: queueName, error }));
+		worker.on("error", (error) => logger.error(`Worker error`, { queue: queueName, error }));
 
-		void worker.client.then(client => {
+		void worker.client.then((client) => {
 			client.on("ready", () => logger.info(`Redis ready`, { queue: queueName }));
 			client.on("reconnecting", () => logger.warn(`Redis reconnecting`, { queue: queueName }));
 			client.on("end", () => logger.error(`Redis connection ended`, { queue: queueName }));
-			client.on("error", error => logger.error(`Redis connection error`, { queue: queueName, error }));
+			client.on("error", (error) => logger.error(`Redis connection error`, { queue: queueName, error }));
 		});
 
 		this.workers.set(queueName, worker);
@@ -164,7 +164,7 @@ export class BullMQProvider implements IQueueProvider {
 				connection: this.connection,
 			});
 
-			events.on("error", error => logger.error(`QueueEvents error`, { queue: queueName, error }));
+			events.on("error", (error) => logger.error(`QueueEvents error`, { queue: queueName, error }));
 			this.events.set(queueName, events);
 		}
 		return this.events.get(queueName)!;
@@ -172,7 +172,7 @@ export class BullMQProvider implements IQueueProvider {
 
 	onJobComplete<K extends keyof JobRegistry>(
 		queueName: K,
-		callback: (jobId: string, result: JobRegistry[K]["result"]) => void
+		callback: (jobId: string, result: JobRegistry[K]["result"]) => void,
 	): void {
 		const events = this.getQueueEvents(queueName);
 		events.on("completed", ({ jobId, returnvalue }) => {
@@ -198,13 +198,13 @@ export class BullMQProvider implements IQueueProvider {
 	async close(): Promise<void> {
 		logger.warn("Shutting down queue system...");
 
-		const workerResults = await Promise.allSettled(Array.from(this.workers.values()).map(worker => worker.close()));
-		const eventResults = await Promise.allSettled(Array.from(this.events.values()).map(event => event.close()));
-		const queueResults = await Promise.allSettled(Array.from(this.queues.values()).map(queue => queue.close()));
+		const workerResults = await Promise.allSettled(Array.from(this.workers.values()).map((worker) => worker.close()));
+		const eventResults = await Promise.allSettled(Array.from(this.events.values()).map((event) => event.close()));
+		const queueResults = await Promise.allSettled(Array.from(this.queues.values()).map((queue) => queue.close()));
 
 		[...workerResults, ...eventResults, ...queueResults]
 			.filter((result): result is PromiseRejectedResult => result.status === "rejected")
-			.forEach(result => {
+			.forEach((result) => {
 				logger.error("Error during shutdown", result.reason);
 			});
 

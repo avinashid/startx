@@ -30,7 +30,7 @@ const rejectTooLarge = (res: Response, message: string) => {
 const countEntries = (bag: unknown) =>
 	Object.values((bag ?? {}) as Record<string, unknown>).reduce<number>(
 		(total, value) => total + (Array.isArray(value) ? value.length : 1),
-		0
+		0,
 	);
 
 /**

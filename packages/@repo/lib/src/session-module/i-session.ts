@@ -74,7 +74,7 @@ export abstract class IUserSession {
 	public async updateSessionData(userId: string, data: PartialSessionRecord): Promise<void> {
 		const sessions = await this.getUserSessions(userId);
 
-		await Promise.all(sessions.map(sessionId => this.updateSession(sessionId, data)));
+		await Promise.all(sessions.map((sessionId) => this.updateSession(sessionId, data)));
 	}
 
 	public async startSession(user: RequestUser): Promise<TokenPair> {
@@ -206,7 +206,7 @@ export abstract class IUserSession {
 	public async endAllSessions(userId: string): Promise<void> {
 		const sessions = await this.getUserSessions(userId);
 
-		await Promise.all(sessions.map(sessionId => this.deleteSession(sessionId)));
+		await Promise.all(sessions.map((sessionId) => this.deleteSession(sessionId)));
 
 		await this.clearUserSessions(userId);
 	}

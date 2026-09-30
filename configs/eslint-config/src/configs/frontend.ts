@@ -10,7 +10,7 @@ import tseslint from "typescript-eslint";
 
 import { baseConfig } from "./base.js";
 
-const baseWithoutPrettier = baseConfig.filter(config => config !== eslintConfigPrettier);
+const baseWithoutPrettier = baseConfig.filter((config) => config !== eslintConfigPrettier);
 
 export const frontendConfig = tseslint.config(
 	...baseWithoutPrettier,
@@ -95,5 +95,5 @@ export const frontendConfig = tseslint.config(
 		},
 	},
 
-	eslintConfigPrettier
+	eslintConfigPrettier,
 );

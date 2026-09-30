@@ -1,5 +1,5 @@
-'use client';
-import { useEffect, useState } from 'react';
+"use client";
+import { useEffect, useState } from "react";
 
 type WindowDimensions = {
 	width: number | undefined;
@@ -7,7 +7,7 @@ type WindowDimensions = {
 };
 
 const useWindowDimensions = (): WindowDimensions => {
-	const win = typeof window !== 'undefined' ? window : undefined;
+	const win = typeof window !== "undefined" ? window : undefined;
 	const [windowDimensions, setWindowDimensions] = useState<WindowDimensions>({
 		width: win && window?.innerWidth,
 		height: win && window?.innerHeight,
@@ -20,8 +20,8 @@ const useWindowDimensions = (): WindowDimensions => {
 			});
 		}
 		handleResize();
-		window.addEventListener('resize', handleResize);
-		return (): void => window.removeEventListener('resize', handleResize);
+		window.addEventListener("resize", handleResize);
+		return (): void => window.removeEventListener("resize", handleResize);
 	}, []);
 
 	return windowDimensions;

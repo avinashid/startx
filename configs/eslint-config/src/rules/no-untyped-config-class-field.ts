@@ -1,15 +1,14 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoUntypedConfigClassFieldRule = ESLintUtils.RuleCreator.withoutDocs({
 	name: "no-untyped-config-class-field",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
-			description: 'Enforce explicit typing of config class fields',
+			description: "Enforce explicit typing of config class fields",
 		},
 		messages: {
-			noUntypedConfigClassField:
-				'Class field must have an explicit type annotation, e.g. `field: type = value`.',
+			noUntypedConfigClassField: "Class field must have an explicit type annotation, e.g. `field: type = value`.",
 		},
 		schema: [],
 	},
@@ -18,7 +17,7 @@ export const NoUntypedConfigClassFieldRule = ESLintUtils.RuleCreator.withoutDocs
 		return {
 			PropertyDefinition(node) {
 				if (!node.typeAnnotation) {
-					context.report({ node: node.key, messageId: 'noUntypedConfigClassField' });
+					context.report({ node: node.key, messageId: "noUntypedConfigClassField" });
 				}
 			},
 		};

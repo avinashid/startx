@@ -23,8 +23,8 @@ export const createQueryClient = (config?: QueryClientConfig) =>
 					},
 				},
 			},
-			config
-		)
+			config,
+		),
 	);
 
 export const queryClient = createQueryClient();

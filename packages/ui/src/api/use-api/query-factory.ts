@@ -10,9 +10,9 @@ export function makeQueryKeyFactory<ZQ extends ZQuery, ZP extends ZParams>(
 	schemaKey: string,
 	extraStaticKeys: string[] = [],
 	_zParams?: ZP,
-	_zQuery?: ZQ
+	_zQuery?: ZQ,
 ): QueryKeyFactory<ZQ, ZP> {
-	return input => ApiHelper.getQueryKey(schemaKey, extraStaticKeys, { params: input?.params, query: input?.query });
+	return (input) => ApiHelper.getQueryKey(schemaKey, extraStaticKeys, { params: input?.params, query: input?.query });
 }
 
 export function createQueryKeysProxy<Schema extends RawSchema>(schema: Schema): SchemaQueryKeys<Schema> {

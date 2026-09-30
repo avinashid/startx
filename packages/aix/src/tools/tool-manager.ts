@@ -63,7 +63,7 @@ export class ToolManager {
 			case "mcp": {
 				// TODO: implement mcp tool call
 				// Remove this
-				await new Promise(resolve => setTimeout(resolve, 0));
+				await new Promise((resolve) => setTimeout(resolve, 0));
 				throw new Error("MCP tool call not implemented yet!");
 			}
 			default: {
@@ -72,14 +72,14 @@ export class ToolManager {
 		}
 	}
 	public getActiveTools() {
-		return Array.from(this.tools.values()).map(e => ({
+		return Array.from(this.tools.values()).map((e) => ({
 			name: e.name,
 			description: e.description,
 			input_schema: e.schema,
 		}));
 	}
 	public getRegisteredTools() {
-		return Array.from(this.registered.values()).map(e => ({
+		return Array.from(this.registered.values()).map((e) => ({
 			name: e.name,
 			description: e.description,
 			input_schema: e.schema,
@@ -112,7 +112,7 @@ export class ToolManager {
 			});
 			const result = await tool.run(
 				ToolManager.parseArgs(props.args) as z.infer<GenericTool["schema"]>,
-				props.internal
+				props.internal,
 			);
 			this.events.emit("tool.finish", result);
 

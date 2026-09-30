@@ -9,7 +9,7 @@ const customColors = {
 	http: "magenta",
 	debug: "blue",
 };
-const upperCaseLevel = format(info => {
+const upperCaseLevel = format((info) => {
 	info.level = info.level.toUpperCase();
 	return info;
 });

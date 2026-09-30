@@ -53,10 +53,12 @@ export abstract class AiInterface<AI, P extends AiProvider> {
 	}
 	abstract ai: AI;
 	protected abstract handleAi(): Promise<void>;
-	abstract listModels(): Promise<Array<{
-		provider: string;
-		name: string;
-	}>>;
+	abstract listModels(): Promise<
+		Array<{
+			provider: string;
+			name: string;
+		}>
+	>;
 	protected model: (typeof DefaultAiModels)[P][number]["id"];
 	protected credentials: AiInterfaceConstructor["credentials"];
 	private iInternal: TInternal;
@@ -173,7 +175,7 @@ export abstract class AiInterface<AI, P extends AiProvider> {
 						timestamp: new Date(),
 					});
 					if (
-						!this.tools.whitelist.find(e => e === "execute_javascript") &&
+						!this.tools.whitelist.find((e) => e === "execute_javascript") &&
 						this.tools.registered.has("execute_javascript")
 					) {
 						this.event.emit("log", {

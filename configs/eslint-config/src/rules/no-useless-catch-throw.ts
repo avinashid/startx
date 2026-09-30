@@ -1,16 +1,16 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoUselessCatchThrowRule = ESLintUtils.RuleCreator.withoutDocs({
-	name: 'no-useless-catch-throw',
+	name: "no-useless-catch-throw",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
-			description: 'Disallow `try-catch` blocks where the `catch` only contains a `throw error`.',
+			description: "Disallow `try-catch` blocks where the `catch` only contains a `throw error`.",
 		},
 		messages: {
-			noUselessCatchThrow: 'Remove useless `catch` block.',
+			noUselessCatchThrow: "Remove useless `catch` block.",
 		},
-		fixable: 'code',
+		fixable: "code",
 		schema: [],
 	},
 	defaultOptions: [],
@@ -26,7 +26,7 @@ export const NoUselessCatchThrowRule = ESLintUtils.RuleCreator.withoutDocs({
 				) {
 					context.report({
 						node,
-						messageId: 'noUselessCatchThrow',
+						messageId: "noUselessCatchThrow",
 						fix(fixer) {
 							const tryStatement = node.parent;
 							const tryBlock = tryStatement.block;
@@ -34,9 +34,9 @@ export const NoUselessCatchThrowRule = ESLintUtils.RuleCreator.withoutDocs({
 							const tryBlockText = sourceCode.getText(tryBlock);
 							const tryBlockTextWithoutBraces = tryBlockText.slice(1, -1).trim();
 							const indentedTryBlockText = tryBlockTextWithoutBraces
-								.split('\n')
-								.map((line) => line.replace(/\t/, ''))
-								.join('\n');
+								.split("\n")
+								.map((line) => line.replace(/\t/, ""))
+								.join("\n");
 							return fixer.replaceText(tryStatement, indentedTryBlockText);
 						},
 					});

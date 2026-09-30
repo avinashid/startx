@@ -3,7 +3,9 @@ import crypto from "crypto";
 import z from "zod";
 
 const env = defineEnv({
-	INTEGRATION_ENCRYPTION_KEY: z.string().length(64, "INTEGRATION_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)"),
+	INTEGRATION_ENCRYPTION_KEY: z
+		.string()
+		.length(64, "INTEGRATION_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)"),
 });
 
 const ALGORITHM = "aes-256-gcm";

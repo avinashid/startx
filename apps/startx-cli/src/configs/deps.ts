@@ -6,22 +6,22 @@ export const DepCheck: WHITELIST_DEPS = {
 		version: "catalog:",
 		isDevDependency: true,
 	},
-	"prettier": {
+	prettier: {
 		tags: ["node", "prettier", "root"],
 		version: "catalog:",
 		isDevDependency: true,
 	},
-	"eslint": {
+	eslint: {
 		tags: ["node", "eslint", "root"],
 		version: "catalog:",
 		isDevDependency: true,
 	},
-	"vitest": {
+	vitest: {
 		tags: ["node", "vitest", "root"],
 		version: "catalog:",
 		isDevDependency: true,
 	},
-	"tsdown": {
+	tsdown: {
 		isDevDependency: true,
 		tags: ["node", "tsdown", "root"],
 		version: "catalog:",

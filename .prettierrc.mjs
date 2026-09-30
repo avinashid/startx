@@ -6,6 +6,9 @@ import base from "./.prettierrc.cjs";
  * `requirePragma` makes prettier skip files without an explicit `@format` comment, which keeps
  * the editor and a manual `prettier --write .` off biome's turf. Everything else — JSON, CSS,
  * markdown — is still formatted by prettier, and the shared options stay in `.prettierrc.cjs`.
+ *
+ * This repo is itself the template source, so `.prettierrc.js` shadows this file here (prettier
+ * resolves it first) to keep `requirePragma` out of startx's own `format` / `format:check`.
  */
 export default {
 	...base,

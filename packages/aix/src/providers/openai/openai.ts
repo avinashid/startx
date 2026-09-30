@@ -8,12 +8,12 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 	}
 	ai: OpenAI;
 	async listModels() {
-		return (await this.ai.models.list()).data.map(e => ({ name: e.id, provider: "openAi" }));
+		return (await this.ai.models.list()).data.map((e) => ({ name: e.id, provider: "openAi" }));
 	}
 	async handleAi() {
 		const getCompletion = async (): Promise<OpenAI.Chat.ChatCompletion> => {
 			try {
-				const tools = this.tools.getActiveTools().map(tool => ({
+				const tools = this.tools.getActiveTools().map((tool) => ({
 					type: "function" as const,
 					function: {
 						name: tool.name,
@@ -33,7 +33,7 @@ export class OpenAIClient extends AiInterface<OpenAI, "openAi"> {
 				const messages = this.chats.getMessages();
 				const response = await this.ai.chat.completions.create({
 					model: this.model,
-					messages: messages.map(e => ({
+					messages: messages.map((e) => ({
 						role: e.role,
 						content: e.content,
 					})) as unknown as ChatCompletionCreateParamsBase["messages"],

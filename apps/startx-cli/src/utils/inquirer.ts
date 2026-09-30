@@ -26,7 +26,7 @@ export class CommonInquirer {
 	}
 
 	static async getText<T extends ZodTypeAny | undefined>(
-		props: PromptProps<T>
+		props: PromptProps<T>,
 	): Promise<T extends ZodTypeAny ? z.infer<T> : string> {
 		const { message, schema, default: defaultValue } = props;
 
@@ -42,7 +42,7 @@ export class CommonInquirer {
 		}
 
 		if (schema && schema instanceof ZodEnum) {
-			const formattedChoices = schema.options.map(opt => ({
+			const formattedChoices = schema.options.map((opt) => ({
 				value: opt,
 			}));
 
@@ -113,9 +113,7 @@ export class CommonInquirer {
 		// 		? [defaultValue]
 		// 		: [] as string[];
 
-		const defaultValues = (
-			mode === "single" ? [defaultValue] : [...(defaultValue || [])]
-		) as string[];
+		const defaultValues = (mode === "single" ? [defaultValue] : [...(defaultValue || [])]) as string[];
 
 		const choices = [
 			...(mode === "multiple" && includeAllOption
@@ -127,7 +125,7 @@ export class CommonInquirer {
 						},
 					]
 				: []),
-			...options.map(opt => ({
+			...options.map((opt) => ({
 				name: opt,
 				value: opt,
 				checked: defaultValues.includes(opt),
@@ -138,7 +136,7 @@ export class CommonInquirer {
 			const answer = await checkbox({
 				message,
 				choices,
-				validate: input => {
+				validate: (input) => {
 					if (required && input.length === 0) {
 						return "You must select at least one option.";
 					}
@@ -155,7 +153,7 @@ export class CommonInquirer {
 
 		const answer = await select({
 			message,
-			choices: options.map(opt => ({
+			choices: options.map((opt) => ({
 				name: opt,
 				value: opt,
 			})),

@@ -154,12 +154,12 @@ export class Aix {
 
 	static executeWithPlanner = async <T extends AiProvider, Q extends AiProvider>(
 		props: ExecuteWithPlannerProps<T, Q>,
-		onEvent?: (props: IEventWithPayload<ExecuteWithPlannerEvents>) => void
+		onEvent?: (props: IEventWithPayload<ExecuteWithPlannerEvents>) => void,
 	) => {
 		const event = new IEvent<ExecuteWithPlannerEvents>();
 
 		if (onEvent) {
-			event.onEvery(e => onEvent(e));
+			event.onEvery((e) => onEvent(e));
 		}
 
 		const tokenCount = { input: 0, output: 0 };
@@ -171,9 +171,9 @@ export class Aix {
 			});
 
 			await Promise.all(
-				props.tools.map(async tool => {
+				props.tools.map(async (tool) => {
 					await tools.attachTools(tool);
-				})
+				}),
 			);
 
 			const pQuery = await this.planner({
@@ -189,7 +189,7 @@ export class Aix {
       User query: ${props.query}
       Tools_available: ${tools
 				.getActiveTools()
-				.map(t => `${t.name}: ${t.description}`)
+				.map((t) => `${t.name}: ${t.description}`)
 				.join(", ")}
       Always end the plan with the end_response or execute_javascript tool unless answering directly.
     `,
@@ -226,8 +226,8 @@ export class Aix {
 				queryClassification: pQuery.plan.queryClassification,
 			});
 
-			const executionMatrix = (pQuery.plan.executionPhases || []).map(phase =>
-				phase.parallelNodes.map(node => node.nodeId)
+			const executionMatrix = (pQuery.plan.executionPhases || []).map((phase) =>
+				phase.parallelNodes.map((node) => node.nodeId),
 			);
 			event.emit("execution", executionMatrix);
 			event.emit("status", "executing");
@@ -251,9 +251,9 @@ export class Aix {
 			>();
 
 			for (const phase of pQuery.plan.executionPhases || []) {
-				const phasePromises = phase.parallelNodes.map(async node => {
+				const phasePromises = phase.parallelNodes.map(async (node) => {
 					event.emit("current", node.nodeId);
-					const deps = (node.dependsOn?.map(dep => nodeResults.get(dep)!) || []).filter(e => e);
+					const deps = (node.dependsOn?.map((dep) => nodeResults.get(dep)!) || []).filter((e) => e);
 
 					const runner = Aix.client(props.provider)({
 						conversations: [],
@@ -272,15 +272,15 @@ export class Aix {
 						},
 						internal: {
 							system: { ...props.internal?.system, schemaOnly: node.schemaOnly },
-							vars: new Map(deps.flatMap(dep => dep.vars?.map(e => [e.name, e]) || [])),
+							vars: new Map(deps.flatMap((dep) => dep.vars?.map((e) => [e.name, e]) || [])),
 						},
 						whitelistedTools: [...node.tools, "execute_javascript", "end_response"],
 					});
 
 					await Promise.all(
-						props.tools.map(async tool => {
+						props.tools.map(async (tool) => {
 							await runner.tools.attachTools(tool);
-						})
+						}),
 					);
 
 					let isolatedPrompt = `System/Instruction:\n${node.instruction}\n\n`;
@@ -301,10 +301,10 @@ export class Aix {
 						}
 					}
 
-					runner.on("tool.start", tool => {
+					runner.on("tool.start", (tool) => {
 						logger.info(`${node.nodeId}Tool started: ${tool.name}: ${JSON.stringify(tool.args)}`);
 					});
-					runner.on("tool.finish", tool => {
+					runner.on("tool.finish", (tool) => {
 						logger.info(`${node.nodeId} \n${JSON.stringify(tool)}`);
 					});
 
@@ -352,9 +352,9 @@ export class Aix {
 
 			if (phases.length > 0) {
 				const lastPhase = phases[phases.length - 1];
-				const terminalNodeIds = lastPhase.parallelNodes.map(n => n.nodeId);
+				const terminalNodeIds = lastPhase.parallelNodes.map((n) => n.nodeId);
 				finalResponseText = terminalNodeIds
-					.map(id => nodeResults.get(id)?.response)
+					.map((id) => nodeResults.get(id)?.response)
 					.filter(Boolean)
 					.join("\n\n");
 			}
@@ -395,7 +395,7 @@ export class Aix {
 				title: toolName,
 				description: props.description || "Structures a response based on a schema.",
 				schema: props.schema,
-				run: input => {
+				run: (input) => {
 					return [
 						{ type: "text", text: JSON.stringify(input) },
 						{
@@ -422,7 +422,7 @@ export class Aix {
 				whitelistedTools: [toolName],
 			});
 
-			ai.onEvery(e => {
+			ai.onEvery((e) => {
 				logger.info(e);
 			});
 

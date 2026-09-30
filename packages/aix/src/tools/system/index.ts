@@ -10,7 +10,7 @@ export const SystemInternalTools: ITool[] = [
 			note: z
 				.string()
 				.describe(
-					"Answer the user query with a note in professional way that has the task summary and the response of what user asked you can also use variable and perform js-operations on them. A valid variable format is {{message.VARIABLE_NAME}}."
+					"Answer the user query with a note in professional way that has the task summary and the response of what user asked you can also use variable and perform js-operations on them. A valid variable format is {{message.VARIABLE_NAME}}.",
 				),
 		}),
 		run: ({ note }: { note: string }) => {
@@ -206,12 +206,12 @@ export const SystemInternalTools: ITool[] = [
 			operation: z
 				.string()
 				.describe(
-					"Valid JavaScript code. MUST contain a 'return' statement. Do not include markdown code blocks (```javascript) in this string."
+					"Valid JavaScript code. MUST contain a 'return' statement. Do not include markdown code blocks (```javascript) in this string.",
 				),
 			isCompleted: z
 				.boolean()
 				.describe(
-					"Set to true if this operation fully resolves the user's request (script must return formatted Markdown). Set to false if extracting intermediate data."
+					"Set to true if this operation fully resolves the user's request (script must return formatted Markdown). Set to false if extracting intermediate data.",
 				),
 		}),
 		run: async ({ isCompleted, operation }, internal) => {

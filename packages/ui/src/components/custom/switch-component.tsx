@@ -1,4 +1,4 @@
-import type React from 'react';
+import type * as React from "react";
 
 export type SwitchCases<T extends string> = {
 	[key in T]?: React.ReactNode; // Mapping of cases with the type T

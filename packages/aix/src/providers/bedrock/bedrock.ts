@@ -24,7 +24,7 @@ export class BedrockClient extends AiInterface<BedrockRuntimeClient, "bedrock"> 
 	constructor(
 		props: AiInterfaceConstructor & {
 			credentials: BedrockCredentials;
-		}
+		},
 	) {
 		super(props);
 
@@ -45,7 +45,7 @@ export class BedrockClient extends AiInterface<BedrockRuntimeClient, "bedrock"> 
 	async listModels() {
 		const models = await this.controlPlane.send(new ListFoundationModelsCommand({}));
 		return (
-			models.modelSummaries?.map(e => ({
+			models.modelSummaries?.map((e) => ({
 				provider: e.providerName!,
 				name: e.modelName!,
 			})) ?? []
@@ -84,7 +84,7 @@ export class BedrockClient extends AiInterface<BedrockRuntimeClient, "bedrock"> 
 			}
 
 			if (msg.role === "assistant" && "tool_calls" in msg) {
-				msg.tool_calls.forEach(tc => {
+				msg.tool_calls.forEach((tc) => {
 					if (tc.type === "function") {
 						const func = tc as unknown as {
 							function: {
@@ -113,7 +113,7 @@ export class BedrockClient extends AiInterface<BedrockRuntimeClient, "bedrock"> 
 	}
 
 	private mapTools(): Tool[] {
-		return this.tools.getActiveTools().map(tool => ({
+		return this.tools.getActiveTools().map((tool) => ({
 			toolSpec: {
 				name: tool.name,
 				description: tool.description,
@@ -147,7 +147,7 @@ export class BedrockClient extends AiInterface<BedrockRuntimeClient, "bedrock"> 
 									},
 								}
 							: {}),
-					})
+					}),
 				);
 
 				if (response.usage) {

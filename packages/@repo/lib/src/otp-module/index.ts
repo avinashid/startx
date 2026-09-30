@@ -54,7 +54,7 @@ export class OTPModule {
 					attempts: 0,
 					expiresAt: Date.now() + this.otpExpirySeconds * 1000,
 				},
-				this.otpExpirySeconds
+				this.otpExpirySeconds,
 			);
 		} catch (err) {
 			logger?.error("otp: redis write failed", { email: normalizedEmail, err });

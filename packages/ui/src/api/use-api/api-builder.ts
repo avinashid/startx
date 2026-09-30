@@ -33,18 +33,18 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 	}
 
 	private wrapRefetch<IK extends string, IQ extends z.output<ZQuery>, IP extends z.output<ZParams>, IB, ID>(
-		refetch: IRefetch<IK, IQ, IP, IB, ID, Schema> | undefined
+		refetch: IRefetch<IK, IQ, IP, IB, ID, Schema> | undefined,
 	): IRefetch<IK, IQ, IP, IB, ID> | undefined {
 		if (!refetch) return undefined;
 		const { cb, ...rest } = refetch;
 		return {
 			...rest,
-			cb: props => (typeof cb === "function" ? cb(props, createQueryKeysProxy(this.schema)) : cb),
+			cb: (props) => (typeof cb === "function" ? cb(props, createQueryKeysProxy(this.schema)) : cb),
 		};
 	}
 
 	private wrapQueryEvent<IK extends string, IQ extends z.output<ZQuery>, IP extends z.output<ZParams>, IB, ID>(
-		event: QueryEventWithKeys<IK, IQ, IP, IB, ID, Schema> | undefined
+		event: QueryEventWithKeys<IK, IQ, IP, IB, ID, Schema> | undefined,
 	): QueryEvent<IK, IQ, IP, IB, ID> | undefined {
 		if (!event) return undefined;
 		const wrapped: QueryEvent<IK, IQ, IP, IB, ID> = {};
@@ -61,7 +61,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 		key: EnsureUnique<KEY, RawSchemaKeys<Schema>>,
 		options: Omit<IFetchOptions<ID, ZQ, ZP, string>, "apiType" | "refetch"> & {
 			refetch?: IRefetch<KEY | RawSchemaKeys<Schema>, z.output<ZQ>, z.output<ZP>, undefined, ID, Schema>;
-		}
+		},
 	): ApiSchema<Schema & Record<KEY, IFetchOptions<ID, ZQ, ZP, KEY> & { queryKey: QueryKeyFactory<ZQ, ZP> }>> {
 		const { refetch, ...rest } = options;
 		const entry = {
@@ -84,7 +84,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 				IPaginatedData<ID, IO>,
 				Schema
 			>;
-		}
+		},
 	): ApiSchema<
 		Schema & Record<KEY, IPaginatedFetchOptions<ID, IO, ZQ, ZP, KEY> & { queryKey: QueryKeyFactory<ZQ, ZP> }>
 	> {
@@ -109,7 +109,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 				IPaginatedData<ID, IO>,
 				Schema
 			>;
-		}
+		},
 	): ApiSchema<
 		Schema & Record<KEY, IInfinitePaginatedFetchOptions<ID, IO, ZQ, ZP, KEY> & { queryKey: QueryKeyFactory<ZQ, ZP> }>
 	> {
@@ -140,7 +140,7 @@ export class ApiSchema<Schema extends RawSchema = {}> {
 				Schema
 			>;
 			refetch?: IRefetch<KEY | RawSchemaKeys<Schema>, z.output<ZQ>, z.output<ZP>, z.output<ZB>, ID, Schema>;
-		}
+		},
 	): ApiSchema<
 		Schema & Record<KEY, IFetchMutationOptions<KEY, ZQ, ZB, ZP, ID> & { queryKey: QueryKeyFactory<ZQ, ZP> }>
 	> {

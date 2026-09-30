@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B43`
-- **Last full audit:** 2026-09-22 against HEAD `712b60f`
-- **Open:** 9 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 35
+- **Next free ID:** `B46`
+- **Last full audit:** 2026-09-30 against HEAD `b7006b0`
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 47
 
 Counts include the four sub-items of B12.
 
@@ -16,34 +16,47 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 2 | 1 | 3 | 3 | **9** |
+| open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 7 | 9 | 8 | 11 | **35** |
+| **verified** | 9 | 12 | 12 | 14 | **47** |
 
-**B1–B33 are all closed, and the toolchain is green:**
+**B1–B45 are all closed.** Measured uncached at the tip of `fix/p0-bugs`:
 
-| command | before | after |
+```
+pnpm exec turbo typecheck lint test build format:check --force
+Tasks: 69 successful, 69 total   —   exit 0
+```
+
+### The previous "50 / 50, exit 0" was wrong, and that matters
+
+This register previously recorded `turbo typecheck lint test build` as **50 / 50, exit 0** at
+`712b60f`. That measurement was taken against a warm turbo cache. Re-run with `--force` at the same
+tree, **two lint tasks fail**: `web-client#lint` ([B43](config-bugs.md#b43)) and `@repo/ui#lint`
+([B45](type-bugs.md#b45)). Both had been failing for some time behind cached green results.
+
+Two lessons are now baked into the conventions: **every status claim in this register must come from
+a `--force` run**, and the task list must name `format:check` explicitly — the old command was
+missing it, which is how [B36](config-bugs.md#b36) hid a completely inert formatter.
+
+| command | before | after (uncached) |
 |---|---|---|
 | `turbo typecheck` | 32 / 41 | **41 / 41** |
-| `turbo lint` | 16 / 17, 1 failing | **17 / 17, 0 errors** |
-| `turbo test` | 7 / 8, 1 failing | **9 / 9** |
+| `turbo lint` | 15 / 17, 2 failing | **17 / 17, 0 errors** |
+| `turbo test` | 7 / 8, 1 failing | **9 / 9, 154 tests** |
 | `turbo build` | blocked by `lint` | **22 / 22** |
-
-Re-measured at `712b60f`: `turbo typecheck lint test build` is **50 / 50 tasks, exit 0**. The test
-count went 8 → 9 because `@repo/lib` had a `vitest.config.ts` but no `test` script, so `turbo test`
-had been skipping it entirely.
+| `turbo format:check` | *inert — skipped every file* | **19 / 19, real** |
 
 ~90 lint *warnings* remain by design — burning them down is
 [E2](../enhancements/template-enhancements.md#e2), not a defect. P2 (generator B13–B21) and
 P3 (hardening B22–B29, CI B30–B31) were closed in `c104915`.
 
-### The nine open bugs are new — B34–B42
+### B34–B45 were filed and closed in the same pass
 
-They came out of the audit run *after* B13–B31 were closed, and none of them existed in the register
-before. Two are P0.
+B34–B42 came out of the audit run *after* B13–B31 were closed; B43–B45 surfaced while verifying
+those fixes, once `--force` runs replaced cached ones. All twelve are now closed.
 
-The most important thing on this board is that **B36 is a regression introduced by the fix for
+The most important thing on this board is that **B36 was a regression introduced by the fix for
 [B14](config-bugs.md#b14)**. That fix added a `.prettierrc.mjs` carrying a `requirePragma` override
 intended for generated biome+prettier workspaces. The file also sits at the root of *this* repo —
 it has to, in order to be templated — and Prettier resolves `.prettierrc.mjs` ahead of
@@ -51,12 +64,17 @@ it has to, in order to be templated — and Prettier resolves `.prettierrc.mjs` 
 file. Proven directly: a deliberately mangled TypeScript file passes `prettier --check` with exit 0,
 and checking against `.prettierrc.cjs` explicitly reports **128 files** with style issues.
 
-That masked drift is then half of [B37](config-bugs.md#b37): 9 of 10 packages in a stock
-prettier-only scaffold fail `pnpm format:check` immediately after `pnpm install`. B14's own symptom
-really is fixed — the status stands — but the fix bought it at a price nobody had measured.
+That masked drift was then half of [B37](config-bugs.md#b37): 9 of 10 packages in a stock
+prettier-only scaffold failed `pnpm format:check` immediately after `pnpm install`. B14's own symptom
+really was fixed — its status stands — but the fix bought it at a price nobody had measured.
 
-`turbo typecheck lint test build` does not cover `format:check`, which is exactly why 50/50 green
-and a broken formatter are both true at once.
+`turbo typecheck lint test build` did not cover `format:check`, which is exactly why 50/50 green and
+a completely inert formatter were both true at once. The root `package.json` did not even define a
+`format:check` script, though `turbo.json` had declared the task all along; it does now.
+
+**Fixing B36 is what exposed B44 and B45.** Once the formatter and the lint gate started reporting
+honestly, two further defects had nowhere left to hide. That is the shape of this whole batch: the
+gates were green because they were not looking.
 
 ---
 
@@ -71,8 +89,8 @@ and a broken formatter are both true at once.
 | B5 | `Request.user` type contradicts what sessions actually store | core-server | [type](type-bugs.md#b5) | **verified** |
 | B6 | `REDIS_CLUSTER_MODE=false` enables cluster mode | @repo/redis | [runtime](runtime-bugs.md#b6) | **verified** |
 | B7 | `.env.example` secrets are 24 chars; the code requires 32 | root | [config](config-bugs.md#b7) | **verified** |
-| B34 | A frontend-only selection never broadcasts `node`, so the root gets no `lint`/`format`/`test` | startx-cli | [function](function-bugs.md#b34) | open |
-| B37 | A stock prettier-only scaffold fails its own `format:check` — 9 of 10 packages | startx-cli | [config](config-bugs.md#b37) | open |
+| B34 | A frontend-only selection never broadcasts `node`, so the root gets no `lint`/`format`/`test` | startx-cli | [function](function-bugs.md#b34) | verified |
+| B37 | A stock prettier-only scaffold fails its own `format:check` — 9 of 10 packages | startx-cli | [config](config-bugs.md#b37) | verified |
 
 ¹ B3's pure logic (TTL unit, code keyspace) was verified; the Redis round-trip and the
 attempt-limit path were **not** executed — no Redis or Docker was available on the machine where the
@@ -92,7 +110,9 @@ fix was made. See the entry for exactly what remains unproven.
 | B12.4 | Unused bindings fail `noUnusedLocals`/`noUnusedParameters` — 7 sites | ui, aix, @repo/mail | [type](type-bugs.md#b124) | **verified** |
 | B32 | Shared frontend vitest config points `setupFiles` at a path that exists nowhere | vitest-config | [config](config-bugs.md#b32) | **verified** |
 | B33 | `tsconfigRootDir` points into `eslint-config`'s own internals, disabling type-aware linting | eslint-config | [config](config-bugs.md#b33) | **verified** |
-| B36 | `.prettierrc.mjs`'s `requirePragma` makes this repo's own `format:check` a no-op | root | [config](config-bugs.md#b36) | open |
+| B36 | `.prettierrc.mjs`'s `requirePragma` makes this repo's own `format:check` a no-op | root | [config](config-bugs.md#b36) | verified |
+| B43 | A stray duplicate `src/eslint.config.ts` fails `web-client#lint` and ships to every scaffold | web-client | [config](config-bugs.md#b43) | verified |
+| B45 | `import type React from "react"` trips `import-x/default` — `@repo/ui#lint` fails | @repo/ui | [type](type-bugs.md#b45) | verified |
 
 B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
 rules were silently not running for any package.
@@ -110,9 +130,10 @@ rules were silently not running for any package.
 | B19 | Renaming across scopes writes to the template's scope directory | startx-cli | [function](function-bugs.md#b19) | **verified** |
 | B20 | `syncDepsWithCatalog` can emit an unresolvable `catalog:` with no warning | startx-cli | [function](function-bugs.md#b20) | **verified** |
 | B21 | Dead ternary and a misleading log line in `installRootDependencies` | startx-cli | [function](function-bugs.md#b21) | **verified** |
-| B35 | `.vscode` settings default to Prettier even when no formatter was chosen | startx-cli | [function](function-bugs.md#b35) | open |
-| B38 | `package new` emits no `format` / `format:check` script | startx-cli | [function](function-bugs.md#b38) | open |
-| B40 | `peerDependencies` bypasses `filterDeps` and `syncDepsWithCatalog` | startx-cli | [function](function-bugs.md#b40) | open |
+| B35 | `.vscode` settings default to Prettier even when no formatter was chosen | startx-cli | [function](function-bugs.md#b35) | verified |
+| B38 | `package new` emits no `format` / `format:check` script | startx-cli | [function](function-bugs.md#b38) | verified |
+| B40 | `peerDependencies` bypasses `filterDeps` and `syncDepsWithCatalog` | startx-cli | [function](function-bugs.md#b40) | verified |
+| B44 | Per-package prettier never reads the root `.prettierignore`, so `format:check` checks `dist/` | root, template pkgs | [config](config-bugs.md#b44) | verified |
 
 ## P3 — hardening, papercuts, dead code
 
@@ -128,9 +149,9 @@ rules were silently not running for any package.
 | B29 | `serve-static.ts` is dead code with a path that wouldn't resolve after bundling | core-server | [runtime](runtime-bugs.md#b29) | **verified** |
 | B30 | CI publishes to npm on every push to `main` with no gate | ci | [ci](ci-bugs.md#b30) | **verified** |
 | B31 | `.npmignore` excludes the `bin` target; publishing works only by npm's force-include | ci | [ci](ci-bugs.md#b31) | **verified** |
-| B39 | `package new` leaks generator-only `startx` metadata into user packages | startx-cli | [function](function-bugs.md#b39) | open |
-| B41 | Two incompatible boolean env dialects — `@repo/redis` strict, `@repo/lib` lenient | @repo/redis, @repo/lib | [runtime](runtime-bugs.md#b41) | open |
-| B42 | Shared `eslint-config` ignores `**/dist/**` but not `**/bin/**` | eslint-config | [config](config-bugs.md#b42) | open |
+| B39 | `package new` leaks generator-only `startx` metadata into user packages | startx-cli | [function](function-bugs.md#b39) | verified |
+| B41 | Two incompatible boolean env dialects — `@repo/redis` strict, `@repo/lib` lenient | @repo/redis, @repo/lib | [runtime](runtime-bugs.md#b41) | verified |
+| B42 | Shared `eslint-config` ignores `**/dist/**` but not `**/bin/**` | eslint-config | [config](config-bugs.md#b42) | verified |
 
 ---
 
@@ -145,17 +166,19 @@ Historical, for B1–B33 — these four files held 13 of them:
 | `apps/core-server/src/middlewares/` | B1 · B4 · B5 |
 | `packages/@repo/lib/src/` | B3 · B25 · B26 · B27 |
 
-For the nine that are open now, the grouping is different — and two clusters cover seven of them:
+B34–B45 clustered differently, and they were worked in this grouping — four file-disjoint batches
+in parallel, then the formatting sweep last, once nothing else was still editing the tree:
 
 | File | Bugs |
 |---|---|
-| prettier config (`.prettierrc.mjs`, `.prettierrc.cjs`, `writeJSONFile`) | B36 · B37 |
+| prettier config (`.prettierrc.js`, `.prettierrc.mjs`, `writeJSONFile`) | B36 · B37 · B44 |
 | `apps/startx-cli/src/commands/package.ts` (`package new`) | B38 · B39 · B40 |
 | script/tag gating (`configs/scripts.ts`, `commands/init.ts`) | B34 · B35 |
+| env + eslint template config | B41 · B42 · B45 |
 
-Suggested order: **B36 first**, because until the formatter tells the truth, B37 cannot be measured
-and any formatting work done in the meantime is unverifiable. Then B37, then B34 — that is both P0s
-and the P1. B38–B42 are independent of each other and of everything above.
+**B36 had to go first**: until the formatter told the truth, B37 could not be measured and any
+formatting work done in the meantime was unverifiable. That ordering proved itself — closing B36 is
+what surfaced B44 and B45, neither of which was visible while the gates were cached green.
 
 ---
 

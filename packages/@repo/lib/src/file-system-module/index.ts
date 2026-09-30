@@ -31,7 +31,9 @@ class FStool {
 			destination = path.resolve(dirPath, file);
 		}
 
-		await fs.writeFile(destination, JSON.stringify(content, null, 2));
+		// Tab-indented with a trailing newline so the output already satisfies the `useTabs`
+		// prettier config the generated workspace enforces on itself.
+		await fs.writeFile(destination, `${JSON.stringify(content, null, "\t")}\n`);
 
 		return destination;
 	}
@@ -150,7 +152,7 @@ class FStool {
 			const entries = await fs.readdir(path.resolve(this.root, dir), {
 				withFileTypes: true,
 			});
-			return entries.filter(e => e.isDirectory()).map(e => e.name);
+			return entries.filter((e) => e.isDirectory()).map((e) => e.name);
 		} catch (error) {
 			console.error(`Error listing directories in ${dir}:`, error); // Exposes the error
 			return [];
@@ -162,7 +164,7 @@ class FStool {
 			const entries = await fs.readdir(path.resolve(this.root, dir), {
 				withFileTypes: true,
 			});
-			return entries.filter(e => e.isFile()).map(e => e.name);
+			return entries.filter((e) => e.isFile()).map((e) => e.name);
 		} catch (error) {
 			console.error(`Error listing files in ${dir}:`, error); // Exposes the error
 			return [];

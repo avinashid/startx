@@ -36,7 +36,7 @@ const ImagePicker = ({
 	const fileInputRef = useRef<HTMLInputElement | null>(null);
 	const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files?.[0]) {
-			setSelectedImage(Array.from(event.target.files).map(file => URL.createObjectURL(file)));
+			setSelectedImage(Array.from(event.target.files).map((file) => URL.createObjectURL(file)));
 			const file = event.target.files;
 			onChange?.(file);
 		}
@@ -48,13 +48,13 @@ const ImagePicker = ({
 					onClick={() => fileInputRef.current?.click()}
 					className={cn(
 						"border-dashed grid place-content-center min-w-full aspect-video border border-gray-300 rounded-md overflow-hidden",
-						className
+						className,
 					)}
 				>
 					{selectedImage.length !== 0 ? (
 						<Carousel>
 							<CarouselContent>
-								{selectedImage.map(image => (
+								{selectedImage.map((image) => (
 									<CarouselItem key={image}>
 										<img
 											alt={image}

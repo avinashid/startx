@@ -51,6 +51,7 @@
 		"clean": "turbo clean",
 		"test": "turbo test",
 		"format": "turbo format",
+		"format:check": "turbo format:check",
 		"db:push": "turbo run db:push",
 		"db:studio": "turbo run db:studio",
 		"db:generate": "turbo run db:generate",

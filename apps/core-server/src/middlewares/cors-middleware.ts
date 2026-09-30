@@ -14,9 +14,9 @@ import type { RequestHandler } from "express";
  */
 const allowedOrigins = [ENV.CLIENT_URL, ENV.CORS_URL, ENV.SERVER_URL].filter(Boolean);
 
-if (ENV.NODE_ENV !== "development" && allowedOrigins.some(origin => origin.includes("localhost"))) {
+if (ENV.NODE_ENV !== "development" && allowedOrigins.some((origin) => origin.includes("localhost"))) {
 	logger.warn(
-		`CORS allowlist still holds a localhost default (${allowedOrigins.join(", ")}) while NODE_ENV=${ENV.NODE_ENV}. Set CLIENT_URL, CORS_URL and SERVER_URL for this deployment.`
+		`CORS allowlist still holds a localhost default (${allowedOrigins.join(", ")}) while NODE_ENV=${ENV.NODE_ENV}. Set CLIENT_URL, CORS_URL and SERVER_URL for this deployment.`,
 	);
 }
 

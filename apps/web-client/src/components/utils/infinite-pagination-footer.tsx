@@ -77,12 +77,12 @@ function InfinitePaginationFooter<T>({
 		if (!node) return;
 
 		const observer = new IntersectionObserver(
-			entries => {
+			(entries) => {
 				if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
 					fetchNextPage();
 				}
 			},
-			{ rootMargin: "200px" }
+			{ rootMargin: "200px" },
 		);
 
 		observer.observe(node);
@@ -100,7 +100,7 @@ function InfinitePaginationFooter<T>({
 				variant === "default" && "rounded-xl border bg-background/50 p-3 shadow-sm backdrop-blur-sm",
 				variant === "compact" && "rounded-lg border border-transparent py-1",
 				variant === "ghost" && "py-2",
-				className
+				className,
 			)}
 		>
 			<div className="text-sm text-muted-foreground tabular-nums" aria-live="polite">

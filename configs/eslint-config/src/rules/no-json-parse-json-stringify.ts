@@ -5,8 +5,7 @@ export const NoJsonParseJsonStringifyRule = ESLintUtils.RuleCreator.withoutDocs(
 	meta: {
 		type: "problem",
 		docs: {
-			description:
-				"Calls to `JSON.parse(JSON.stringify(arg))` must be replaced with `structuredClone(arg)`.",
+			description: "Calls to `JSON.parse(JSON.stringify(arg))` must be replaced with `structuredClone(arg)`.",
 		},
 		schema: [],
 		messages: {
@@ -54,7 +53,7 @@ export const NoJsonParseJsonStringifyRule = ESLintUtils.RuleCreator.withoutDocs(
 					node,
 					messageId: "noJsonParseJsonStringify",
 					data: { argText },
-					fix: fixer => fixer.replaceText(node, `structuredClone(${argText})`),
+					fix: (fixer) => fixer.replaceText(node, `structuredClone(${argText})`),
 				});
 			},
 		};

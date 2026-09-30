@@ -1,4 +1,4 @@
-import { defineEnv } from "@repo/env";
+import { defineEnv, envBool } from "@repo/env";
 import { logger } from "@repo/logger";
 import { Cluster, Redis } from "ioredis";
 import z from "zod";
@@ -10,11 +10,7 @@ const connection = defineEnv({
 	REDIS_USERNAME: z.string().default(""),
 	REDIS_PASSWORD: z.string().default(""),
 	REDIS_DB: z.coerce.number().optional(),
-	// NOT z.coerce.boolean(): that is Boolean(value), so the string "false" would coerce to true.
-	REDIS_CLUSTER_MODE: z
-		.enum(["true", "false", "1", "0"])
-		.default("false")
-		.transform(v => v === "true" || v === "1"),
+	REDIS_CLUSTER_MODE: envBool(),
 });
 
 const clients = new Map<number, Redis>();
@@ -37,14 +33,14 @@ export function getRedis(props?: { db?: number }): Redis | Cluster {
 						lazyConnect: true,
 						maxRetriesPerRequest: null,
 					},
-				}
+				},
 			);
 
 			clusterClient.on("connect", () => {
 				logger.info("[Redis Cluster] connected");
 			});
 
-			clusterClient.on("error", err => {
+			clusterClient.on("error", (err) => {
 				logger.error("[Redis Cluster] error:", err);
 			});
 		}
@@ -71,7 +67,7 @@ export function getRedis(props?: { db?: number }): Redis | Cluster {
 			logger.info(`[Redis] connected (db ${db})`);
 		});
 
-		client.on("error", err => {
+		client.on("error", (err) => {
 			logger.error(`[Redis] error (db ${db}):`, err);
 		});
 

@@ -1,6 +1,7 @@
 import { Time } from "@repo/common/time";
 import type { CookieOptions } from "express";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import z from "zod";
 
 /**
  * `@repo/env` calls `loadDotenv()` at import, which reads `.env` from BOTH `process.cwd()` and the
@@ -21,7 +22,12 @@ vi.mock("@repo/env", () => {
 		get ENV() {
 			return { NODE_ENV: read("NODE_ENV") ?? "production" };
 		},
-		defineEnv: (spec: Record<string, unknown>) => Object.fromEntries(Object.keys(spec).map(key => [key, read(key)])),
+		defineEnv: (spec: Record<string, unknown>) => Object.fromEntries(Object.keys(spec).map((key) => [key, read(key)])),
+		envBool: (def = false) =>
+			z
+				.enum(["true", "false", "1", "0", ""])
+				.default(def ? "true" : "false")
+				.transform((v) => v === "true" || v === "1"),
 	};
 });
 
@@ -55,11 +61,11 @@ describe("CookieModule — import safety (B26)", () => {
 
 	it("does not throw at import time when COOKIE_CROSS_SITE is nonsense", async () => {
 		await expect(
-			loadCookieModule({ NODE_ENV: "production", COOKIE_DOMAIN: ".x.com", COOKIE_CROSS_SITE: "yep" })
+			loadCookieModule({ NODE_ENV: "production", COOKIE_DOMAIN: ".x.com", COOKIE_CROSS_SITE: "yep" }),
 		).resolves.toBeDefined();
 	});
 
-	it.each(["staging", "production"])("surfaces the missing COOKIE_DOMAIN as a startup error in %s", async nodeEnv => {
+	it.each(["staging", "production"])("surfaces the missing COOKIE_DOMAIN as a startup error in %s", async (nodeEnv) => {
 		const cookies = await loadCookieModule({ NODE_ENV: nodeEnv });
 
 		expect(() => cookies.validateConfig()).toThrowError(/COOKIE_DOMAIN must be configured/);
@@ -256,15 +262,9 @@ describe("CookieModule — sameSite / secure matrix (B25)", () => {
 
 	it.each([
 		["true", "none"],
-		["TRUE", "none"],
-		["  True  ", "none"],
 		["1", "none"],
-		["yes", "none"],
-		["on", "none"],
 		["false", "lax"],
 		["0", "lax"],
-		["off", "lax"],
-		["no", "lax"],
 	])("COOKIE_CROSS_SITE=%s resolves to sameSite=%s", async (raw, expected) => {
 		const cookies = await loadCookieModule({
 			NODE_ENV: "production",
@@ -273,5 +273,17 @@ describe("CookieModule — sameSite / secure matrix (B25)", () => {
 		});
 
 		expect(cookies.getRefreshTokenOptions().sameSite).toBe(expected);
+	});
+
+	// Strict, case-sensitive dialect shared with @repo/redis's REDIS_CLUSTER_MODE (B41): only
+	// "true"/"false"/"1"/"0" are accepted, so these previously-lenient spellings now reject.
+	it.each(["TRUE", "  True  ", "yes", "on", "off", "no"])("COOKIE_CROSS_SITE=%s is rejected", async (raw) => {
+		const cookies = await loadCookieModule({
+			NODE_ENV: "production",
+			COOKIE_DOMAIN: ".example.com",
+			COOKIE_CROSS_SITE: raw,
+		});
+
+		expect(() => cookies.getRefreshTokenOptions()).toThrowError(/COOKIE_CROSS_SITE must be a boolean/);
 	});
 });

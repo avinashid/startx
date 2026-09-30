@@ -17,7 +17,10 @@ export const ServerConfig = defineEnv({
 	MAX_UPLOAD_FIELDS: z.coerce.number().positive().default(20),
 	RATE_LIMIT_WINDOW_MS: z.coerce.number().positive().default(60_000),
 	RATE_LIMIT_MAX: z.coerce.number().positive().default(100),
-	AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().positive().default(15 * 60_000),
+	AUTH_RATE_LIMIT_WINDOW_MS: z.coerce
+		.number()
+		.positive()
+		.default(15 * 60_000),
 	AUTH_RATE_LIMIT_MAX: z.coerce.number().positive().default(10),
 	/**
 	 * Express `trust proxy`: `true` | `false` | a hop count | `loopback` | `uniquelocal` | an
@@ -32,7 +35,7 @@ export const ServerConfig = defineEnv({
 	TRUST_PROXY: z
 		.string()
 		.default("loopback")
-		.transform(raw => {
+		.transform((raw) => {
 			const value = raw.trim();
 			if (value === "true") return true;
 			if (value === "false") return false;
@@ -51,7 +54,7 @@ export const STORAGE_ROOT = path.resolve(ENV.FILE_STORAGE_PATH);
 
 if (!path.isAbsolute(ENV.FILE_STORAGE_PATH)) {
 	logger.warn(
-		`FILE_STORAGE_PATH="${ENV.FILE_STORAGE_PATH}" is relative and was resolved against the working directory to "${STORAGE_ROOT}". Set an absolute path so uploads do not move with it.`
+		`FILE_STORAGE_PATH="${ENV.FILE_STORAGE_PATH}" is relative and was resolved against the working directory to "${STORAGE_ROOT}". Set an absolute path so uploads do not move with it.`,
 	);
 }
 

@@ -19,17 +19,17 @@ export class IEvent<T extends Record<string, unknown>> {
 
 	off<K extends keyof T>(event: K, handler: (payload: T[K]) => void) {
 		if (this.listeners[event]) {
-			this.listeners[event] = this.listeners[event].filter(fn => fn !== handler);
+			this.listeners[event] = this.listeners[event].filter((fn) => fn !== handler);
 		}
 		if (this.onceListeners[event]) {
-			this.onceListeners[event] = this.onceListeners[event].filter(fn => fn !== handler);
+			this.onceListeners[event] = this.onceListeners[event].filter((fn) => fn !== handler);
 		}
 	}
 
 	onEvery(handler: (e: IEventWithPayload<T>) => void) {
 		this.everyListeners.push(handler);
 		return () => {
-			this.everyListeners = this.everyListeners.filter(h => h !== handler);
+			this.everyListeners = this.everyListeners.filter((h) => h !== handler);
 		};
 	}
 

@@ -35,7 +35,7 @@ export class RedisUserSession extends IUserSession {
 						...data.user,
 					},
 				},
-				this.type.sessionDuration
+				this.type.sessionDuration,
 			);
 		}
 	}
@@ -66,7 +66,7 @@ export class RedisUserSession extends IUserSession {
 
 		const sessions = (await this.sessionIndexStore.get(key)) ?? [];
 
-		const filtered = sessions.filter(id => id !== sessionId);
+		const filtered = sessions.filter((id) => id !== sessionId);
 
 		if (filtered.length === 0) {
 			await this.sessionIndexStore.del(key);

@@ -25,19 +25,19 @@ export type ApiControl<Schema extends RawSchema> = {
 	refetch: <K extends QueryEntryKeys<Schema>>(key: K, input?: ControlOptions<Schema[K]>) => Promise<void>;
 	getData: <K extends QueryEntryKeys<Schema>>(
 		key: K,
-		input?: ControlOptions<Schema[K]>
+		input?: ControlOptions<Schema[K]>,
 	) => ResolvedData<Schema[K]> | undefined;
 	setData: <K extends QueryEntryKeys<Schema>>(
 		key: K,
 		dataOrUpdater: Updater<ResolvedData<Schema[K]> | undefined, ResolvedData<Schema[K]> | undefined>,
-		input?: ControlOptions<Schema[K]>
+		input?: ControlOptions<Schema[K]>,
 	) => ResolvedData<Schema[K]> | undefined;
 	remove: <K extends QueryEntryKeys<Schema>>(key: K, input?: ControlOptions<Schema[K]>) => void;
 	reset: <K extends QueryEntryKeys<Schema>>(key: K, input?: ControlOptions<Schema[K]>) => Promise<void>;
 	cancel: <K extends QueryEntryKeys<Schema>>(key?: K, input?: ControlOptions<Schema[K]>) => Promise<void>;
 	mutate: <K extends MutationEntryKeys<Schema>>(
 		key: K,
-		variables?: MutationVariables<Schema[K]>
+		variables?: MutationVariables<Schema[K]>,
 	) => Promise<ExtractData<Schema[K]>>;
 	getQueryKey: <K extends QueryEntryKeys<Schema>>(key: K, input?: ControlOptions<Schema[K]>) => QueryKey<string>;
 	queryKeys: ReturnType<typeof createQueryKeysProxy<Schema>>;
@@ -58,7 +58,7 @@ export function useApiControl<Schema extends RawSchema>(schema: Schema, axiosCli
 
 		const getQueryKey = <K extends QueryEntryKeys<Schema>>(
 			key: K,
-			input?: ControlOptions<Schema[K]>
+			input?: ControlOptions<Schema[K]>,
 		): QueryKey<string> => {
 			const factory = proxy[key] as unknown as (input?: { params?: unknown; query?: unknown }) => QueryKey<string>;
 			return factory({ params: (input as { params?: unknown } | undefined)?.params, query: resolveQuery(key, input) });
@@ -89,7 +89,7 @@ export function useApiControl<Schema extends RawSchema>(schema: Schema, axiosCli
 					axiosClient,
 					proxy,
 					queryClient,
-					variables
+					variables,
 				);
 			},
 

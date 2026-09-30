@@ -49,7 +49,7 @@ class AxiosClient extends IAxiosClient {
 
 	setupInterceptors(): void {
 		this.privateClient.interceptors.response.use(
-			response => response,
+			(response) => response,
 			async (error: AxiosError) => {
 				const originalRequest = error.config as RetryableRequest | undefined;
 
@@ -77,7 +77,7 @@ class AxiosClient extends IAxiosClient {
 				}
 
 				throw error;
-			}
+			},
 		);
 	}
 }

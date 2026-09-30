@@ -27,9 +27,11 @@ export class InitCommand {
 
 	private static async run(projectName: string | undefined, options: InitOptions) {
 		const packageList = await CliUtils.getPackageList();
-		const availableApps = packageList.filter(pkg => pkg.type === "apps" && pkg.packageJson?.startx?.mode !== "silent");
+		const availableApps = packageList.filter(
+			(pkg) => pkg.type === "apps" && pkg.packageJson?.startx?.mode !== "silent",
+		);
 		const prefs = await this.getPrefs({ projectName, options, projects: availableApps });
-		const nonAppPackages = packageList.filter(pkg => pkg.type !== "apps");
+		const nonAppPackages = packageList.filter((pkg) => pkg.type !== "apps");
 
 		await this.checkTargetDirectory(prefs.directory.workspace, options.force === true);
 
@@ -54,7 +56,7 @@ export class InitCommand {
 		// Installing Apps
 		const allSelectedPackages = [...packagePrefs.selectedPackages, ...prefs.selectedApps];
 		await Promise.all(
-			allSelectedPackages.map(async pkg => {
+			allSelectedPackages.map(async (pkg) => {
 				const appDeps: Record<string, string> = {};
 				const tags = new Set<TAGS>(packagePrefs.gTags);
 
@@ -66,15 +68,15 @@ export class InitCommand {
 					tags.add("runnable");
 
 					packagePrefs.selectedPackages
-						.filter(depPkg => {
+						.filter((depPkg) => {
 							if (depPkg.type !== "packages") return false;
 							if (depPkg.packageJson?.startx?.mode === "standalone") return false;
-							const sharesTags = depPkg.packageJson?.startx?.iTags?.every(tag =>
-								pkg.packageJson?.startx?.gTags?.includes(tag)
+							const sharesTags = depPkg.packageJson?.startx?.iTags?.every((tag) =>
+								pkg.packageJson?.startx?.gTags?.includes(tag),
 							);
 							return sharesTags;
 						})
-						.forEach(depPkg => {
+						.forEach((depPkg) => {
 							const depName = depPkg.packageJson?.name || depPkg.name;
 							appDeps[depName] = "workspace:^";
 						});
@@ -86,7 +88,7 @@ export class InitCommand {
 					tags: Array.from(tags),
 					dependencies: appDeps,
 				});
-			})
+			}),
 		);
 	}
 
@@ -116,7 +118,7 @@ export class InitCommand {
 
 		const selectedAppNames = await CommonInquirer.choose({
 			message: "Select apps to install",
-			options: props.projects.map(pkg => pkg.name),
+			options: props.projects.map((pkg) => pkg.name),
 			includeAllOption: true,
 			mode: "multiple",
 			required: true,
@@ -125,36 +127,38 @@ export class InitCommand {
 		return {
 			projectName,
 			directory: { workspace, template: directory.template },
-			selectedApps: props.projects.filter(pkg => selectedAppNames.includes(pkg.name)),
+			selectedApps: props.projects.filter((pkg) => selectedAppNames.includes(pkg.name)),
 		};
 	}
 
 	private static async getConfigPrefs(props: { packages: PackageItem[]; selectedApps: PackageItem[] }) {
-		const gTags = new Set<TAGS>(["common"]);
+		const gTags = new Set<TAGS>(["common", "node"]);
 		const configs = new Map<string, PackageItem>();
 		// Selected apps globals tags and dependencies resolver
-		this.getGlobalTags({ pkgs: props.selectedApps }).forEach(tag => gTags.add(tag));
+		this.getGlobalTags({ pkgs: props.selectedApps }).forEach((tag) => gTags.add(tag));
 
 		this.getPackageDeps({
 			allPkgs: props.packages,
 			pkgs: props.selectedApps,
-		}).forEach(pkg => configs.set(pkg.name, pkg));
+		}).forEach((pkg) => configs.set(pkg.name, pkg));
 
-		const availableConfigs = props.packages.filter(pkg => {
+		const availableConfigs = props.packages.filter((pkg) => {
 			if (pkg.type !== "configs") return false;
 			if (pkg.packageJson?.startx?.mode === "silent") return false;
 			if (configs.has(pkg.name)) return false;
-			return pkg.packageJson?.startx?.iTags?.every(t => gTags.has(t)) ?? true;
+			return pkg.packageJson?.startx?.iTags?.every((t) => gTags.has(t)) ?? true;
 		});
 		if (availableConfigs.length > 0) {
 			const rawSelectedConfigs = await CommonInquirer.choose({
 				message: "Select configs to install",
-				options: availableConfigs.map(pkg => pkg.name),
+				options: availableConfigs.map((pkg) => pkg.name),
 				includeAllOption: true,
 				mode: "multiple",
 				required: false,
 			});
-			availableConfigs.filter(pkg => rawSelectedConfigs.includes(pkg.name)).forEach(pkg => configs.set(pkg.name, pkg));
+			availableConfigs
+				.filter((pkg) => rawSelectedConfigs.includes(pkg.name))
+				.forEach((pkg) => configs.set(pkg.name, pkg));
 		}
 
 		if (gTags.has("node")) {
@@ -177,10 +181,10 @@ export class InitCommand {
 		this.getPackageDeps({
 			allPkgs: props.packages,
 			pkgs: Array.from(configs.values()),
-		}).forEach(pkg => configs.set(pkg.name, pkg));
+		}).forEach((pkg) => configs.set(pkg.name, pkg));
 
 		// Adding global tags
-		this.getGlobalTags({ pkgs: Array.from(configs.values()) }).forEach(tag => gTags.add(tag));
+		this.getGlobalTags({ pkgs: Array.from(configs.values()) }).forEach((tag) => gTags.add(tag));
 
 		return {
 			gTags: Array.from(gTags),
@@ -194,35 +198,35 @@ export class InitCommand {
 		selectedPackages: PackageItem[];
 	}) {
 		const gTags = new Set<TAGS>(props.tags);
-		const packages = new Map<string, PackageItem>(props.selectedPackages.map(pkg => [pkg.name, pkg]));
-		const availablePackages = props.packages.filter(pkg => {
+		const packages = new Map<string, PackageItem>(props.selectedPackages.map((pkg) => [pkg.name, pkg]));
+		const availablePackages = props.packages.filter((pkg) => {
 			if (pkg.type !== "packages") return false;
 			if (pkg.packageJson?.startx?.mode === "silent") return false;
 			if (packages.has(pkg.name)) return false;
-			return pkg.packageJson?.startx?.iTags?.every(t => gTags.has(t)) ?? false;
+			return pkg.packageJson?.startx?.iTags?.every((t) => gTags.has(t)) ?? false;
 		});
 		if (availablePackages.length > 0) {
 			const rawSelectedPackages = await CommonInquirer.choose({
 				message: "Select packages to install",
-				options: availablePackages.map(pkg => pkg.name),
+				options: availablePackages.map((pkg) => pkg.name),
 				includeAllOption: true,
 				mode: "multiple",
 				required: false,
 			});
 
 			availablePackages
-				.filter(pkg => rawSelectedPackages.includes(pkg.name))
-				.forEach(pkg => packages.set(pkg.name, pkg));
+				.filter((pkg) => rawSelectedPackages.includes(pkg.name))
+				.forEach((pkg) => packages.set(pkg.name, pkg));
 		}
 
 		this.getPackageDeps({
 			allPkgs: props.packages,
 			pkgs: Array.from(packages.values()),
-		}).forEach(pkg => packages.set(pkg.name, pkg));
+		}).forEach((pkg) => packages.set(pkg.name, pkg));
 
 		this.getGlobalTags({
 			pkgs: Array.from(packages.values()),
-		}).forEach(tag => gTags.add(tag));
+		}).forEach((tag) => gTags.add(tag));
 
 		return {
 			gTags: Array.from(gTags),
@@ -304,7 +308,7 @@ export class InitCommand {
 		await this.copyValidatedFilesFromFolder(
 			props.dir.template,
 			props.dir.workspace,
-			new Set(["root", ...props.tags] as TAGS[])
+			new Set(["root", ...props.tags] as TAGS[]),
 		);
 		await this.writeVscodeSettings({
 			workspace: props.dir.workspace,
@@ -314,11 +318,17 @@ export class InitCommand {
 
 	private static async writeVscodeSettings(props: { workspace: string; tags: TAGS[] }) {
 		const usesBiome = props.tags.includes("biome");
+		const usesPrettier = props.tags.includes("prettier");
+		const usesFormatter = usesBiome || usesPrettier;
 		const vscodeDir = path.join(props.workspace, ".vscode");
 
 		const settings: Record<string, unknown> = {
-			"editor.formatOnSave": true,
-			"editor.defaultFormatter": usesBiome ? "biomejs.biome" : "esbenp.prettier-vscode",
+			...(usesFormatter
+				? {
+						"editor.formatOnSave": true,
+						"editor.defaultFormatter": usesBiome ? "biomejs.biome" : "esbenp.prettier-vscode",
+					}
+				: {}),
 			"editor.codeActionsOnSave": {
 				...(usesBiome
 					? {
@@ -329,11 +339,14 @@ export class InitCommand {
 				"source.fixAll.eslint": "explicit",
 				"source.fixAll": "explicit",
 			},
-			"eslint.workingDirectories": [{ "mode": "auto" }],
+			"eslint.workingDirectories": [{ mode: "auto" }],
 		};
 
 		const extensions = {
-			recommendations: ["dbaeumer.vscode-eslint", ...(usesBiome ? ["biomejs.biome"] : ["esbenp.prettier-vscode"])],
+			recommendations: [
+				"dbaeumer.vscode-eslint",
+				...(usesBiome ? ["biomejs.biome"] : usesPrettier ? ["esbenp.prettier-vscode"] : []),
+			],
 		};
 
 		await Promise.all([
@@ -422,14 +435,27 @@ export class InitCommand {
 					os.homedir(),
 					os.tmpdir(),
 					process.cwd(),
-					...["etc", "usr", "var", "bin", "sbin", "lib", "opt", "boot", "dev", "proc", "sys", "root", "home", "Users"].map(
-						dir => path.join(path.parse(resolved).root, dir)
-					),
+					...[
+						"etc",
+						"usr",
+						"var",
+						"bin",
+						"sbin",
+						"lib",
+						"opt",
+						"boot",
+						"dev",
+						"proc",
+						"sys",
+						"root",
+						"home",
+						"Users",
+					].map((dir) => path.join(path.parse(resolved).root, dir)),
 					...["Documents", "Desktop", "Downloads", "Pictures", "Music", "Movies", "Videos", "Public", "Library"].map(
-						dir => path.join(os.homedir(), dir)
+						(dir) => path.join(os.homedir(), dir),
 					),
-				].map(realPath)
-			)
+				].map(realPath),
+			),
 		);
 
 		if (exact.has(resolved)) {
@@ -458,15 +484,13 @@ export class InitCommand {
 	private static getPackageDeps(props: { pkgs: PackageItem[]; allPkgs: PackageItem[] }) {
 		// Full BFS closure (shared with `startx package add`), then drop the seeds themselves
 		// so callers keep getting only the newly required packages back.
-		const seeded = new Set(props.pkgs.map(pkg => pkg.name));
-		return resolvePackageClosure({ packages: props.allPkgs, seeds: props.pkgs }).filter(
-			pkg => !seeded.has(pkg.name)
-		);
+		const seeded = new Set(props.pkgs.map((pkg) => pkg.name));
+		return resolvePackageClosure({ packages: props.allPkgs, seeds: props.pkgs }).filter((pkg) => !seeded.has(pkg.name));
 	}
 	private static getGlobalTags(props: { pkgs: PackageItem[]; gTags?: TAGS[] }) {
 		const tags = new Set<TAGS>(props.gTags || []);
-		props.pkgs.forEach(pkg => {
-			pkg.packageJson?.startx?.gTags?.forEach(tag => tags.add(tag));
+		props.pkgs.forEach((pkg) => {
+			pkg.packageJson?.startx?.gTags?.forEach((tag) => tags.add(tag));
 		});
 		return Array.from(tags);
 	}
@@ -474,7 +498,7 @@ export class InitCommand {
 		const files = await fsTool.listFiles({ dir: source }).catch(() => []);
 		for (const file of files) {
 			const checked = FileCheck[file];
-			if (checked && !checked.tags.every(tag => tags.has(tag))) continue;
+			if (checked && !checked.tags.every((tag) => tags.has(tag))) continue;
 			const destFileName = file === "_gitignore" ? ".gitignore" : file;
 			try {
 				await fsTool.copyFile({

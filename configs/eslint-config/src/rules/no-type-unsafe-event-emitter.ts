@@ -1,14 +1,14 @@
-import { AST_NODE_TYPES, ESLintUtils } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES, ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoTypeUnsafeEventEmitterRule = ESLintUtils.RuleCreator.withoutDocs({
-	name: 'no-type-unsafe-event-emitter',
+	name: "no-type-unsafe-event-emitter",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
-			description: 'Disallow extending from `EventEmitter`, which is not type-safe.',
+			description: "Disallow extending from `EventEmitter`, which is not type-safe.",
 		},
 		messages: {
-			noExtendsEventEmitter: 'Extend from the type-safe `TypedEmitter` class instead.',
+			noExtendsEventEmitter: "Extend from the type-safe `TypedEmitter` class instead.",
 		},
 		schema: [],
 	},
@@ -19,12 +19,12 @@ export const NoTypeUnsafeEventEmitterRule = ESLintUtils.RuleCreator.withoutDocs(
 				if (
 					node.superClass &&
 					node.superClass.type === AST_NODE_TYPES.Identifier &&
-					node.superClass.name === 'EventEmitter' &&
-					node.id?.name !== 'TypedEmitter'
+					node.superClass.name === "EventEmitter" &&
+					node.id?.name !== "TypedEmitter"
 				) {
 					context.report({
 						node: node.superClass,
-						messageId: 'noExtendsEventEmitter',
+						messageId: "noExtendsEventEmitter",
 					});
 				}
 			},

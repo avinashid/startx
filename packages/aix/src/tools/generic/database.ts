@@ -50,7 +50,7 @@ export const DatabaseTools: ITool[] = [
 					ORDER BY table_schema, table_name;
 				`)) as { rows: Array<{ table_schema: string; table_name: string }> };
 
-				const tables = result.rows.map(row => ({
+				const tables = result.rows.map((row) => ({
 					schema: row.table_schema,
 					table_name: row.table_name,
 				}));
@@ -114,12 +114,12 @@ export const DatabaseTools: ITool[] = [
 			sql: z
 				.string()
 				.describe(
-					"The SQL query. Use {{expression}} to evaluate JS and safely inject values via parameterized queries."
+					"The SQL query. Use {{expression}} to evaluate JS and safely inject values via parameterized queries.",
 				),
 			isCompleted: z
 				.boolean()
 				.describe(
-					"Set to true if this operation fully resolves the user's request (must return formatted Markdown). Set to false if you just need to extract data for your own further reasoning."
+					"Set to true if this operation fully resolves the user's request (must return formatted Markdown). Set to false if you just need to extract data for your own further reasoning.",
 				),
 		}),
 		run: async (props, internal) => {
@@ -238,7 +238,7 @@ export const DatabaseTools: ITool[] = [
 									columns,
 								},
 								null,
-								2
+								2,
 							),
 						},
 						{
@@ -266,7 +266,7 @@ export const DatabaseTools: ITool[] = [
 								columns,
 							},
 							null,
-							2
+							2,
 						),
 					},
 				];

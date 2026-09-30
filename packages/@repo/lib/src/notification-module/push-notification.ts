@@ -40,9 +40,7 @@ export class PushNotificationManager {
 			let credential: firebaseAdmin.credential.Credential;
 
 			if (options.type === "file") {
-				credential = firebaseAdmin.credential.cert(
-					path.join(__dirname(), credentials.FIREBASE_KEY_PATH)
-				);
+				credential = firebaseAdmin.credential.cert(path.join(__dirname(), credentials.FIREBASE_KEY_PATH));
 			} else if (options.type === "env") {
 				credential = firebaseAdmin.credential.cert({
 					projectId: credentials.FIREBASE_PROJECT_ID,
@@ -67,7 +65,7 @@ export class PushNotificationManager {
 			return;
 		}
 
-		const formattedPayload = payload.map(item => {
+		const formattedPayload = payload.map((item) => {
 			const data: Record<string, string> = {};
 
 			for (const key in item.data) {

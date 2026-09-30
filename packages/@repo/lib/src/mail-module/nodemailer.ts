@@ -60,7 +60,7 @@ class SMTPMailService {
 			html?: string;
 			attachments?: Array<{ filename: string; url: string }>;
 		},
-		customConfig?: SMTPConfig
+		customConfig?: SMTPConfig,
 	) {
 		const config = customConfig || defineEnv(credentials);
 		const transporter = this.getTransporter(config);
@@ -71,7 +71,7 @@ class SMTPMailService {
 			subject: props.subject,
 			text: props.text,
 			html: props.html,
-			attachments: props.attachments?.map(attachment => ({ filename: attachment.filename, path: attachment.url })),
+			attachments: props.attachments?.map((attachment) => ({ filename: attachment.filename, path: attachment.url })),
 		};
 
 		try {

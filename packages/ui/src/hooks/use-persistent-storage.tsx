@@ -1,5 +1,5 @@
-'use client';
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
+"use client";
+import { useState, useEffect, type Dispatch, type SetStateAction } from "react";
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
 	// Retrieve stored value from localStorage, or use initialValue if none is found
@@ -10,7 +10,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<S
 			try {
 				return JSON.parse(storedValue) as T;
 			} catch (error) {
-				console.error('Error parsing stored value:', error);
+				console.error("Error parsing stored value:", error);
 			}
 		}
 		return initialValue;
@@ -25,10 +25,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<S
 	return [value, setValue];
 }
 
-export function useSessionStorage<T>(
-	key: string,
-	initialValue: T,
-): [T, Dispatch<SetStateAction<T>>] {
+export function useSessionStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
 	// Retrieve stored value from localStorage, or use initialValue if none is found
 	const getStoredValue = (): T => {
 		const storedValue = sessionStorage.getItem(key);
@@ -36,7 +33,7 @@ export function useSessionStorage<T>(
 			try {
 				return JSON.parse(storedValue) as T;
 			} catch (error) {
-				console.error('Error parsing stored value:', error);
+				console.error("Error parsing stored value:", error);
 			}
 		}
 		return initialValue;

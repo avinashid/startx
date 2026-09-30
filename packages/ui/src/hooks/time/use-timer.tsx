@@ -26,7 +26,7 @@ export function useTimer(initialSeconds: number): TimerHook {
 		}
 
 		timerRef.current = setTimeout(() => {
-			setCounter(prev => (prev > 0 ? prev - 1 : 0));
+			setCounter((prev) => (prev > 0 ? prev - 1 : 0));
 		}, 1000);
 	};
 

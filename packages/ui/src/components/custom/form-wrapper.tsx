@@ -72,9 +72,9 @@ export const FormSelectField = <
 	}): Array<SelectOption | RelationSelectOption> => {
 		if (!defaultValue) return [...options];
 
-		const valueExists = options.some(opt => {
+		const valueExists = options.some((opt) => {
 			if ("options" in opt) {
-				return opt.options.some(nestedOpt => nestedOpt.value === defaultValue);
+				return opt.options.some((nestedOpt) => nestedOpt.value === defaultValue);
 			}
 			return opt.value === defaultValue;
 		});
@@ -96,7 +96,7 @@ export const FormSelectField = <
 					<FieldContent>
 						<Select
 							disabled={disabled}
-							onValueChange={value => {
+							onValueChange={(value) => {
 								field.onChange(value);
 								onChange?.(value);
 							}}
@@ -106,12 +106,12 @@ export const FormSelectField = <
 								<SelectValue placeholder={placeholder ?? "Select"} />
 							</SelectTrigger>
 							<SelectContent>
-								{transformOptions({ options, defaultValue: field.value }).map(option => {
+								{transformOptions({ options, defaultValue: field.value }).map((option) => {
 									if ("options" in option) {
 										return (
 											<SelectGroup key={option.label}>
 												<SelectLabel>{option.label}</SelectLabel>
-												{option.options.map(option => (
+												{option.options.map((option) => (
 													<SelectItem key={option.value} value={option.value}>
 														{option.label}
 													</SelectItem>
@@ -142,7 +142,7 @@ export const FormTextField = <
 	props: Omit<
 		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
-	>
+	>,
 ) => {
 	const { label, description, control, name, ...rest } = props;
 
@@ -174,7 +174,7 @@ export const FormTextAreaField = <
 			React.TextareaHTMLAttributes<HTMLTextAreaElement> &
 			React.RefAttributes<HTMLTextAreaElement>,
 		"render"
-	>
+	>,
 ) => {
 	const { label, description, control, name, ...rest } = props;
 
@@ -203,7 +203,7 @@ export const FormNumberField = <
 	props: Omit<
 		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
-	>
+	>,
 ) => {
 	const { label, description, control, name, ...rest } = props;
 
@@ -219,7 +219,7 @@ export const FormNumberField = <
 							inputMode="numeric"
 							aria-invalid={!!fieldState.error}
 							{...field}
-							onChange={e => {
+							onChange={(e) => {
 								if (!isNaN(Number(e.currentTarget.value))) field.onChange(Number(e.currentTarget.value));
 							}}
 							{...rest}
@@ -296,11 +296,11 @@ export function FormWrapper<T extends FieldValues>(props: FormWrapperProps<T>) {
 		<Form {...props.formData}>
 			<form
 				className={cn("flex flex-col gap-4", props.className)}
-				onSubmit={async e => {
+				onSubmit={async (e) => {
 					e.preventDefault();
 					e.stopPropagation();
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					await props.formData.handleSubmit(data => props.onSubmit(data))();
+					await props.formData.handleSubmit((data) => props.onSubmit(data))();
 				}}
 			>
 				{props.children}
@@ -316,7 +316,7 @@ export const FormDefaultDateField = <
 	props: Omit<
 		SimpleFormFieldProps & ControllerProps<TFieldValues, TName> & InputProps & React.RefAttributes<HTMLInputElement>,
 		"render"
-	>
+	>,
 ) => {
 	const { label, description, control, name, ...rest } = props;
 
@@ -333,7 +333,7 @@ export const FormDefaultDateField = <
 							{...field}
 							{...rest}
 							value={field.value || ""}
-							onChange={e => field.onChange(e.target.value)}
+							onChange={(e) => field.onChange(e.target.value)}
 							type="date"
 							max="9999-12-31"
 						/>
@@ -386,7 +386,7 @@ export function FormMultiSelectField<
 				const selected: string[] = field.value ?? [];
 
 				const toggleOption = (value: string) => {
-					const newValue = selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value];
+					const newValue = selected.includes(value) ? selected.filter((v) => v !== value) : [...selected, value];
 					field.onChange(newValue);
 					onChange?.(newValue);
 				};
@@ -413,15 +413,15 @@ export function FormMultiSelectField<
 											<CommandInput placeholder="Search..." />
 											<CommandList>
 												<CommandEmpty>No options found.</CommandEmpty>
-												{options.map(opt =>
+												{options.map((opt) =>
 													"options" in opt ? (
 														<CommandGroup key={opt.label} heading={opt.label}>
-															{opt.options.map(nested => (
+															{opt.options.map((nested) => (
 																<CommandItem key={nested.value} onSelect={() => toggleOption(nested.value)}>
 																	<Check
 																		className={cn(
 																			"mr-2 h-4 w-4",
-																			selected.includes(nested.value) ? "opacity-100" : "opacity-0"
+																			selected.includes(nested.value) ? "opacity-100" : "opacity-0",
 																		)}
 																	/>
 																	{nested.label}
@@ -433,12 +433,12 @@ export function FormMultiSelectField<
 															<Check
 																className={cn(
 																	"mr-2 h-4 w-4",
-																	selected.includes(opt.value) ? "opacity-100" : "opacity-0"
+																	selected.includes(opt.value) ? "opacity-100" : "opacity-0",
 																)}
 															/>
 															{opt.label}
 														</CommandItem>
-													)
+													),
 												)}
 											</CommandList>
 										</Command>
@@ -450,9 +450,10 @@ export function FormMultiSelectField<
 
 						{showSelected && selected.length > 0 ? (
 							<div className="flex flex-wrap gap-2 mt-2">
-								{selected.map(value => {
+								{selected.map((value) => {
 									const badgeLabel =
-										options.flatMap(o => ("options" in o ? o.options : o)).find(o => o.value === value)?.label ?? value;
+										options.flatMap((o) => ("options" in o ? o.options : o)).find((o) => o.value === value)?.label ??
+										value;
 									return (
 										<Badge
 											onClick={() => !disabled && toggleOption(value)}

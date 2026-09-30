@@ -25,13 +25,13 @@ export abstract class IAxiosClient {
 	protected defaultInterceptors(): void {
 		if (!this.opts.includeDefaultInterceptors) return;
 		this.privateClient.interceptors.request.use(
-			config => {
+			(config) => {
 				if (this.accessToken) {
 					config.headers.Authorization = `Bearer ${this.accessToken}`;
 				}
 				return config;
 			},
-			(error: AxiosError) => Promise.reject(error)
+			(error: AxiosError) => Promise.reject(error),
 		);
 	}
 

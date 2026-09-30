@@ -1,5 +1,5 @@
 /* eslint-disable id-denylist */
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect } from "react";
 
 const useInterval = (callback: () => void, interval: number) => {
 	const intervalIdRef = useRef<number | null>(null);

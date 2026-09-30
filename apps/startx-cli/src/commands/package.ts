@@ -9,6 +9,7 @@ import z from "zod";
 
 import { DepCheck } from "../configs/deps";
 import { FileCheck } from "../configs/files";
+import { topLevelSources } from "../configs/scripts";
 import type { PnpmWorkspace, StartXPackageJson, TAGS } from "../types";
 import { CliUtils, type PackageItem } from "../utils/cli-utils";
 import { findPackageByName, resolvePackageClosure } from "../utils/closure";
@@ -39,7 +40,7 @@ export class PackageCommand {
 			new Command("list")
 				.alias("ls")
 				.description("List packages available from the StartX template.")
-				.action(PackageCommand.list.bind(PackageCommand))
+				.action(PackageCommand.list.bind(PackageCommand)),
 		)
 		.addCommand(
 			new Command("add")
@@ -49,7 +50,7 @@ export class PackageCommand {
 				.option("--eslint", "enable ESLint support for the added package")
 				.option("--no-eslint", "skip ESLint support for the added package")
 				.option("--no-install", "do not run the package manager after updating dependencies")
-				.action(PackageCommand.add.bind(PackageCommand))
+				.action(PackageCommand.add.bind(PackageCommand)),
 		)
 		.addCommand(
 			new Command("new")
@@ -60,7 +61,7 @@ export class PackageCommand {
 				.option("--eslint", "enable ESLint support for the new package")
 				.option("--no-eslint", "skip ESLint support for the new package")
 				.option("--no-install", "do not run the package manager after updating ESLint")
-				.action(PackageCommand.create.bind(PackageCommand))
+				.action(PackageCommand.create.bind(PackageCommand)),
 		);
 
 	private static async list() {
@@ -86,12 +87,12 @@ export class PackageCommand {
 
 	private static async add(packageName: string | undefined, options: PackageOptions) {
 		const packages = await CliUtils.getPackageList();
-		const availablePackages = packages.filter(pkg => pkg.packageJson?.startx?.mode !== "silent");
+		const availablePackages = packages.filter((pkg) => pkg.packageJson?.startx?.mode !== "silent");
 		const selectedName =
 			packageName ??
 			(await CommonInquirer.choose({
 				message: "Select app or package to add",
-				options: availablePackages.map(pkg => pkg.name),
+				options: availablePackages.map((pkg) => pkg.name),
 				mode: "single",
 				required: true,
 			}));
@@ -116,7 +117,7 @@ export class PackageCommand {
 
 		const directory = CliUtils.getDirectory();
 		const workspaceGlobs = await CliUtils.parsePnpmWorkspace({ dir: directory.workspace })
-			.then(workspace => workspace?.packages)
+			.then((workspace) => workspace?.packages)
 			.catch(() => undefined);
 		const eslintEnabled = await this.resolveEslintPreference(options);
 		const packagesToInstall = resolvePackageClosure({
@@ -171,7 +172,7 @@ export class PackageCommand {
 		const packageDir = this.assertInsideWorkspace(
 			directory.workspace,
 			options.dir ?? this.getDefaultPackagePath(name),
-			`package "${name}"`
+			`package "${name}"`,
 		);
 
 		if (await this.pathExists(packageDir)) {
@@ -208,10 +209,15 @@ export class PackageCommand {
 			});
 		}
 
+		const hasBiome = this.hasDependency(rootPackage, "@biomejs/biome");
+		const hasPrettier = this.hasDependency(rootPackage, "prettier");
+
 		await fs.mkdir(path.join(packageDir, "src"), { recursive: true });
 		await this.writeJson(
 			path.join(packageDir, "package.json"),
-			this.createPackageJson({ name, eslintEnabled, vitestEnabled })
+			FileHandler.stripGeneratorFields(
+				this.createPackageJson({ name, eslintEnabled, vitestEnabled, hasBiome, hasPrettier }),
+			),
 		);
 		await fs.writeFile(
 			path.join(packageDir, "tsconfig.json"),
@@ -226,22 +232,22 @@ export class PackageCommand {
 					include: ["src/**/*.ts"],
 				},
 				null,
-				2
-			)}\n`
+				2,
+			)}\n`,
 		);
 		await fs.writeFile(path.join(packageDir, "src", "index.ts"), "export {};\n");
 
 		if (eslintEnabled) {
 			await fs.writeFile(
 				path.join(packageDir, "eslint.config.ts"),
-				`import { baseConfig } from "eslint-config/base";\nimport { extend } from "eslint-config/extend";\n\nexport default extend(baseConfig);\n`
+				`import { baseConfig } from "eslint-config/base";\nimport { extend } from "eslint-config/extend";\n\nexport default extend(baseConfig);\n`,
 			);
 		}
 
 		if (vitestEnabled) {
 			await fs.writeFile(
 				path.join(packageDir, "vitest.config.ts"),
-				`import vitestConfig from "vitest-config/node";\n\nexport default vitestConfig;\n`
+				`import vitestConfig from "vitest-config/node";\n\nexport default vitestConfig;\n`,
 			);
 		}
 
@@ -295,7 +301,7 @@ export class PackageCommand {
 		if (this.hasDependency(rootPackage, "tsdown")) tags.add("tsdown");
 
 		for (const pkg of props.packages) {
-			pkg.packageJson?.startx?.gTags?.forEach(tag => tags.add(tag));
+			pkg.packageJson?.startx?.gTags?.forEach((tag) => tags.add(tag));
 		}
 
 		return Array.from(tags);
@@ -335,7 +341,7 @@ export class PackageCommand {
 		const destination = this.assertInsideWorkspace(
 			props.directory.workspace,
 			relativePath,
-			`package "${props.overrideName ?? props.pkg.name}"`
+			`package "${props.overrideName ?? props.pkg.name}"`,
 		);
 
 		if (await this.pathExists(path.join(destination, "package.json"))) {
@@ -385,7 +391,7 @@ export class PackageCommand {
 		const files = await fsTool.listFiles({ dir: source }).catch(() => []);
 		for (const file of files) {
 			const checked = FileCheck[file];
-			if (checked && !checked.tags.every(tag => tags.has(tag))) continue;
+			if (checked && !checked.tags.every((tag) => tags.has(tag))) continue;
 			if (file === "package.json") continue;
 
 			await fsTool.copyFile({
@@ -395,29 +401,37 @@ export class PackageCommand {
 		}
 	}
 
-	private static createPackageJson(props: { name: string; eslintEnabled: boolean; vitestEnabled: boolean }) {
+	private static createPackageJson(props: {
+		name: string;
+		eslintEnabled: boolean;
+		vitestEnabled: boolean;
+		hasBiome: boolean;
+		hasPrettier: boolean;
+	}) {
 		const scripts: Record<string, string> = {
 			typecheck: "tsc --noEmit",
 			clean: "rimraf dist .turbo",
 		};
+
+		if (props.hasBiome) {
+			scripts.format = "biome format --write .";
+			scripts["format:check"] = "biome ci .";
+		} else if (props.hasPrettier) {
+			scripts.format = `prettier --write src "${topLevelSources}" --no-error-on-unmatched-pattern`;
+			scripts["format:check"] = `prettier --check src "${topLevelSources}" --no-error-on-unmatched-pattern`;
+		}
 		const devDependencies: Record<string, string> = {
 			"typescript-config": "workspace:*",
 		};
-		const ignore: string[] = [];
-
 		if (props.eslintEnabled) {
 			scripts.lint = "eslint .";
 			scripts["lint:fix"] = "eslint . --fix";
 			devDependencies["eslint-config"] = "workspace:*";
-		} else {
-			ignore.push("eslint-config");
 		}
 
 		if (props.vitestEnabled) {
 			scripts.test = "vitest run";
 			devDependencies["vitest-config"] = "workspace:*";
-		} else {
-			ignore.push("vitest-config");
 		}
 
 		return {
@@ -427,11 +441,6 @@ export class PackageCommand {
 			scripts,
 			exports: "./src/index.ts",
 			devDependencies,
-			startx: {
-				iTags: ["node"],
-				requiredDevDeps: ["typescript-config"],
-				...(ignore.length > 0 ? { ignore } : {}),
-			},
 		};
 	}
 	private static async checkAndInstallMissingDeps(props: {
@@ -460,7 +469,7 @@ export class PackageCommand {
 		const missingWorkspace: string[] = [];
 
 		for (const [dep, config] of Object.entries(DepCheck)) {
-			if (!config.tags.every(tag => props.tags.includes(tag))) continue;
+			if (!config.tags.every((tag) => props.tags.includes(tag))) continue;
 			if (ignoredRootTools.has(dep)) continue;
 
 			if (config.version.startsWith("workspace:")) {
@@ -516,7 +525,10 @@ export class PackageCommand {
 		await this.writeJson(path.join(props.directory.workspace, "package.json"), rootPackage);
 
 		if (props.install !== false) {
-			await this.installRootDependencies(props.directory.workspace, changes.join(" and ") || "root package.json changed");
+			await this.installRootDependencies(
+				props.directory.workspace,
+				changes.join(" and ") || "root package.json changed",
+			);
 		}
 	}
 	private static ensureMinimumPackageManager(rootPackage: StartXPackageJson): boolean {
@@ -566,11 +578,8 @@ export class PackageCommand {
 		// No pnpm-workspace.yaml to read: fall back to the layout startx itself ships.
 		if (!workspaceGlobs || workspaceGlobs.length === 0) return bucket === "packages";
 
-		return workspaceGlobs.some(glob => {
-			const parts = glob
-				.replace(/^\.\//, "")
-				.split("/")
-				.filter(Boolean);
+		return workspaceGlobs.some((glob) => {
+			const parts = glob.replace(/^\.\//, "").split("/").filter(Boolean);
 			const head = parts[0];
 			if (head !== bucket && head !== "*" && head !== "**") return false;
 			return parts.includes("**") || parts.length >= 3;
@@ -614,8 +623,8 @@ export class PackageCommand {
 	private static hasDependency(packageJson: StartXPackageJson, dependency: string) {
 		return Boolean(
 			packageJson.dependencies?.[dependency] ||
-				packageJson.devDependencies?.[dependency] ||
-				packageJson.peerDependencies?.[dependency]
+			packageJson.devDependencies?.[dependency] ||
+			packageJson.peerDependencies?.[dependency],
 		);
 	}
 
@@ -645,7 +654,7 @@ export class PackageCommand {
 			});
 
 			child.on("error", reject);
-			child.on("close", code => {
+			child.on("close", (code) => {
 				if (code === 0) {
 					resolve();
 					return;
@@ -653,7 +662,7 @@ export class PackageCommand {
 
 				reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
 			});
-		}).catch(error => {
+		}).catch((error) => {
 			logger.warn(`Could not install dependencies automatically: ${error instanceof Error ? error.message : error}`);
 			logger.warn(`Run "${command} ${args.join(" ")}" manually in ${workspace}.`);
 		});
@@ -682,6 +691,7 @@ export class PackageCommand {
 
 		const deps = props.packageJson.dependencies as Record<string, string> | undefined;
 		const devDeps = props.packageJson.devDependencies as Record<string, string> | undefined;
+		const peerDeps = props.packageJson.peerDependencies as Record<string, string> | undefined;
 		const newEntries: Record<string, string> = {};
 		const newNamedEntries: Array<{ catalog: string; name: string; version: string }> = [];
 
@@ -704,7 +714,7 @@ export class PackageCommand {
 						} else {
 							logger.warn(
 								`No version found for ${name} in catalog "${catalogName}"; it stays as "${version}" and ` +
-									`pnpm install will fail. Add ${name} under catalogs.${catalogName} in pnpm-workspace.yaml.`
+									`pnpm install will fail. Add ${name} under catalogs.${catalogName} in pnpm-workspace.yaml.`,
 							);
 						}
 						continue;
@@ -722,7 +732,7 @@ export class PackageCommand {
 					// once a template has pinned `catalog:`, so the only honest action is to say so.
 					logger.warn(
 						`No catalog version found for ${name}; it stays as "catalog:" and pnpm install will fail. ` +
-							`Add ${name} to the catalog in pnpm-workspace.yaml.`
+							`Add ${name} to the catalog in pnpm-workspace.yaml.`,
 					);
 					continue;
 				}
@@ -734,6 +744,7 @@ export class PackageCommand {
 
 		processMap(deps);
 		processMap(devDeps);
+		processMap(peerDeps);
 
 		if (Object.keys(newEntries).length === 0 && newNamedEntries.length === 0) return;
 
@@ -758,7 +769,7 @@ export class PackageCommand {
 	}
 
 	private static async loadTemplateCatalogs(
-		templateDir: string
+		templateDir: string,
 	): Promise<{ catalog: Record<string, string>; catalogs: Record<string, Record<string, string>> }> {
 		const empty = { catalog: {}, catalogs: {} };
 		const file = path.join(templateDir, "pnpm-workspace.yaml");
@@ -777,7 +788,7 @@ export class PackageCommand {
 		} catch (error) {
 			logger.warn(
 				`Could not parse ${file}: ${error instanceof Error ? error.message : String(error)}. ` +
-					`Catalog versions will not be resolved.`
+					`Catalog versions will not be resolved.`,
 			);
 			return empty;
 		}
@@ -789,12 +800,12 @@ export class PackageCommand {
 		return {
 			catalog: asVersions(parsed.catalog),
 			catalogs: Object.fromEntries(
-				Object.entries(parsed.catalogs ?? {}).map(([name, group]) => [name, asVersions(group)])
+				Object.entries(parsed.catalogs ?? {}).map(([name, group]) => [name, asVersions(group)]),
 			),
 		};
 	}
 	private static async writeJson(file: string, content: object) {
-		await fs.writeFile(file, `${JSON.stringify(content, null, 2)}\n`);
+		await fs.writeFile(file, `${JSON.stringify(content, null, "\t")}\n`);
 	}
 
 	private static async pathExists(target: string) {

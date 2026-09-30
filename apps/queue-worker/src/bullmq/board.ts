@@ -13,7 +13,7 @@ serverAdapter.setBasePath("/");
 
 createBullBoard({
 	serverAdapter,
-	queues: queueList.map(queue => new BullMQAdapter(BullQueue.getQueue(queue))),
+	queues: queueList.map((queue) => new BullMQAdapter(BullQueue.getQueue(queue))),
 });
 const port = defineEnv({
 	BULL_BOARD_PORT: z.coerce.number().default(2866),

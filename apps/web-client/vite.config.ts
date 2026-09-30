@@ -17,7 +17,7 @@ export default defineConfig(() => {
 			acc[`import.meta.env.${key}`] = JSON.stringify(value);
 			return acc;
 		},
-		{} as Record<string, string>
+		{} as Record<string, string>,
 	);
 
 	return {

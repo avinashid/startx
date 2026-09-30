@@ -17,17 +17,17 @@ interface AuthActions {
 	reset(): void;
 }
 
-export const useAuthStore = create<AuthState & AuthActions>(set => ({
+export const useAuthStore = create<AuthState & AuthActions>((set) => ({
 	status: "loading",
 	user: null,
 	role: undefined,
 
-	updateStatus: status =>
+	updateStatus: (status) =>
 		set({
 			status,
 		}),
 
-	updateUser: user =>
+	updateUser: (user) =>
 		set({
 			user,
 			role: user?.role,

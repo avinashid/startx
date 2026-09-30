@@ -16,11 +16,7 @@ const ruleTester = new RuleTester({
 });
 
 ruleTester.run("no-json-parse-json-stringify", NoJsonParseJsonStringifyRule, {
-	valid: [
-		{ code: "structuredClone(foo)" },
-		{ code: "JSON.parse(foo)" },
-		{ code: "JSON.stringify(foo)" },
-	],
+	valid: [{ code: "structuredClone(foo)" }, { code: "JSON.parse(foo)" }, { code: "JSON.stringify(foo)" }],
 	invalid: [
 		{
 			code: "JSON.parse(JSON.stringify(foo))",

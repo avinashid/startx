@@ -1,10 +1,10 @@
 import type { SCRIPT } from "../types";
 
 /** Everything prettier can format that legitimately sits at the top level of a package. */
-const topLevelSources = "*.{ts,tsx,js,jsx,cjs,mjs,json,css,md,yaml,yml}";
+export const topLevelSources = "*.{ts,tsx,js,jsx,cjs,mjs,json,css,md,yaml,yml}";
 
 export const scripts: SCRIPT = {
-	"dev": [
+	dev: [
 		{
 			script: "turbo run dev",
 			tags: ["runnable", "root"],
@@ -42,7 +42,7 @@ export const scripts: SCRIPT = {
 			tags: ["backend", "node", "runnable", "express"],
 		},
 	],
-	"build": [
+	build: [
 		{
 			script: "turbo run build",
 			tags: ["runnable", "root"],
@@ -56,7 +56,7 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "node", "tsdown"],
 		},
 	],
-	"cli": [
+	cli: [
 		{
 			script: "turbo run cli -- ",
 			tags: ["runnable", "node", "cli", "root"],
@@ -66,7 +66,7 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "node", "cli", "commander"],
 		},
 	],
-	"start": [
+	start: [
 		{
 			script: "turbo run start",
 			tags: ["runnable", "root"],
@@ -80,7 +80,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "runnable"],
 		},
 	],
-	"lint": [
+	lint: [
 		{
 			script: "turbo run lint",
 			tags: ["node", "eslint", "root"],
@@ -100,7 +100,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "eslint"],
 		},
 	],
-	"clean": [
+	clean: [
 		{
 			script: "turbo run clean",
 			tags: ["root"],
@@ -190,7 +190,7 @@ export const scripts: SCRIPT = {
 			tags: ["drizzle", "db"],
 		},
 	],
-	"typecheck": [
+	typecheck: [
 		{
 			script: "turbo run typecheck",
 			tags: ["node", "root"],
@@ -204,7 +204,7 @@ export const scripts: SCRIPT = {
 			tags: ["node"],
 		},
 	],
-	"format": [
+	format: [
 		{
 			script: "turbo run format",
 			tags: ["node", "root"],
@@ -217,8 +217,8 @@ export const scripts: SCRIPT = {
 			// Turbo runs this inside the package, and prettier reads ignore files from the cwd
 			// only — a root `.prettierignore` never reaches it. Naming the source directory is
 			// what keeps `dist/`, `build/` and `coverage/` out.
-			"script": `prettier --write src "${topLevelSources}" --no-error-on-unmatched-pattern`,
-			"tags": ["node", "prettier"],
+			script: `prettier --write src "${topLevelSources}" --no-error-on-unmatched-pattern`,
+			tags: ["node", "prettier"],
 		},
 	],
 	"format:check": [
@@ -231,11 +231,11 @@ export const scripts: SCRIPT = {
 			tags: ["node", "biome", "prettier"],
 		},
 		{
-			"script": `prettier --check src "${topLevelSources}" --no-error-on-unmatched-pattern`,
-			"tags": ["node", "prettier"],
+			script: `prettier --check src "${topLevelSources}" --no-error-on-unmatched-pattern`,
+			tags: ["node", "prettier"],
 		},
 	],
-	"test": [
+	test: [
 		{
 			script: "turbo run test",
 			tags: ["node", "vitest", "root"],

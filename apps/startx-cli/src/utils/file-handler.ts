@@ -4,6 +4,25 @@ import { Constants } from "../constants";
 import type { StartXPackageJson, TAGS } from "../types";
 
 export class FileHandler {
+	// Metadata describing the generator rather than the workspace being generated. `startx` blocks
+	// are only ever read back from the template directory (CliUtils.getPackageList), never from a
+	// user's workspace; the rest identify startx itself and must not be inherited.
+	private static readonly generatorFields = [
+		"startx",
+		"author",
+		"license",
+		"keywords",
+		"repository",
+		"homepage",
+		"bugs",
+		"publishConfig",
+	] as const;
+
+	static stripGeneratorFields<T extends Record<string, unknown>>(packageJson: T): T {
+		for (const field of this.generatorFields) delete packageJson[field];
+		return packageJson;
+	}
+
 	private static objSorter(obj: Record<string, unknown>, sorter: string[] = []) {
 		const cleaned = Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== null && v !== undefined));
 
@@ -46,22 +65,23 @@ export class FileHandler {
 		const packageScript = Object.fromEntries(
 			Object.entries(scripts)
 				.map(([key, value]) => {
-					const script = value.find(e => e.tags.every(tag => tags.includes(tag)));
+					const script = value.find((e) => e.tags.every((tag) => tags.includes(tag)));
 					return script ? [key, script.script] : null;
 				})
-				.filter((v): v is [string, string] => v !== null)
+				.filter((v): v is [string, string] => v !== null),
 		);
 
 		const filterDeps = (deps?: Record<string, string>) =>
 			Object.fromEntries(
 				Object.entries(deps ?? {}).filter(([key]) => {
 					const selected = DepCheck[key];
-					return !selected || selected.tags.every(tag => tags.includes(tag));
-				})
+					return !selected || selected.tags.every((tag) => tags.includes(tag));
+				}),
 			);
 
 		const dependencies = filterDeps(props.app.dependencies as Record<string, string>);
 		const devDependencies = filterDeps(props.app.devDependencies as Record<string, string>);
+		const peerDependencies = filterDeps(props.app.peerDependencies as Record<string, string>);
 
 		// Removing all workspace dependencies
 		for (const [key, value] of Object.entries(dependencies)) {
@@ -87,12 +107,12 @@ export class FileHandler {
 		}
 
 		// Adding required dev & devDeps
-		props.app.startx?.requiredDevDeps?.forEach(e => (devDependencies[e] = "workspace:^"));
-		props.app.startx?.requiredDeps?.forEach(e => (dependencies[e] = "workspace:^"));
+		props.app.startx?.requiredDevDeps?.forEach((e) => (devDependencies[e] = "workspace:^"));
+		props.app.startx?.requiredDeps?.forEach((e) => (dependencies[e] = "workspace:^"));
 
 		// Adding rest
 		for (const [key, value] of Object.entries(DepCheck)) {
-			if (!value.tags.every(tag => tags.includes(tag))) continue;
+			if (!value.tags.every((tag) => tags.includes(tag))) continue;
 			if (isWorkspace && !value.tags.includes("root")) continue;
 			const isDev = value.isDevDependency;
 			if (isDev && !devDependencies[key]) {
@@ -108,9 +128,9 @@ export class FileHandler {
 			delete devDependencies[value];
 		}
 
-		// structuredClone so nested objects (exports, peerDependencies, bin …) are not aliased into
-		// the emitted package.json — a later mutation would otherwise poison the in-memory template
-		// for every package emitted afterwards in the same run.
+		// structuredClone so nested objects (exports, bin …) are not aliased into the emitted
+		// package.json — a later mutation would otherwise poison the in-memory template for every
+		// package emitted afterwards in the same run.
 		const packageJson: Record<string, unknown> = {
 			...structuredClone(props.app),
 			name: props.name || props.app.name,
@@ -118,26 +138,11 @@ export class FileHandler {
 			scripts: packageScript,
 			dependencies,
 			devDependencies,
+			...(props.app.peerDependencies ? { peerDependencies } : {}),
 			...workspaceAttr,
 		};
 
-		// Metadata describing the generator rather than the workspace being generated. `startx` blocks
-		// are only ever read back from the template directory (CliUtils.getPackageList), never from a
-		// user's workspace; the rest identify startx itself and must not be inherited.
-		const generatorFields = [
-			"startx",
-			"author",
-			"license",
-			"keywords",
-			"repository",
-			"homepage",
-			"bugs",
-			"publishConfig",
-		];
-
-		for (const field of generatorFields) {
-			delete packageJson[field];
-		}
+		this.stripGeneratorFields(packageJson);
 
 		// The template root package.json *is* the published `startx` package, so the workspace root is
 		// assembled from an allowlist: a field added to the template root later cannot leak silently.

@@ -4,7 +4,7 @@ import type { NextFunction, Request, Response } from "express";
 
 const SKIPPED_PREFIXES = ["/static", "/_next"];
 
-const shouldSkip = (path: string) => path === "/health" || SKIPPED_PREFIXES.some(prefix => path.startsWith(prefix));
+const shouldSkip = (path: string) => path === "/health" || SKIPPED_PREFIXES.some((prefix) => path.startsWith(prefix));
 
 const resolveIp = (req: Request) =>
 	req.ip || (req.headers["x-forwarded-for"] as string | undefined) || req.socket?.remoteAddress || "-";

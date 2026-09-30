@@ -41,10 +41,10 @@
 		},
 		"formatter": {
 			"jsxQuoteStyle": "double",
-			"quoteProperties": "preserve",
-			"trailingCommas": "es5",
+			"quoteProperties": "asNeeded",
+			"trailingCommas": "all",
 			"semicolons": "always",
-			"arrowParentheses": "asNeeded",
+			"arrowParentheses": "always",
 			"bracketSpacing": true,
 			"bracketSameLine": false,
 			"quoteStyle": "double",

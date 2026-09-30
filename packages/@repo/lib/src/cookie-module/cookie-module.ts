@@ -1,5 +1,5 @@
 import { Time } from "@repo/common/time";
-import { defineEnv, ENV } from "@repo/env";
+import { defineEnv, ENV, envBool } from "@repo/env";
 import type { CookieOptions } from "express";
 import z from "zod";
 
@@ -34,9 +34,6 @@ const COOKIE_TTL = {
 	production: Time.days(30).milliseconds,
 } as const;
 
-const TRUTHY = new Set(["1", "true", "yes", "on"]);
-const FALSY = new Set(["0", "false", "no", "off"]);
-
 function getRuntimeEnv(): RuntimeEnv {
 	switch (ENV.NODE_ENV) {
 		case "production":
@@ -56,7 +53,7 @@ function resolveCookieDomain(env: RuntimeEnv): string | undefined {
 	if (!credentials.COOKIE_DOMAIN) {
 		throw new Error(
 			`COOKIE_DOMAIN must be configured in staging/production environments (NODE_ENV=${ENV.NODE_ENV}). ` +
-				`Set it to the domain the refresh-token cookie should be scoped to, e.g. ".example.com".`
+				`Set it to the domain the refresh-token cookie should be scoped to, e.g. ".example.com".`,
 		);
 	}
 
@@ -74,17 +71,13 @@ function resolveCrossSite(): boolean {
 		return false;
 	}
 
-	const value = raw.trim().toLowerCase();
+	const result = envBool().safeParse(raw);
 
-	if (TRUTHY.has(value)) {
-		return true;
+	if (!result.success) {
+		throw new Error(`COOKIE_CROSS_SITE must be a boolean ("true", "false", "1", or "0"), received "${raw}"`);
 	}
 
-	if (FALSY.has(value)) {
-		return false;
-	}
-
-	throw new Error(`COOKIE_CROSS_SITE must be a boolean ("true" or "false"), received "${raw}"`);
+	return result.data;
 }
 
 /**

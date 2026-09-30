@@ -23,7 +23,7 @@ export class FormUtils {
 			if (value instanceof Blob || value instanceof File) {
 				formData.append(key, value);
 			} else if (value instanceof FileList || (Array.isArray(value) && value[0] instanceof File)) {
-				Array.from(value as File[]).forEach(file => formData.append(key, file));
+				Array.from(value as File[]).forEach((file) => formData.append(key, file));
 			} else if (typeof value === "string") {
 				formData.append(key, value);
 			} else {
@@ -99,7 +99,7 @@ export class FormatUtils {
 	static createLabels(e: string): string {
 		return e
 			.replaceAll("_", " ")
-			.replace(/\b\w/g, char => char.toUpperCase())
+			.replace(/\b\w/g, (char) => char.toUpperCase())
 			.trim();
 	}
 }

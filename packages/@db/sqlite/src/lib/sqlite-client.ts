@@ -76,7 +76,7 @@ export class SqliteModule {
 	insert(tableName: string, row: Record<string, any>): void {
 		const safeTable = this.escapeId(tableName);
 		const cols = Object.keys(row)
-			.map(c => this.escapeId(c))
+			.map((c) => this.escapeId(c))
 			.join(", ");
 		const placeholders = Object.keys(row)
 			.map(() => "?")
@@ -100,7 +100,7 @@ export class SqliteModule {
 	update(tableName: string, updates: Record<string, any>, where: string, params: any[] = []): void {
 		const safeTable = this.escapeId(tableName);
 		const setClause = Object.keys(updates)
-			.map(k => `${this.escapeId(k)} = ?`)
+			.map((k) => `${this.escapeId(k)} = ?`)
 			.join(", ");
 		const values = [...Object.values(updates), ...params];
 
@@ -118,7 +118,7 @@ export class SqliteModule {
 		const rows = this.db
 			.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';`)
 			.all() as Array<{ name: string }>;
-		return rows.map(r => r.name);
+		return rows.map((r) => r.name);
 	}
 
 	getTableSchema(tableName: string): string | string[] {
@@ -135,7 +135,7 @@ export class SqliteModule {
 		const rows = this.db.prepare(`PRAGMA table_info("${safeName}");`).all() as TableInfoRow[];
 
 		const header = ["cid", "name", "type", "notnull", "default_value", "primary_key"];
-		const content = rows.map(r => `${r.cid} ${r.name} ${r.type} ${!!r.notnull} ${r.dflt_value} ${!!r.pk}`);
+		const content = rows.map((r) => `${r.cid} ${r.name} ${r.type} ${!!r.notnull} ${r.dflt_value} ${!!r.pk}`);
 
 		return [header.join(" "), ...content].join("\n");
 	}

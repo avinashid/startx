@@ -26,9 +26,7 @@ export const NoUncaughtJsonParseRule = ESLintUtils.RuleCreator.withoutDocs({
 					return;
 				}
 
-				if (
-					sourceCode.getAncestors(node).find(node => node.type === AST_NODE_TYPES.TryStatement) !== undefined
-				) {
+				if (sourceCode.getAncestors(node).find((node) => node.type === AST_NODE_TYPES.TryStatement) !== undefined) {
 					return;
 				}
 

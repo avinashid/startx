@@ -6,7 +6,7 @@ const ExecutionNodeSchema = z.object({
 	instruction: z
 		.string()
 		.describe(
-			"Strict instruction. DO NOT hardcode/mock data. Reference injected dynamic variables (e.g., `vars.xyz`) directly in scripts/queries."
+			"Strict instruction. DO NOT hardcode/mock data. Reference injected dynamic variables (e.g., `vars.xyz`) directly in scripts/queries.",
 		),
 	schemaOnly: z
 		.boolean()
@@ -26,7 +26,7 @@ const PlannerSchema = z.object({
 	queryClassification: z
 		.enum(["direct_answer", "requires_tools", "unclear"])
 		.describe(
-			"Classify intent. Use 'direct_answer' for abstract/general queries. Use 'requires_tools' for actionable workflows."
+			"Classify intent. Use 'direct_answer' for abstract/general queries. Use 'requires_tools' for actionable workflows.",
 		),
 	intentSummary: z.string(),
 	directResponse: z

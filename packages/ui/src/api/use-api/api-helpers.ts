@@ -46,7 +46,7 @@ export class ApiHelper {
 
 		return {
 			success: false as const,
-			errors: result.error.issues.map(i => `${i.path.join(".")}: ${i.message}`),
+			errors: result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
 		};
 	}
 
@@ -102,7 +102,7 @@ export class ApiHelper {
 		input?: {
 			query?: Record<string, unknown>;
 			params?: Record<string, unknown>;
-		}
+		},
 	): QueryKey<IK> {
 		const keys: string[] = [key];
 

@@ -1,17 +1,16 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoInternalPackageImportRule = ESLintUtils.RuleCreator.withoutDocs({
 	name: "no-internal-package-import",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
-			description: 'Disallow imports from internal package paths (e.g. `/pkg/src/...`).',
+			description: "Disallow imports from internal package paths (e.g. `/pkg/src/...`).",
 		},
 		messages: {
-			noInternalPackageImport:
-				'Import from "{{ packageRoot }}", not from the internal `/src/` path.',
+			noInternalPackageImport: 'Import from "{{ packageRoot }}", not from the internal `/src/` path.',
 		},
-		fixable: 'code',
+		fixable: "code",
 		schema: [],
 	},
 	defaultOptions: [],
@@ -20,7 +19,7 @@ export const NoInternalPackageImportRule = ESLintUtils.RuleCreator.withoutDocs({
 
 		return {
 			ImportDeclaration(node) {
-				if (typeof node.source.type !== 'string') return;
+				if (typeof node.source.type !== "string") return;
 
 				const match = node.source.value.match(INTERNAL_IMPORT_REGEX);
 
@@ -30,7 +29,7 @@ export const NoInternalPackageImportRule = ESLintUtils.RuleCreator.withoutDocs({
 
 				context.report({
 					node: node.source,
-					messageId: 'noInternalPackageImport',
+					messageId: "noInternalPackageImport",
 					fix: (fixer) => fixer.replaceText(node.source, `"${packageRoot}"`),
 					data: { packageRoot },
 				});

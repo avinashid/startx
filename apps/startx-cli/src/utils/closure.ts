@@ -6,7 +6,7 @@ import type { PackageItem } from "./cli-utils";
  * `PackageItem.name` today, so the two can never disagree — revisit if that changes.
  */
 export const findPackageByName = (packages: PackageItem[], name: string) =>
-	packages.find(pkg => pkg.name === name || pkg.packageJson?.name === name);
+	packages.find((pkg) => pkg.name === name || pkg.packageJson?.name === name);
 
 /**
  * Breadth-first closure over `startx.requiredDeps` / `startx.requiredDevDeps`.

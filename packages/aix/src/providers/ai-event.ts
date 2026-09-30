@@ -8,13 +8,13 @@ export type AiEventType = {
 		args: any;
 	};
 	"tool.finish": ToolReturn;
-	"log": {
+	log: {
 		type: "info" | "warn" | "error";
 		message: string;
 		stack?: string;
 		meta?: Record<string, unknown>;
 	};
-	"token": {
+	token: {
 		input: number;
 		output: number;
 	};

@@ -34,4 +34,4 @@ export class ServerEvents {
 	}
 }
 
-serverBus.onEvery(e => logger.info(`${e.event}: ${e.payload}`));
+serverBus.onEvery((e) => logger.info(`${e.event}: ${e.payload}`));

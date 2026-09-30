@@ -16,16 +16,16 @@ export class RouterValidation {
 			page: vine
 				.number()
 				.positive()
-				.parse(e => (!e ? 1 : e))
+				.parse((e) => (!e ? 1 : e))
 				.optional(),
 			limit: vine
 				.number()
 				.positive()
-				.parse(e => (!e ? 10 : e))
+				.parse((e) => (!e ? 10 : e))
 				.optional(),
 			query: vine
 				.string()
-				.parse(e => (!e ? "" : e))
+				.parse((e) => (!e ? "" : e))
 				.optional(),
 		}),
 	};
@@ -38,7 +38,7 @@ export class RouterValidation {
 			} catch (err: unknown) {
 				if (err && typeof err === "object" && "messages" in err) {
 					const messages = (err as { messages: Array<{ message: string }> }).messages;
-					const errorMessage = messages.map(e => e.message).join("\n");
+					const errorMessage = messages.map((e) => e.message).join("\n");
 
 					logger.error(errorMessage, { logType: "validationErrors" });
 					throw new ErrorResponse(errorMessage, 422);
@@ -61,7 +61,7 @@ export class RouterValidation {
 		validateMediaBody: async <T extends SchemaTypes>(
 			schema: T,
 			req: Request<any, any, any, any, Record<string, any>> & { files?: any; file?: any },
-			options: { optional?: boolean; multiple?: boolean } = {}
+			options: { optional?: boolean; multiple?: boolean } = {},
 		): Promise<{ data: Infer<T>; media: any }> => {
 			const { optional = false, multiple = false } = options;
 			const files = req.files || req.file;
@@ -107,7 +107,7 @@ export class RouterValidation {
 				F extends (
 					req: Request<any, any, Infer<T>, any, Record<string, any>>,
 					res: Response<any, Record<string, any>>,
-					next: NextFunction
+					next: NextFunction,
 				) => Promise<any> | void,
 			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
 				const originalMethod = descriptor.value!;
@@ -116,7 +116,7 @@ export class RouterValidation {
 					this: unknown,
 					req: Request<any, any, Infer<T>, any, Record<string, any>>,
 					res: Response,
-					next: NextFunction
+					next: NextFunction,
 				) {
 					try {
 						const data = await RouterValidation.fn.validate(schema, req.body);
@@ -141,7 +141,7 @@ export class RouterValidation {
 				F extends (
 					req: Request<any, any, Infer<T>, any, Record<string, any>>,
 					res: Response<any, Record<string, any>>,
-					next: NextFunction
+					next: NextFunction,
 				) => Promise<any> | void,
 			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
 				const originalMethod = descriptor.value!;
@@ -150,7 +150,7 @@ export class RouterValidation {
 					this: unknown,
 					req: Request<Infer<T>, any, any, any, Record<string, any>>,
 					res: Response,
-					next: NextFunction
+					next: NextFunction,
 				) {
 					try {
 						const data = await RouterValidation.fn.validate(schema, req.params);
@@ -170,7 +170,7 @@ export class RouterValidation {
 				F extends (
 					req: Request<any, any, Infer<T>, any, Record<string, any>>,
 					res: Response<any, Record<string, any>>,
-					next: NextFunction
+					next: NextFunction,
 				) => Promise<any> | void,
 			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
 				const originalMethod = descriptor.value!;
@@ -179,7 +179,7 @@ export class RouterValidation {
 					this: unknown,
 					req: Request<any, any, any, Infer<T>, Record<string, any>>,
 					res: Response,
-					next: NextFunction
+					next: NextFunction,
 				) {
 					try {
 						const data = await RouterValidation.fn.validate(schema, req.query);
@@ -199,7 +199,7 @@ export class RouterValidation {
 				F extends (
 					req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any; file?: any; media?: any },
 					res: Response<any, Record<string, any>>,
-					next: NextFunction
+					next: NextFunction,
 				) => Promise<any> | void,
 			>(_target: unknown, _propertyKey: string, descriptor: TypedPropertyDescriptor<F>) {
 				const originalMethod = descriptor.value!;
@@ -208,7 +208,7 @@ export class RouterValidation {
 					this: unknown,
 					req: Request<any, any, Infer<T>, any, Record<string, any>> & { files?: any; file?: any; media?: any },
 					res: Response,
-					next: NextFunction
+					next: NextFunction,
 				) {
 					try {
 						const { data, media } = await RouterValidation.fn.validateMediaBody(schema, req, {

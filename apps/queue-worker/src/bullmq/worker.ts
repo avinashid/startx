@@ -6,7 +6,7 @@ export const bullWorker = () => {
 
 	BullQueue.registerWorker(
 		"email-send",
-		async data => {
+		async (data) => {
 			const message = await SMTPMailService.sendMail({
 				subject: data.subject,
 				text: data.text!,
@@ -20,6 +20,6 @@ export const bullWorker = () => {
 		},
 		{
 			concurrency: 10,
-		}
+		},
 	);
 };

@@ -1,27 +1,27 @@
-import { ESLintUtils } from '@typescript-eslint/utils';
+import { ESLintUtils } from "@typescript-eslint/utils";
 
 export const NoInterpolationInRegularStringRule = ESLintUtils.RuleCreator.withoutDocs({
-	name: 'no-interpolation-in-regular-string',
+	name: "no-interpolation-in-regular-string",
 	meta: {
-		type: 'problem',
+		type: "problem",
 		docs: {
-			description: 'String interpolation `${...}` requires backticks, not single or double quotes.',
+			description: "String interpolation `${...}` requires backticks, not single or double quotes.",
 		},
 		messages: {
-			useBackticks: 'Use backticks to interpolate',
+			useBackticks: "Use backticks to interpolate",
 		},
-		fixable: 'code',
+		fixable: "code",
 		schema: [],
 	},
 	defaultOptions: [],
 	create(context) {
 		return {
 			Literal(node) {
-				if (typeof node.value !== 'string') return;
+				if (typeof node.value !== "string") return;
 
 				if (/\$\{/.test(node.value)) {
 					context.report({
-						messageId: 'useBackticks',
+						messageId: "useBackticks",
 						node,
 						fix: (fixer) => fixer.replaceText(node, `\`${node.value}\``),
 					});

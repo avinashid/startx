@@ -15,7 +15,7 @@ export const SummarizerTool: ITool[] = [
 				.string()
 				.optional()
 				.describe(
-					"A dense, highly compressed step-by-step execution plan or raw database query. Omit all filler words."
+					"A dense, highly compressed step-by-step execution plan or raw database query. Omit all filler words.",
 				),
 			requiredTools: z
 				.array(z.string())

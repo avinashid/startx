@@ -38,7 +38,7 @@ const buttonVariants = cva(
 			variant: "default",
 			size: "default",
 		},
-	}
+	},
 );
 
 export interface ButtonProps
@@ -63,7 +63,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 			icon,
 			...props
 		},
-		ref
+		ref,
 	) => {
 		const Comp = asChild ? Slot.Root : "button";
 
@@ -77,7 +77,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 				className={cn(
 					buttonVariants({ variant, size }),
 					"ease-in-out duration-75 active:scale-95 transition-transform will-change-transform cursor-pointer",
-					className
+					className,
 				)}
 				{...props}
 			>
@@ -88,7 +88,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 				<>{hideChild ? !loading && props.children : props.children}</>
 			</Comp>
 		);
-	}
+	},
 );
 
 Button.displayName = "Button";

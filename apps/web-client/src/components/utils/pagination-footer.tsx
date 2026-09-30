@@ -59,13 +59,13 @@ const PaginationNavButton = forwardRef<HTMLButtonElement, PaginationNavButtonPro
 					"hover:bg-secondary/80 hover:text-foreground",
 					"disabled:pointer-events-none disabled:opacity-40",
 					isHiddenOnMobile && "hidden sm:flex",
-					props.className
+					props.className,
 				)}
 			>
 				<Icon className="h-4 w-4" aria-hidden="true" />
 			</motion.button>
 		);
-	}
+	},
 );
 PaginationNavButton.displayName = "PaginationNavButton";
 
@@ -108,7 +108,7 @@ function PaginationFooter<T>({
 				variant === "default" && "rounded-xl border bg-background/50 p-2 shadow-sm backdrop-blur-sm",
 				variant === "compact" && "rounded-lg border border-transparent py-1",
 				variant === "ghost" && "py-2",
-				className
+				className,
 			)}
 		>
 			<div className="flex w-full items-center justify-between sm:w-auto sm:justify-start gap-4">
@@ -117,23 +117,23 @@ function PaginationFooter<T>({
 						htmlFor="rows-per-page-select"
 						className={cn(
 							"whitespace-nowrap font-medium text-muted-foreground",
-							variant === "compact" ? "text-xs" : "text-sm"
+							variant === "compact" ? "text-xs" : "text-sm",
 						)}
 					>
 						Rows per page
 					</label>
-					<Select value={`${data.pageSize}`} onValueChange={value => setLimit(parseInt(value, 10))}>
+					<Select value={`${data.pageSize}`} onValueChange={(value) => setLimit(parseInt(value, 10))}>
 						<SelectTrigger
 							id="rows-per-page-select"
 							className={cn(
 								"h-8 w-[72px] transition-colors hover:bg-secondary/50 focus-visible:ring-2 focus-visible:ring-ring/50",
-								variant === "compact" && "h-7 text-xs"
+								variant === "compact" && "h-7 text-xs",
 							)}
 						>
 							<SelectValue placeholder={`${data.pageSize}`} />
 						</SelectTrigger>
 						<SelectContent side="top" className="min-w-[72px]">
-							{limitList.map(pageSize => (
+							{limitList.map((pageSize) => (
 								<SelectItem key={pageSize} value={`${pageSize}`} className="cursor-pointer transition-colors">
 									{pageSize}
 								</SelectItem>
@@ -147,7 +147,7 @@ function PaginationFooter<T>({
 				<div
 					className={cn(
 						"flex flex-1 items-center justify-center font-medium tabular-nums text-muted-foreground sm:justify-end",
-						variant === "compact" ? "text-xs" : "text-sm"
+						variant === "compact" ? "text-xs" : "text-sm",
 					)}
 					aria-live="polite"
 				>

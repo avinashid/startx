@@ -24,7 +24,7 @@ export const WeatherTools: ITool[] = [
 		schema: z.object({
 			location: z.string().describe("Location name, city, or place."),
 		}),
-		run: async props => {
+		run: async (props) => {
 			try {
 				const coords = await findCoordinates(props.location);
 

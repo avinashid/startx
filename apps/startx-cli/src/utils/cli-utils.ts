@@ -43,7 +43,7 @@ export class CliUtils {
 			subPath: string,
 			type: "apps" | "configs" | "packages",
 			namePrefix = "",
-			filterFn?: (name: string) => boolean
+			filterFn?: (name: string) => boolean,
 		): Promise<PackageItem[]> => {
 			const dirPath = path.join(cliDirectory, ...subPath.split("/"));
 
@@ -52,7 +52,7 @@ export class CliUtils {
 				if (filterFn) names = names.filter(filterFn);
 
 				const packages = await Promise.all(
-					names.map(async name => {
+					names.map(async (name) => {
 						const pkgPath = path.join(dirPath, name);
 						const relativePath = path.relative(cliDirectory, pkgPath);
 						const pkgName = namePrefix ? `${namePrefix}${name}` : name;
@@ -76,7 +76,7 @@ export class CliUtils {
 							name: pkgName,
 							packageJson,
 						};
-					})
+					}),
 				);
 
 				return packages.filter((pkg): pkg is PackageItem => pkg !== null);
@@ -90,7 +90,7 @@ export class CliUtils {
 		const results = await Promise.all([
 			fetchPackages("apps", "apps"),
 			fetchPackages("configs", "configs"),
-			fetchPackages("packages", "packages", "", name => !extraPackages.includes(name)),
+			fetchPackages("packages", "packages", "", (name) => !extraPackages.includes(name)),
 			fetchPackages("packages/@repo", "packages", "@repo/"),
 			fetchPackages("packages/@db", "packages", "@db/"),
 		]);

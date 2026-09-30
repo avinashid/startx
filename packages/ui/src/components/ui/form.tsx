@@ -69,7 +69,7 @@ const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivEl
 				<div ref={ref} className={cn("space-y-2", className)} {...props} />
 			</FormItemContext.Provider>
 		);
-	}
+	},
 );
 FormItem.displayName = "FormItem";
 
@@ -90,7 +90,7 @@ const FormDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
 		const { formDescriptionId } = useFormField();
 
 		return <p ref={ref} id={formDescriptionId} className={cn("text-sm text-muted-foreground", className)} {...props} />;
-	}
+	},
 );
 FormDescription.displayName = "FormDescription";
 
@@ -114,7 +114,7 @@ const FormMessage = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
 				<p>{body}</p>
 			</span>
 		);
-	}
+	},
 );
 FormMessage.displayName = "FormMessage";
 const FormControl = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement> & { children: React.ReactNode }>(
@@ -145,7 +145,7 @@ const FormControl = React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLEleme
 			},
 			className: cn("w-full", className, child.props.className),
 		});
-	}
+	},
 );
 
 FormControl.displayName = "FormControl";

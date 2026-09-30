@@ -3,7 +3,7 @@ import { getQuickJS } from "quickjs-emscripten";
 export class VariableResolver {
 	static extractPlaceholders(text: string): string[] {
 		const matches = [...text.matchAll(/{{(.*?)}}/g)];
-		return matches.map(m => m[1]?.trim() || "");
+		return matches.map((m) => m[1]?.trim() || "");
 	}
 
 	static async evaluateInQuickJS(expression: string, context: Record<string, any>): Promise<any> {
@@ -75,7 +75,7 @@ export class VariableResolver {
 		const placeholders = this.extractPlaceholders(text);
 
 		const replacements = await Promise.all(
-			placeholders.map(async expr => {
+			placeholders.map(async (expr) => {
 				try {
 					const result = await this.evaluateInQuickJS(expr, context);
 					return {
@@ -86,7 +86,7 @@ export class VariableResolver {
 				} catch (e) {
 					return { expr, result: "", valid: false };
 				}
-			})
+			}),
 		);
 
 		let resolved = text;
@@ -110,9 +110,9 @@ export class VariableResolver {
 			access: "user" | "agent" | "system" | "message";
 		}>;
 	}) {
-		const messageVars = messages.flatMap(m => this.extractPlaceholders(m.content));
+		const messageVars = messages.flatMap((m) => this.extractPlaceholders(m.content));
 		const allExpressions = [...new Set([...messageVars])];
-		const rootKeys = new Set(allExpressions.map(e => e.split(".")[0]));
+		const rootKeys = new Set(allExpressions.map((e) => e.split(".")[0]));
 
 		const context: Record<string, any> = {
 			user: {},
@@ -150,10 +150,10 @@ export class VariableResolver {
 		}
 
 		const resolvedMessages = await Promise.all(
-			messages.map(async msg => ({
+			messages.map(async (msg) => ({
 				...msg,
 				content: await this.resolveText(msg.content, context),
-			}))
+			})),
 		);
 
 		return resolvedMessages;

@@ -89,7 +89,7 @@ export function validateSession() {
 	return function <T extends ExpressHandler>(
 		_target: unknown,
 		_propertyKey: string,
-		descriptor: TypedPropertyDescriptor<T>
+		descriptor: TypedPropertyDescriptor<T>,
 	): void {
 		const originalMethod = descriptor.value;
 

@@ -1,4 +1,4 @@
-import { type AllHTMLAttributes, forwardRef } from 'react';
+import { type AllHTMLAttributes, forwardRef } from "react";
 
 const PageContainer = forwardRef<HTMLButtonElement, AllHTMLAttributes<HTMLDivElement>>(
 	(
@@ -20,5 +20,5 @@ const PageContainer = forwardRef<HTMLButtonElement, AllHTMLAttributes<HTMLDivEle
 		);
 	},
 );
-PageContainer.displayName = 'PageContainer';
+PageContainer.displayName = "PageContainer";
 export { PageContainer };
