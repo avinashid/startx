@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B46`
-- **Last full audit:** 2026-09-30 against HEAD `b7006b0`
-- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 47
+- **Next free ID:** `B47`
+- **Last full audit:** 2026-09-30 against HEAD `5975f4a`
+- **Open:** 2 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 46
 
 Counts include the four sub-items of B12.
 
@@ -16,12 +16,13 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 0 | 0 | 0 | **0** |
+| open | 1 | 1 | 0 | 0 | **2** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 9 | 12 | 12 | 14 | **47** |
+| **verified** | 8 | 12 | 12 | 14 | **46** |
 
-**B1–B45 are all closed.** Measured uncached at the tip of `fix/p0-bugs`:
+**B1–B36 and B38–B45 are closed. [B37](config-bugs.md#b37) is half fixed and stays open**, blocked
+on the new [B46](config-bugs.md#b46). Measured uncached at the tip of `fix/p0-bugs`:
 
 ```
 pnpm exec turbo typecheck lint test build format:check --force
@@ -51,10 +52,11 @@ missing it, which is how [B36](config-bugs.md#b36) hid a completely inert format
 [E2](../enhancements/template-enhancements.md#e2), not a defect. P2 (generator B13–B21) and
 P3 (hardening B22–B29, CI B30–B31) were closed in `c104915`.
 
-### B34–B45 were filed and closed in the same pass
+### B34–B46 were filed and worked in the same pass
 
 B34–B42 came out of the audit run *after* B13–B31 were closed; B43–B45 surfaced while verifying
-those fixes, once `--force` runs replaced cached ones. All twelve are now closed.
+those fixes, once `--force` runs replaced cached ones. Eleven of the twelve are closed in `5975f4a`.
+**[B37](config-bugs.md#b37) is not** — see below.
 
 The most important thing on this board is that **B36 was a regression introduced by the fix for
 [B14](config-bugs.md#b14)**. That fix added a `.prettierrc.mjs` carrying a `requirePragma` override
@@ -67,6 +69,14 @@ and checking against `.prettierrc.cjs` explicitly reports **128 files** with sty
 That masked drift was then half of [B37](config-bugs.md#b37): 9 of 10 packages in a stock
 prettier-only scaffold failed `pnpm format:check` immediately after `pnpm install`. B14's own symptom
 really was fixed — its status stands — but the fix bought it at a price nobody had measured.
+
+**B37 is only half fixed, and it stays open.** Part (a) — `writeJSONFile` and `package new`'s
+`writeJson` emitting 2-space JSON that prettier then rejects — is fixed. Part (b) is not. Aligning
+`biome.json`'s `trailingCommas`, `arrowParentheses` and `quoteProperties` with `.prettierrc.cjs` took
+a stock prettier-only scaffold from 4 failing packages to 1, but the residual is biome and prettier
+disagreeing on *line breaking* for generic parameter lists, union types and nested CSS values. That
+is not configurable in either tool, so template sources cannot currently satisfy both
+`prettier --check` and `biome ci`. Filed as [B46](config-bugs.md#b46).
 
 `turbo typecheck lint test build` did not cover `format:check`, which is exactly why 50/50 green and
 a completely inert formatter were both true at once. The root `package.json` did not even define a
@@ -90,7 +100,7 @@ gates were green because they were not looking.
 | B6 | `REDIS_CLUSTER_MODE=false` enables cluster mode | @repo/redis | [runtime](runtime-bugs.md#b6) | **verified** |
 | B7 | `.env.example` secrets are 24 chars; the code requires 32 | root | [config](config-bugs.md#b7) | **verified** |
 | B34 | A frontend-only selection never broadcasts `node`, so the root gets no `lint`/`format`/`test` | startx-cli | [function](function-bugs.md#b34) | verified |
-| B37 | A stock prettier-only scaffold fails its own `format:check` — 9 of 10 packages | startx-cli | [config](config-bugs.md#b37) | verified |
+| B37 | A stock prettier-only scaffold fails its own `format:check` | startx-cli | [config](config-bugs.md#b37) | **open** — half fixed, 9 of 10 packages → 1 |
 
 ¹ B3's pure logic (TTL unit, code keyspace) was verified; the Redis round-trip and the
 attempt-limit path were **not** executed — no Redis or Docker was available on the machine where the
@@ -113,6 +123,7 @@ fix was made. See the entry for exactly what remains unproven.
 | B36 | `.prettierrc.mjs`'s `requirePragma` makes this repo's own `format:check` a no-op | root | [config](config-bugs.md#b36) | verified |
 | B43 | A stray duplicate `src/eslint.config.ts` fails `web-client#lint` and ships to every scaffold | web-client | [config](config-bugs.md#b43) | verified |
 | B45 | `import type React from "react"` trips `import-x/default` — `@repo/ui#lint` fails | @repo/ui | [type](type-bugs.md#b45) | verified |
+| B46 | biome and prettier break generics, unions and nested CSS differently — not configurable | root, template src | [config](config-bugs.md#b46) | **open** |
 
 B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
 rules were silently not running for any package.
@@ -174,7 +185,7 @@ in parallel, then the formatting sweep last, once nothing else was still editing
 | prettier config (`.prettierrc.js`, `.prettierrc.mjs`, `writeJSONFile`) | B36 · B37 · B44 |
 | `apps/startx-cli/src/commands/package.ts` (`package new`) | B38 · B39 · B40 |
 | script/tag gating (`configs/scripts.ts`, `commands/init.ts`) | B34 · B35 |
-| env + eslint template config | B41 · B42 · B45 |
+| env + eslint template config | B41 · B42 · B43 · B45 |
 
 **B36 had to go first**: until the formatter told the truth, B37 could not be measured and any
 formatting work done in the meantime was unverifiable. That ordering proved itself — closing B36 is

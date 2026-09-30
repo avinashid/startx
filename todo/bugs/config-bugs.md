@@ -5,7 +5,8 @@ Wrong configuration files and wrong entries in the generator's static data table
 Register: [`bugs.md`](bugs.md).
 
 Contents: [B7](#b7) · [B8](#b8) · [B9](#b9) · [B10](#b10) · [B11](#b11) · [B13](#b13) · [B14](#b14) ·
-[B32](#b32) · [B33](#b33) · [B36](#b36) · [B37](#b37) · [B42](#b42)
+[B32](#b32) · [B33](#b33) · [B36](#b36) · [B37](#b37) · [B42](#b42) · [B43](#b43) · [B44](#b44) ·
+[B46](#b46)
 
 ---
 
@@ -546,11 +547,26 @@ pnpm exec turbo lint --continue   # 17/17, 0 errors, no "project service" parsin
 
 ### B36 · `.prettierrc.mjs`'s `requirePragma` makes the repo's own `format:check` a no-op
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** root / `startx-cli`
 - **File:** `.prettierrc.mjs:14-15`
 - **Found while fixing:** [B14](#b14)
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Added a new root `.prettierrc.js` containing
+> `module.exports = require("./.prettierrc.cjs")`. Prettier's resolution order is
+> `.prettierrc.js` → `.prettierrc.mjs` → `.prettierrc.cjs`, so the new file shadows
+> `.prettierrc.mjs` and its `requirePragma: true` override no longer governs the master repo, while
+> `.prettierrc.mjs` still ships to generated biome+prettier workspaces where it is wanted.
+> `.prettierrc.js` is tagged `never` in `apps/startx-cli/src/configs/files.ts`, so it is never
+> copied into a scaffold, and it is absent from the root `package.json` `files` allowlist, so it is
+> not published. Verified by `prettier.resolveConfig()` now returning
+> `{useTabs: true, trailingComma: "all", semi: true}` with no `requirePragma`; the root
+> `package.json` `type` is `commonjs`, so the CJS shadow loads. Closing this also required adding
+> `"format:check": "turbo format:check"` to the root `package.json` — `turbo.json` had declared the
+> task all along, but no root script invoked it. `pnpm format` then reformatted ~50 source files
+> (129 had drifted behind the inert formatter).
 
 **Symptom** — `pnpm format` / `pnpm format:check` at the repo root, and inside any package, report
 success across the whole master repo without actually checking a single `.ts`/`.js` file's
@@ -601,10 +617,22 @@ pnpm format:check   # must fail once real drift exists, not pass unconditionally
 
 ### B37 · A freshly scaffolded prettier-only workspace fails its own `format:check`
 
-- **Status:** open
+- **Status:** open — half fixed
 - **Severity:** P0
 - **Area:** `startx-cli` + template sources
 - **File:** `packages/@repo/lib/src/file-system-module/index.ts:34`
+
+> **Partially fixed in `5975f4a`.** Part (a), generated JSON being 2-space indented and therefore
+> rejected by prettier, is fixed: `writeJSONFile` in
+> `packages/@repo/lib/src/file-system-module/index.ts:34` now emits
+> `` `${JSON.stringify(content, null, "\t")}\n` ``, and a second path that bypassed that fix
+> entirely, `writeJson` in `apps/startx-cli/src/commands/package.ts` (~line 807), was changed the
+> same way. Part (b) is **not** fixed. Aligning `biome.json` to `.prettierrc.cjs`
+> (`quoteProperties: "asNeeded"`, `trailingCommas: "all"`, `arrowParentheses: "always"` — previously
+> `preserve`/`es5`/`asNeeded`) took a stock prettier-only scaffold from 4 failing packages down to 1,
+> but the residual is biome and prettier disagreeing on *line breaking* for generic parameter lists,
+> union types, and nested CSS values. None of that is configurable in either tool. Filed as
+> [B46](#b46). This bug stays open until B46 is resolved.
 
 **Symptom** — Scaffolding a real workspace (`cli` + `web-client`, formatter = `prettier` only),
 running `pnpm install`, then `pnpm format:check` fails immediately: **9 of 10 packages** report
@@ -646,11 +674,21 @@ pnpm install && pnpm format:check   # must exit 0, not fail on 9/10 packages
 
 ### B42 · Shared `eslint-config` ignores `**/dist/**` but not `**/bin/**`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `eslint-config`
 - **File:** `configs/eslint-config/src/configs/base.ts:15-28`
 - **Found while fixing:** [B31](ci-bugs.md#b31)
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Not applied to the shared `configs/eslint-config/src/configs/base.ts` as originally
+> proposed below. A first attempt added `**/bin/**` to that config's global ignores; review caught
+> that this config ships into generated workspaces where `bin/` is frequently hand-written source,
+> so ignoring it there would silently un-lint user code. It was reverted, and the ignore was
+> relocated to `apps/startx-cli/eslint.config.ts` as
+> `export default extend(baseConfig, { ignores: ["bin/**"] })`, where `bin/` really is that
+> package's tsdown `outDir`. `apps/startx-cli/package.json` also dropped the now-redundant
+> `--ignore-pattern 'bin/**'` from its lint scripts.
 
 **Symptom** — Any package that bundles its build output into `bin/` needs its own
 `--ignore-pattern` to keep ESLint from linting compiled output, instead of getting it for free from
@@ -676,4 +714,114 @@ maintains its own build-output convention), then remove the now-redundant
 **Verify**
 ```bash
 pnpm exec turbo lint --continue   # still green with the local --ignore-pattern removed from apps/startx-cli/package.json
+```
+
+---
+
+## B43
+
+### B43 · Stray duplicate `eslint.config.ts` inside `web-client`'s `src/` breaks project-service lint
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** `web-client`
+- **File:** `apps/web-client/src/eslint.config.ts`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Deleted the stray `apps/web-client/src/eslint.config.ts`. This had been failing for
+> some time behind a warm turbo cache and only surfaced once `lint` was rerun under `--force`.
+
+**Symptom** — `web-client#lint` failed with a project-service parsing error: ESLint's TypeScript
+project service tried to parse a config file it found inside `src/` as if it were project source.
+
+**Cause** — `apps/web-client/src/eslint.config.ts` was a stray duplicate, byte-identical to the
+legitimate `apps/web-client/eslint.config.ts` one directory up. Because it sat inside `src/`,
+ESLint's project service picked it up as a project file to type-check rather than as tooling
+config, and failed to parse it in that context. The duplicate was also being copied into every
+generated frontend workspace, propagating the same failure downstream.
+
+**Fix** — Delete `apps/web-client/src/eslint.config.ts`; the real config one directory up already
+covers the package.
+
+**Verify**
+```bash
+pnpm exec turbo lint --force --filter=web-client   # no project-service parsing error
+```
+
+---
+
+## B44
+
+### B44 · `turbo run format:check` never reads the root `.prettierignore`, so build artifacts fail formatting
+
+- **Status:** verified
+- **Severity:** P2
+- **Area:** root, template pkgs
+- **File:** `apps/cli/.prettierignore`, `apps/startx-cli/.prettierignore`, `packages/@repo/model/.prettierignore`
+- **Found while fixing:** [B36](#b36)
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Added a per-package `.prettierignore` to `apps/cli`, `apps/startx-cli`, and
+> `packages/@repo/model`, each containing `coverage`, `dist`, `build`, `bin`, `.turbo`,
+> `.react-router`, `CHANGELOG.md`, `**/*.md`. This was invisible until [B36](#b36) made
+> `format:check` an honest gate again.
+
+**Symptom** — After `turbo build`, `cli#format:check` failed on its own build artifact
+`dist/index.mjs`.
+
+**Cause** — `turbo run format:check` invokes prettier *inside each package*, so a root-level
+`.prettierignore` is never read — each package's prettier invocation only sees ignore files in its
+own working directory. Packages that build into `dist/`, `build/`, or `bin/` had no local
+`.prettierignore` telling prettier to skip those directories, so build output got linted as source.
+
+**Fix** — Give each package that produces build output its own `.prettierignore` rather than
+relying on a root-level file that `turbo run` never consults.
+
+**Verify**
+```bash
+pnpm turbo build && pnpm turbo format:check   # cli#format:check no longer fails on dist/index.mjs
+```
+
+---
+
+## B46
+
+### B46 · Biome and prettier cannot both be satisfied by the same template sources
+
+- **Status:** open
+- **Severity:** P1
+- **Area:** root, template src
+- **File:** `biome.json`, `.prettierrc.cjs` (template sources under `apps/*/src`, `packages/*/src`)
+- **Found while fixing:** [B37](#b37)
+
+**Symptom** — A scaffold that selects the `prettier + biome` formatter combination cannot pass both
+`format:check` and `biome ci` on its own template sources, even on a stock, never-hand-edited
+scaffold.
+
+**Cause** — Config-level divergence between the two tools was eliminated (see [B37](#b37)'s
+`biome.json` alignment to `.prettierrc.cjs`), but the remaining differences are line-breaking
+decisions: where each tool wraps generic parameter lists, how each formats multi-line union types,
+and how each indents nested CSS values. Neither tool exposes an option to control these. The result
+is one formatter rewriting a construct into the exact shape the other formatter's check rejects, so
+a template file can never simultaneously satisfy both.
+
+**Fix** — No configuration resolves this; the options are all structural trade-offs, laid out
+honestly rather than picked here:
+
+(a) Pick one formatter as authoritative for template sources and scope the other's check to only
+the file types/paths it actually owns (e.g. biome for JS/TS, prettier for JSON/CSS/markdown only).
+
+(b) Ship template sources pre-formatted by whichever formatter the scaffold selected — i.e. format
+at copy time, so the generated workspace never runs the losing tool's writer over the winning
+tool's output.
+
+(c) Drop the `prettier + biome` combined option entirely and require scaffolds to pick one
+formatter.
+
+This blocks [B37](#b37), which stays open until one of the above is chosen and implemented.
+
+**Verify**
+```bash
+# scaffold cli + web-client with formatter = prettier + biome, then:
+pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a stock scaffold
 ```

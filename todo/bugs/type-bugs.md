@@ -3,10 +3,12 @@
 TypeScript compile errors. Every entry here is reproducible with `pnpm exec turbo typecheck --continue`.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B4](#b4) · [B5](#b5) · [B12.1](#b121) · [B12.2](#b122) · [B12.3](#b123) · [B12.4](#b124)
+Contents: [B4](#b4) · [B5](#b5) · [B12.1](#b121) · [B12.2](#b122) · [B12.3](#b123) · [B12.4](#b124) ·
+[B45](#b45)
 
-**Current state: 41 of 41 typecheck tasks pass.** Every entry in this file is closed. Keep it
-that way — `turbo typecheck` is now a meaningful gate rather than a known-red command.
+**Current state: 41 of 41 typecheck tasks pass.** Every entry in this file is closed, including
+[B45](#b45), a lint-only failure that surfaced in the same pass. Keep it that way — `turbo
+typecheck` is now a meaningful gate rather than a known-red command.
 
 ---
 
@@ -372,4 +374,48 @@ fails fast rather than accumulating. Tracked as [E2](../enhancements/template-en
 **Verify**
 ```bash
 pnpm exec turbo typecheck --continue   # aix, @repo/lib (via mail) and ui must pass
+```
+
+---
+
+## B45
+
+### B45 · `import type React from "react"` trips `import-x/default` in `@repo/ui`
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** `@repo/ui`
+- **File:** `packages/ui/src/components/custom/switch-component.tsx`, `packages/ui/src/components/custom/typography.tsx`, `packages/ui/src/hooks/use-update-effect.tsx`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** All three sites changed from `import type React from "react"` to
+> `import type * as React from "react"`, which also matches the dominant convention elsewhere in
+> the package (`import * as React`). Disabling or downgrading `import-x/default` was considered and
+> rejected — the rule is catching a real resolution mismatch, and weakening it would just hide the
+> next one. This had been failing behind a warm turbo cache and only surfaced once `@repo/ui#lint`
+> was run with `--force`.
+
+**Symptom** — `@repo/ui#lint` fails with `import-x/default` errors in three files:
+```
+switch-component.tsx: 'React' not found in default-exporting module
+typography.tsx: 'React' not found in default-exporting module
+use-update-effect.tsx: 'React' not found in default-exporting module
+```
+
+**Cause** — Each file imports React's type-only default:
+```ts
+import type React from "react";
+```
+React's type package has no default export under the module resolution mode this repo uses, so
+`import-x/default` correctly flags it. Because the previous measurement was a warm turbo cache hit,
+these had already been failing for some time before the run that surfaced them.
+
+**Fix** — Use a namespace import instead:
+```ts
+import type * as React from "react";
+```
+
+**Verify**
+```bash
+pnpm --filter @repo/ui exec turbo lint --force
 ```

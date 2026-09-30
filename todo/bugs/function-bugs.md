@@ -599,10 +599,18 @@ expect(Paginator.getPage({ limit: "999999" }).limit).toBe(100);
 
 ### B34 · Frontend-only selection never broadcasts the `"node"` gTag — every non-root package loses lint/format/format:check/test, and the formatter/config prompts are skipped
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P0
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/configs/scripts.ts:83-247`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** The initial gTags set at `apps/startx-cli/src/commands/init.ts:135` is now
+> `new Set<TAGS>(["common", "node"])` instead of `["common"]`. That restores the
+> `if (gTags.has("node"))` gate at `init.ts:164`, which had been skipping BOTH the "Select
+> formatter" and "Select configs to install" prompts on a frontend-only run. Verified end-to-end
+> by driving `startx init` through a pty with a frontend-only selection and confirming the
+> generated root `package.json` carries `lint`, `format`, `format:check` and `test`.
 
 **Symptom** — Scaffold a workspace selecting only a frontend app (e.g. `web-client` alone, no
 backend/CLI app). The generated root `package.json` ends up with only `dev`/`build`/`start`/
@@ -665,11 +673,20 @@ node -p "require('./<proj>/packages/ui/package.json').scripts"         # expect 
 
 ### B35 · `.vscode/settings.json` defaults to Prettier even when no formatter was ever chosen
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/init.ts:315-343`
 - **Found while fixing:** [B34](#b34)
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** `writeVscodeSettings` in `init.ts` (~lines 315-343) now only emits
+> `editor.formatOnSave` and `editor.defaultFormatter` when biome or prettier was actually chosen.
+> But that edit is **defensive only**. The real trigger for this bug was [B34](#b34): the
+> formatter prompt at `init.ts:164-178` offers only `["prettier + biome", "prettier"]` with
+> `required: true`, so there is no "no formatter" answer a user can give. The only way to reach
+> the bug was B34 skipping the prompt entirely. B35 is therefore closed *by B34's fix*; the guard
+> added here just makes the invariant local rather than implied.
 
 **Symptom** — In the same frontend-only scaffold as B34 (formatter prompt skipped, so neither
 `"prettier"` nor `"biome"` ever enters `gTags`), the generated `.vscode/settings.json` still sets
@@ -707,10 +724,19 @@ node -p "require('./<proj>/.vscode/extensions.json').recommendations"          #
 
 ### B38 · `startx package new` emits no `format`/`format:check` script
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:398-436`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** `startx package new` now emits `format` and `format:check` scripts in
+> `apps/startx-cli/src/commands/package.ts`. The glob source constant was exported from
+> `apps/startx-cli/src/configs/scripts.ts:4` as
+> `export const topLevelSources = "*.{ts,tsx,js,jsx,cjs,mjs,json,css,md,yaml,yml}"` and imported
+> by `package.ts`, so `package new` and `init` can no longer drift apart. The scripts are
+> `prettier --write src "${topLevelSources}" --no-error-on-unmatched-pattern` — the previous
+> draft checked only `src`, which silently never format-checked a package's top-level files.
 
 **Symptom** — Run `startx package new` in a workspace that uses Prettier or Biome everywhere else.
 The generated package's `package.json` gets `typecheck` and `clean`, plus `lint`/`lint:fix` and
@@ -752,10 +778,21 @@ node -p "require('./packages/my-pkg/package.json').scripts['format:check']"  # m
 
 ### B39 · `startx package new` leaks generator-only `startx` metadata into user packages
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/commands/package.ts:212-215`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Fixed by a new `FileHandler.stripGeneratorFields()` in
+> `apps/startx-cli/src/utils/file-handler.ts`, stripping `generatorFields = ["startx","author",
+> "license","keywords","repository","homepage","bugs","publishConfig"]`. Also note: a reviewer
+> flagged the strip as possibly wrong (would it discard a user's own `startx` block?). It was
+> checked — every read of `.startx` metadata in the CLI resolves through `getPackageList()` →
+> `getDirectory().template`, i.e. the *bundled* template directory, never a user workspace. So
+> stripping is correct, and it was the *construction* of a `startx: { iTags, requiredDevDeps,
+> ignore }` block inside `createPackageJson` that was dead code. That construction and its
+> now-unused `ignore` array were removed.
 
 **Symptom** — A package created via `startx package new` carries a `startx` block (e.g.
 `{ iTags: ["node"], requiredDevDeps: [...] }`) in its committed `package.json`. The exact same kind
@@ -788,11 +825,15 @@ node -p "require('./packages/my-pkg/package.json').startx"   # must be undefined
 
 ### B40 · `peerDependencies` bypasses `filterDeps` and `syncDepsWithCatalog`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** `startx-cli`
 - **File:** `apps/startx-cli/src/utils/file-handler.ts:55-61`
 - **Found while fixing:** [B16](#b16)
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** `peerDependencies` is now routed through `filterDeps` in
+> `apps/startx-cli/src/utils/file-handler.ts`, same as `dependencies` and `devDependencies`.
 
 **Symptom** — A `peerDependencies` entry in a template package ships into generated output
 completely unfiltered: it is never tag-checked (so it always ships regardless of whether the

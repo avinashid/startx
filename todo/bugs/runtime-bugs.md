@@ -265,10 +265,28 @@ Track the "supported mode" variant as a feature rather than leaving dead code in
 
 ### B41 · Two incompatible boolean env dialects: `@repo/redis` vs `@repo/lib`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** `@repo/redis`, `@repo/lib`
 - **File:** `packages/@repo/redis/src/lib/redis-client.ts:14-17`, `packages/@repo/lib/src/cookie-module/cookie-module.ts:37-88`
+- **Fixed in:** `5975f4a`
+
+> **Resolved.** Shared `envBool()` added to `packages/@repo/env/src/env-bool.ts`, consumed by both
+> `@repo/redis` and `@repo/lib`, converging the two dialects on the strict one:
+> ```ts
+> export const envBool = (def = false) =>
+>   z
+>     .enum(["true", "false", "1", "0"])
+>     .default(def ? "true" : "false")
+>     .transform((v) => v === "true" || v === "1");
+> ```
+> Deliberately not `z.coerce.boolean()` — that is `Boolean(value)`, so the string `"false"` would
+> coerce to `true`, which was the original bug. `""` is also deliberately rejected: an explicitly
+> blank env var is a misconfiguration, and silently reading it as `false` is exactly how a
+> cluster-mode deployment quietly connects to a single node. `@repo/lib`'s lazy, first-use
+> validation in the cookie module is preserved — `envBool()` is only invoked from inside
+> `resolveCrossSite()`, not at module scope. `cookie-module.test.ts` was updated so the strict
+> spellings resolve, and `TRUE`, `yes`, `on`, `off`, and padded values now assert rejection.
 
 **Symptom** — The same conceptual "boolean env var" is validated with different accepted spellings
 and different error types depending on which package's env var it is. This is a design

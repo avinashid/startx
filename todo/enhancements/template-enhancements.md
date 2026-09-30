@@ -70,13 +70,18 @@ string is truthy.** This will recur every time someone adds a boolean flag.
 
 ```ts
 export const envBool = (def = false) =>
-  z.enum(["true", "false", "1", "0", ""]).default(def ? "true" : "false")
-   .transform(v => v === "true" || v === "1");
+  z
+    .enum(["true", "false", "1", "0"])
+    .default(def ? "true" : "false")
+    .transform((v) => v === "true" || v === "1");
 
 export const envPort = () => z.coerce.number().int().min(1).max(65535);
 
 export const envUrl = () => z.string().url();
 ```
+
+`envBool` deliberately excludes `""` from the enum: a blank env var is treated as a misconfiguration
+and rejected rather than silently read as `false`.
 
 Then sweep the repo for `z.coerce.boolean()` and replace. Add an `eslint-config` rule banning
 `z.coerce.boolean` outright — the repo already ships 10 custom rules, so the machinery exists.
