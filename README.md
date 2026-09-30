@@ -4,6 +4,11 @@
 
 **Requirements:** Node.js ≥ 22 · pnpm · Turborepo (installed automatically)
 
+> Working with an AI coding agent? Point it at [`AGENTS.md`](./AGENTS.md) — the monorepo's
+> conventions, which shared package to use for what, the `useApi` contract, and the one command that
+> decides whether a change is done. It is copied into every generated workspace. A condensed skill
+> version lives in [`docs/agent-skill/`](./docs/agent-skill/).
+
 ---
 
 ## Quick Start

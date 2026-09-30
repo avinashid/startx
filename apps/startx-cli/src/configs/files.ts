@@ -26,6 +26,12 @@ export const FileCheck: WHITELIST_FILES = {
 	"README.md": {
 		tags: ["never"],
 	},
+	// Ships to the workspace root of every scaffold — it documents the monorepo conventions a
+	// generated project inherits, not startx's own CLI. Without an entry here it would be copied
+	// anyway (an unknown filename is copied unconditionally); the entry keeps it to the root pass.
+	"AGENTS.md": {
+		tags: ["root"],
+	},
 	"biome.json": {
 		tags: ["biome"],
 	},
