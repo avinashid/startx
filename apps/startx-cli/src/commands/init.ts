@@ -492,9 +492,11 @@ export class InitCommand {
 			refuse("it is a filesystem root, a system directory, your home directory or a well-known directory inside it");
 		}
 
-		// Any ancestor of the cwd — covers "." , ".." , "../.." and any absolute parent.
+		// Any ancestor of the cwd — covers "." , ".." , "../.." and any absolute parent. Test whole
+		// segments: a cwd of "<target>/..foo" is inside the target although its relative path starts "..".
 		const toCwd = path.relative(resolved, cwd);
-		if (toCwd === "" || (!toCwd.startsWith("..") && !path.isAbsolute(toCwd))) {
+		const outside = toCwd === ".." || toCwd.startsWith(`..${path.sep}`) || path.isAbsolute(toCwd);
+		if (!outside) {
 			refuse("it is the current directory or one of its ancestors");
 		}
 
