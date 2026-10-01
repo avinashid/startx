@@ -14,6 +14,9 @@ import type { RequestHandler } from "express";
  */
 const allowedOrigins = [ENV.CLIENT_URL, ENV.CORS_URL, ENV.SERVER_URL].filter(Boolean);
 
+export const isAllowedOrigin = (origin: string | undefined): origin is string =>
+	origin !== undefined && allowedOrigins.includes(origin);
+
 if (ENV.NODE_ENV !== "development" && allowedOrigins.some((origin) => origin.includes("localhost"))) {
 	logger.warn(
 		`CORS allowlist still holds a localhost default (${allowedOrigins.join(", ")}) while NODE_ENV=${ENV.NODE_ENV}. Set CLIENT_URL, CORS_URL and SERVER_URL for this deployment.`,
@@ -25,7 +28,7 @@ const corsHandler = cors({
 		// No Origin header at all means a non-browser client (curl, server-to-server), which CORS
 		// does not govern. A present-but-unlisted origin is rejected outright rather than answered
 		// without the header, so the request never reaches the body parsers.
-		if (!origin || allowedOrigins.includes(origin)) {
+		if (!origin || isAllowedOrigin(origin)) {
 			callback(null, true);
 			return;
 		}

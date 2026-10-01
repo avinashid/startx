@@ -15,6 +15,8 @@ vi.mock("@/config/server-config.js", () => ({
 }));
 
 const { untrustedProxyWarning } = await import("./rate-limit-middleware.js");
+// cors-middleware, imported by the limiter, warns about its localhost defaults at load time.
+warn.mockClear();
 
 // Loopback is trusted, so a request to 127.0.0.1 has its X-Forwarded-For honoured; "false" makes
 // the same request look like it came through a proxy the app does not trust.

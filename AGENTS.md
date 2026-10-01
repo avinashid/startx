@@ -292,6 +292,11 @@ Creating the file alone does nothing.
 **Middleware order in `server.ts` is load-bearing**: helmet → rate limit → cors → cookie/body parsers
 → upload → routers → `notFoundMiddleware` → `errorMiddleware` **last**.
 
+The limiter sits ahead of cors so that rejected origins are throttled too. Because its 429 is written
+before cors runs, the limiter's handler adds the CORS headers itself for an allowed origin (so the
+frontend can read the 429 and `Retry-After`), and it skips preflights from allowed origins only. A
+middleware you add ahead of cors that answers requests itself has to do the same.
+
 `uploadMiddleware` is mounted globally but only parses multipart for a request with a valid session
 (bearer token): an anonymous multipart request gets a 401 before its body is read. A public upload
 route therefore needs its own parser, mounted ahead of the global one.
