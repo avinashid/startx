@@ -37,6 +37,8 @@ RUN npm install sharp @bull-board/api @bull-board/ui @bull-board/express
 
 # Copy built server dist
 COPY --from=builder /app/apps/queue-worker/dist ./
+# Bull Board is off outside development and binds 127.0.0.1 by default. To reach it from outside the
+# container set BULL_BOARD_ENABLED=true and BULL_BOARD_HOST=0.0.0.0, behind an authenticating proxy.
 EXPOSE 2866
 
 CMD ["node", "./index.mjs"]
