@@ -277,7 +277,7 @@ export class PackageCommand {
 			...(rootPackage.devDependencies as Record<string, string> | undefined),
 			eslint: await this.resolveDependencyVersion(directory.workspace, "eslint"),
 		};
-		if (this.ensureMinimumPackageManager(rootPackage)) {
+		if (await this.ensureMinimumPackageManager(rootPackage)) {
 			logger.info(`Bumped workspace packageManager to ${rootPackage.packageManager}.`);
 		}
 		await this.writeJson(path.join(directory.workspace, "package.json"), rootPackage);
@@ -456,7 +456,7 @@ export class PackageCommand {
 
 		// Tracked separately so the install log names what actually changed, not a guess.
 		const changes: string[] = [];
-		let rootChanged = this.ensureMinimumPackageManager(rootPackage);
+		let rootChanged = await this.ensureMinimumPackageManager(rootPackage);
 		if (rootChanged) {
 			logger.info(`Bumped workspace packageManager to ${rootPackage.packageManager}.`);
 			changes.push(`packageManager was bumped to ${rootPackage.packageManager}`);
@@ -468,8 +468,12 @@ export class PackageCommand {
 		const missingNpm: Array<{ name: string; version: string; isDev: boolean }> = [];
 		const missingWorkspace: string[] = [];
 
+		// Every root-level DepCheck entry is tagged `root`, which no package's install tags carry —
+		// without it here, nothing root-level (tsdown for a newly added app) was ever offered (B64).
+		const rootTags = new Set<TAGS>([...props.tags, "root"]);
+
 		for (const [dep, config] of Object.entries(DepCheck)) {
-			if (!config.tags.every((tag) => props.tags.includes(tag))) continue;
+			if (!config.tags.every((tag) => rootTags.has(tag))) continue;
 			if (ignoredRootTools.has(dep)) continue;
 
 			if (config.version.startsWith("workspace:")) {
@@ -531,12 +535,23 @@ export class PackageCommand {
 			);
 		}
 	}
-	private static ensureMinimumPackageManager(rootPackage: StartXPackageJson): boolean {
-		const match = rootPackage.packageManager?.match(/^pnpm@(\d+)/);
+	/** The workspace's pinned pnpm is the user's choice: bump it only with their say-so (B61). */
+	private static async ensureMinimumPackageManager(rootPackage: StartXPackageJson): Promise<boolean> {
+		const current = rootPackage.packageManager;
+		const match = current?.match(/^pnpm@(\d+)/);
 		if (!match) return false;
 
 		const majorVersion = Number(match[1]);
 		if (majorVersion >= 11) return false;
+
+		const bump = await CommonInquirer.confirm({
+			message: `This workspace pins ${current}, but startx templates target pnpm 11. Update packageManager to pnpm@11.5.1?`,
+			default: true,
+		});
+		if (!bump) {
+			logger.warn(`Keeping ${current}. Installing startx packages with pnpm ${majorVersion} may fail.`);
+			return false;
+		}
 
 		rootPackage.packageManager = "pnpm@11.5.1";
 		return true;
@@ -600,7 +615,9 @@ export class PackageCommand {
 		const resolved = path.resolve(root, target);
 		const relative = path.relative(root, resolved);
 
-		if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+		// Only a leading `..` SEGMENT escapes: `..foo` is an ordinary directory name (B62).
+		const escapes = relative === ".." || relative.startsWith(`..${path.sep}`);
+		if (!relative || escapes || path.isAbsolute(relative)) {
 			throw new Error(`Refusing to write ${label} to "${resolved}": it is not inside the workspace "${root}".`);
 		}
 
