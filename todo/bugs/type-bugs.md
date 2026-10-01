@@ -424,7 +424,8 @@ pnpm --filter @repo/ui exec turbo lint --force
 
 ### B50 · `apps/cli` imports the workspace **root** `package.json`, so a scaffolded CLI fails typecheck and reports the monorepo's name/version
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `b41d8ae` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** cli
 - **File:** `apps/cli/src/index.ts:3`

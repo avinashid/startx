@@ -349,7 +349,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B53 · Placeholder JWT / encryption secrets from `.env.example` pass validation outside development
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `28f8041` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** @repo/lib
 - **File:** `packages/@repo/lib/src/token-module/index.ts`, `encryption-module/index.ts`, `.env.example`
@@ -369,7 +370,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B54 · `verifyMailOTP` read-modify-writes the attempt counter, so parallel guesses bypass the 5-attempt cap
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `bf4d945` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** @repo/lib
 - **File:** `packages/@repo/lib/src/otp-module/index.ts`
@@ -389,7 +391,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B55 · `uploadMiddleware` is mounted globally before any auth, so anonymous clients can push multipart bodies to every route
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `17f675e` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** core-server
 - **File:** `apps/core-server/src/routes/server.ts:37`
@@ -399,9 +402,9 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 **Cause** — The parser is `app.use`d globally, ahead of the routers and their auth guards.
 
-**Fix** — *(design decision — see the card)*
+**Fix** — Decision (Avinash, on `tsk_jg4zgfvj`): keep the mount global, gate it on a session. `uploadMiddleware` now calls `authenticateRequest` (exported from `auth-middleware.ts`) for multipart requests only, after the cheap `Content-Length` check; an anonymous request is answered with that 401 and `Connection: close` before busboy sees a byte, and an authenticated one gets `req.user` set and is parsed as before. Non-multipart traffic pays no session lookup. AGENTS §6 says a public upload route needs its own parser mounted ahead of the global one.
 
-**Verify** — unauthenticated multipart POST to an unknown route is rejected without the body being parsed
+**Verify** — `upload-middleware.test.ts`: anonymous multipart → 401, express-fileupload never invoked, `next` not called; authenticated → parsed once, `req.user` set, `next()`
 
 ---
 
@@ -409,7 +412,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B56 · `errorMiddleware` returns raw `error.message` for 5xx responses
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `18230ec` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** core-server
 - **File:** `apps/core-server/src/middlewares/error-middleware.ts`
@@ -429,7 +433,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B57 · `TRUST_PROXY=loopback` default collapses all clients into one rate-limit bucket behind a remote proxy
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `78ba1d4` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** core-server
 - **File:** `apps/core-server/src/config/server-config.ts`, `.env.example`
@@ -449,7 +454,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B58 · `jwt.verify` does not pin `algorithms`
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `adaa7f6` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** @repo/lib
 - **File:** `packages/@repo/lib/src/token-module/i-token.ts`
@@ -469,7 +475,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B59 · Redis connects without auth in production when `REDIS_PASSWORD` is unset
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `9e67d07` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** @repo/redis
 - **File:** `packages/@repo/redis/src/lib/redis-client.ts`
@@ -479,8 +486,8 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 **Cause** — `REDIS_USERNAME` and `REDIS_PASSWORD` default to `""` so that local dev works, and nothing distinguishes production.
 
-**Fix** — *(design decision — see the card)*
+**Fix** — Decision (Avinash, on `tsk_jg4zgfvj`): require it, with an explicit opt-out. `redis-client.ts` calls `assertRedisAuth` (new `redis-auth.ts`) at load: a blank `REDIS_PASSWORD` throws outside `NODE_ENV=development|test` unless `REDIS_ALLOW_NO_AUTH=true` (`envBool`). `.env.example` documents the opt-out; `@repo/redis` gained `"test": "vitest run"`.
 
-**Verify** — —
+**Verify** — `redis-auth.test.ts` (5 tests): blank in production and staging throws; opt-out, development, test and a set password all pass
 
 ---

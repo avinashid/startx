@@ -873,7 +873,8 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B60 · `copyValidatedFilesFromFolder` swallows copy errors — a broken scaffold exits 0
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `074cb15` · test `3aa7742` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P2
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/init.ts`
@@ -893,7 +894,8 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B61 · `package add` rewrites the workspace `packageManager` to `pnpm@11.5.1` without asking
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `7ac001f` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P2
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts` (`ensureMinimumPackageManager`)
@@ -913,7 +915,8 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B62 · `assertInsideWorkspace` rejects a valid directory named `..foo`
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `7ac001f` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts` (`assertInsideWorkspace`)
@@ -933,7 +936,8 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B64 · `package add` can never add a root tool dependency — `"root"` is never in its tag set
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `7ac001f` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P2
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts` (`getInstallTags`, `checkAndInstallMissingDeps`)
@@ -953,7 +957,8 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B65 · Root `.gitignore` and `_gitignore` are both copied to `<scaffold>/.gitignore`; readdir order picks the winner
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `e8467b8` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P2
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/configs/files.ts`, `commands/init.ts`

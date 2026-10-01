@@ -333,7 +333,8 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B63 · `defineEnv` maps `""` to `undefined`, so `envBool()` reads a blank var as `false` instead of rejecting it
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `12eb17e` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** @repo/env
 - **File:** `packages/@repo/env/src/define-env.ts:50`
@@ -353,7 +354,8 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B66 · `uploadMiddleware` may call `next(error)` after it already sent a 413
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `c5cfa40` · test `3aa7742` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P3
 - **Area:** core-server
 - **File:** `apps/core-server/src/middlewares/upload-middleware.ts`

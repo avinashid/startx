@@ -617,7 +617,8 @@ pnpm format:check   # must fail once real drift exists, not pass unconditionally
 
 ### B37 · A freshly scaffolded prettier-only workspace fails its own `format:check`
 
-- **Status:** open — half fixed
+- **Status:** verified
+- **Fixed in:** `e5c7bf4` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** `startx-cli` + template sources
 - **File:** `packages/@repo/lib/src/file-system-module/index.ts:34`
@@ -632,7 +633,11 @@ pnpm format:check   # must fail once real drift exists, not pass unconditionally
 > `preserve`/`es5`/`asNeeded`) took a stock prettier-only scaffold from 4 failing packages down to 1,
 > but the residual is biome and prettier disagreeing on *line breaking* for generic parameter lists,
 > union types, and nested CSS values. None of that is configurable in either tool. Filed as
-> [B46](#b46). This bug stays open until B46 is resolved.
+> [B46](#b46). This bug stayed open until B46 was resolved.
+>
+> **Part (b) fixed in `e5c7bf4`** by reshaping the contested code (see [B46](#b46)). The E2E
+> matrix's `server-only` and `web-only` prettier scaffolds then passed their own forced gate (36/36
+> and 22/22, exit 0), where both had failed only on `format:check` before.
 
 **Symptom** — Scaffolding a real workspace (`cli` + `web-client`, formatter = `prettier` only),
 running `pnpm install`, then `pnpm format:check` fails immediately: **9 of 10 packages** report
@@ -788,7 +793,8 @@ pnpm turbo build && pnpm turbo format:check   # cli#format:check no longer fails
 
 ### B46 · Biome and prettier cannot both be satisfied by the same template sources
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `e5c7bf4` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P1
 - **Area:** root, template src
 - **File:** `biome.json`, `.prettierrc.cjs` (template sources under `apps/*/src`, `packages/*/src`)
@@ -818,7 +824,13 @@ tool's output.
 (c) Drop the `prettier + biome` combined option entirely and require scaffolds to pick one
 formatter.
 
-This blocks [B37](#b37), which stays open until one of the above is chosen and implemented.
+**Resolution (`e5c7bf4`)** — none of (a)–(c). The tools only disagree on a handful of constructs,
+so the template sources were reshaped to avoid them: `ITokenOptions` became a named type instead of
+an inline generic, `ThemeColor` was split into two smaller unions, `ButtonProps` extends a named
+`ButtonBaseProps` alias, `IFetchOptions` is a type alias, and the `conic-gradient` value in
+`globals.css` was written on one line. `biome ci` and `prettier --check` now both pass on every
+template package. This also closes [B37](#b37) part (b). A new construct of these shapes can
+reintroduce the ping-pong, which AGENTS §2 already documents.
 
 **Verify**
 ```bash
@@ -830,7 +842,8 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B47 · Catalog `tsdown: ^0.20.1` resolves 0.20.3 in fresh scaffolds, whose `inlineOnly` ERROR fails every backend build
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `84aca46` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** root catalog
 - **File:** `pnpm-workspace.yaml` (catalog), `configs/tsdown-config/src/`
@@ -850,7 +863,8 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B48 · `typescript-config` is given `typecheck: tsc --noEmit` but has no `tsconfig.json`, so tsc prints help and exits 1
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `8b8a2b0` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/configs/scripts.ts`, `configs/typescript-config/package.json`
@@ -870,7 +884,8 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B49 · `tsdown-config`'s `ignore` strips its `typescript-config` devDep while its tsconfig still extends it
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `8b8a2b0` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** tsdown-config
 - **File:** `configs/tsdown-config/package.json`
@@ -890,7 +905,8 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B51 · Workspace imports missing from `requiredDeps` are dropped from emitted packages (aix, @repo/model → @repo/logger; @db/sqlite → @repo/env)
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `3567b95` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P0
 - **Area:** template pkgs
 - **File:** `packages/aix/package.json`, `packages/@repo/model/package.json`, `packages/@db/sqlite/package.json`
@@ -910,7 +926,8 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B52 · `.env.example` has no `FileCheck` entry and ships core-server secrets into every scaffold
 
-- **Status:** open
+- **Status:** verified
+- **Fixed in:** `e8467b8` — forced gate 71/71, exit 0 at `9e67d07` (214 tests)
 - **Severity:** P2
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/configs/files.ts`
