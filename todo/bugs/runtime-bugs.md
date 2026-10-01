@@ -403,6 +403,13 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 - **File:** `apps/core-server/src/index.ts`, `apps/queue-worker/src/index.ts`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
 - **Fixed in:** `f375732` — new `@repo/lib/shutdown-module` (`createShutdown`/`onShutdown`: runs the steps once and in order, 8s timeout, a second signal exits 1) with unit tests. `closeRedis()` is in `@repo/redis`. core-server closes the HTTP server and then Redis; queue-worker closes workers, the board and Redis. AGENTS.md §4 lists the module.
+- **Reviewed:** `tsk_8agvwrnm` found that `server.close()` waits on keep-alive sockets: a request in flight at SIGTERM left its socket idle for `keepAliveTimeout`, so close() took about 6.9s and a 2s request crossed the 8s deadline. The Bull Board had the same wait, ahead of the queue drain. Fixed in `d930ce8`:
+  - `trackHttpServer(server)` is called right after `listen()`. Its `close({ graceMs = 6000 })` marks every unanswered response, and every request that arrives during the drain, `Connection: close`. It sweeps idle sockets every 100ms and calls `closeAllConnections()` at `graceMs`.
+  - The board closes with `graceMs: 0`.
+  - `BullQueue.close()` throws an AggregateError after logging, so a failed close exits 1.
+  - `closeRedis` only QUITs a `ready` client.
+  - The fake-timer test restores real timers in `afterEach`.
+  - **Evidence:** 3 real-socket tests with a keep-alive agent. Without the `Connection: close` marking, the in-flight test times out at 5011ms. On the built dists against Redis, a half-sent keep-alive POST across SIGTERM is answered with `Connection: close` (`HTTP/1.1 404`, that route's real answer), and core-server exits 0 1.25s after the signal. queue-worker, with a kept-alive board socket, exits 0 in 0.55s. Both results hold inside fresh worker-only (40/40) and server-only (36/36) scaffolds. Forced gate 73/73, 0 cached, exit 0, 255 tests.
 
 **Symptom** — On SIGTERM (every container stop or rolling deploy) both processes die at once. core-server cuts in-flight HTTP requests mid-response. queue-worker abandons active BullMQ jobs; they sit `active` until the stalled-job checker requeues them, so they run twice or get flagged stalled.
 
@@ -508,6 +515,8 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
   - **Local replay (passwordless redis:7.2):** `core-server: ok` and `queue-worker: ok`. Negatives all exit 1: manifest without bullmq (`ERR_MODULE_NOT_FOUND`), bull-board inlined (`require is not defined`, i.e. B68), and a process exiting 1 on SIGTERM (`did not exit 0`).
   - **Images:** `docker build` of both images succeeds. queue-worker logs `Worker ready` and `Bull Board listening` and has bullmq 5.76.4 and @bull-board/ui 7.1.5. core-server logs `Server listening`. Both report container exit 0 on `docker stop`.
   - **Gates:** forced gate 73/73, 0 cached, exit 0, 252 tests. Fresh scaffolds worker-only 40/40 and server-only 36/36. Each scaffold's own dist boots in the same isolated smoke; its manifest pins that scaffold's lockfile (@bull-board 7.2.1, bullmq 5.81.5).
+
+- **Follow-up:** `07e1ab3`. With bullmq external, `node dist/index.mjs` inside the workspace (the app's `start`) couldn't resolve it, because only `@repo/queue` depended on it. bullmq is now a direct queue-worker dependency. `runtimeDependencies` also fails the build unless every pinned external resolves from `dist/` at the same version, and it reproduced the failure before the dependency was added: `bullmq@5.76.4 is external, but the app resolves no copy of it`.
 
 **Symptom** — The B68 fix kept `@bull-board/*` external and the Dockerfile installed `sharp @bull-board/api @bull-board/ui @bull-board/express` with a bare `npm install`. The image then crashes on start with `Cannot find module 'bullmq'` from `@bull-board/api/dist/queueAdapters/bullMQ.js`. Even without that, every image build takes whatever versions npm resolves that day, not the ones the dist was built and tested against. CI stayed green because its smoke ran `dist/index.mjs` inside the workspace, where pnpm's node_modules satisfies every external. It also only waited for `Bull Board listening`, which doesn't need Redis, and never checked the exit code.
 
