@@ -4,7 +4,7 @@ Defects that only surface when a generated app is actually running — the code 
 (such as they are) pass, and the wrong thing happens in production.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29) · [B41](#b41) · [B68](#b68) · [B73](#b73) · [B74](#b74) · [B75](#b75) · [B77](#b77)
+Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29) · [B41](#b41) · [B68](#b68) · [B73](#b73) · [B74](#b74) · [B75](#b75) · [B77](#b77) · [B87](#b87)
 
 ---
 
@@ -381,6 +381,7 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 - **File:** `apps/queue-worker/tsdown.config.ts`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
 - **Fixed in:** `74decae` — queue-worker's tsdown config keeps `@bull-board/*` external. The built `node dist/index.mjs`, run against Redis 7.2 with `BULL_BOARD_ENABLED=true`, logs `Bull Board listening`; core-server's bundle logs `Server listening`. publish.yml's verify job now runs a "Boot smoke" step (redis:7.2 service) that starts both bundles, so a bundle that can't start fails CI. Its first CI run (on `ef16e87`) failed: since B73, core-server imports `@repo/redis`, which refuses the passwordless service Redis in production. The step now sets `REDIS_ALLOW_NO_AUTH=true` (reproduced and fixed locally against a passwordless redis:7.2: `core-server: ok`, `queue-worker: ok`). E2E matrix 2026-10-01 (7 fresh scaffolds, each installed and gated with `--force`: full-biome 75/75, full-prettier 75/75, server-only 36/36, web-only 22/22, worker-only 40/40, cli-only 33/33, server-bare 18/18) includes worker-only.
+- **Reviewed:** `tsk_gnsm8pj5` asked for the externals to be pinned and the smoke to test what the image runs. Done in `9a3c219` (see [B87](#b87)): `dist/package.json` pins the externals, the Dockerfiles install from it, and the smoke boots each dist outside the workspace, waits for `Worker ready` as well as `Bull Board listening`, and requires exit 0 on SIGTERM.
 
 **Symptom** — `node dist/index.mjs` (the app's own `start` script) exits immediately with `ReferenceError: require is not defined in ES module scope`. This happens in the repo's own `apps/queue-worker/dist` and in every scaffold. `tsx src/index.ts` works, and the forced gate is green because nothing ever runs the bundle.
 
@@ -491,3 +492,25 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 **Symptom / cause** — `blankRejecting` is a WeakSet holding the schema `envBool()` returned. A wrapped schema is a new object, so `defineEnv` treats `""` as unset again.
 
 **Proposed fix** — Mark the behaviour in a way that survives wrapping (zod metadata/brand), or unwrap before the lookup.
+
+---
+
+## B87
+
+### B87 · The queue-worker image cannot start (no `bullmq`), and both images install unpinned externals
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** queue-worker, core-server, tsdown-config, CI
+- **File:** `apps/*/Dockerfile`, `apps/*/tsdown.config.ts`, `configs/tsdown-config/src/config/tsdown.base.ts`, `.github/workflows/publish.yml`
+- **Found in:** reviewer's review of B68 (`tsk_gnsm8pj5`), 2026-10-01. The bullmq crash surfaced once the smoke ran outside the workspace.
+- **Fixed in:** `9a3c219`. `runtimeDependencies([...])` in tsdown-config keeps the listed packages external and emits `dist/package.json`, pinning each one the bundle imports to the version pnpm linked for its importer. It errors if one is missing or resolves to two versions. queue-worker lists `sharp`, `bullmq` and `@bull-board/{api,express}`; core-server lists `sharp`. The Dockerfiles `npm install --omit=dev` from that manifest. The CI boot smoke runs on Node 24, copies each dist to a temp dir and installs only its manifest. It waits for every ready line (`Worker ready` and `Bull Board listening` for the worker), then sends SIGTERM and requires exit 0; the redis service has a health check.
+  - **Local replay (passwordless redis:7.2):** `core-server: ok` and `queue-worker: ok`. Negatives all exit 1: manifest without bullmq (`ERR_MODULE_NOT_FOUND`), bull-board inlined (`require is not defined`, i.e. B68), and a process exiting 1 on SIGTERM (`did not exit 0`).
+  - **Images:** `docker build` of both images succeeds. queue-worker logs `Worker ready` and `Bull Board listening` and has bullmq 5.76.4 and @bull-board/ui 7.1.5. core-server logs `Server listening`. Both report container exit 0 on `docker stop`.
+  - **Gates:** forced gate 73/73, 0 cached, exit 0, 252 tests. Fresh scaffolds worker-only 40/40 and server-only 36/36. Each scaffold's own dist boots in the same isolated smoke; its manifest pins that scaffold's lockfile (@bull-board 7.2.1, bullmq 5.81.5).
+
+**Symptom** — The B68 fix kept `@bull-board/*` external and the Dockerfile installed `sharp @bull-board/api @bull-board/ui @bull-board/express` with a bare `npm install`. The image then crashes on start with `Cannot find module 'bullmq'` from `@bull-board/api/dist/queueAdapters/bullMQ.js`. Even without that, every image build takes whatever versions npm resolves that day, not the ones the dist was built and tested against. CI stayed green because its smoke ran `dist/index.mjs` inside the workspace, where pnpm's node_modules satisfies every external. It also only waited for `Bull Board listening`, which doesn't need Redis, and never checked the exit code.
+
+**Cause** — `@bull-board/api`'s BullMQ adapter `require`s `bullmq` without declaring it, so only a host that provides bullmq works. The externals list existed twice, once in tsdown.config and once in the Dockerfile, with no versions in the second.
+
+**Fix** — Above. sharp is no longer installed for nothing: neither bundle imports it today, so it is pinned only once an app imports `@repo/lib/storage-module` (a probe build pins `sharp 0.35.3`).

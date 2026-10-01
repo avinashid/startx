@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B87`
+- **Next free ID:** `B88`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 5 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 83
+- **Open:** 5 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 84
 
 Counts include the four sub-items of B12.
 
@@ -19,7 +19,7 @@ Counts include the four sub-items of B12.
 | open | 0 | 0 | 0 | 5 | **5** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 20 | 18 | 20 | 25 | **83** |
+| **verified** | 20 | 19 | 20 | 25 | **84** |
 
 **B68–B78 were filed on 2026-10-01, after the 1.2.0 release**, from the package-command E2E
 (`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **verified** for 1.2.1 (2026-10-01). Two were P0:
@@ -220,6 +220,7 @@ rules were silently not running for any package.
 | B84 | `envBool` blank rejection is keyed on the exact schema object, so `.describe()` / `.optional()` loses it | @repo/env | [runtime](runtime-bugs.md#b84) | open |
 | B85 | `listFiles` still swallows readdir errors, and the cli entry uses `parse` rather than `parseAsync` | startx-cli, @repo/lib | [function](function-bugs.md#b85) | open |
 | B86 | Access and refresh tokens carry no `typ`/`aud` claim, so they are interchangeable when the secrets match | @repo/lib | [security](security-bugs.md#b86) | open |
+| B87 | The queue-worker image can't start (`bullmq` missing), and both images install unpinned externals | queue-worker, core-server, CI | [runtime](runtime-bugs.md#b87) | verified |
 
 ---
 

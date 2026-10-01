@@ -44,7 +44,9 @@ configs/       shared tool config — typescript-config, eslint-config, vitest-c
 matching one of those globs is a workspace package automatically; nothing registers it by hand.
 
 **Apps are built** (tsdown → `dist/`, run via `node dist/index.mjs`). **Libraries are consumed as
-TypeScript source** — no build step, no `dist`. Do not add a `build` script to a library unless you
+TypeScript source** — no build step, no `dist`. An app bundles all its dependencies except those it lists in
+`runtimeDependencies([...])` in its `tsdown.config.ts`. Those are written, pinned, to `dist/package.json`, which
+is what the Dockerfile installs, so a native or self-resolving package (sharp, `@bull-board/*`) goes there. Do not add a `build` script to a library unless you
 are deliberately changing that.
 
 Library `exports` maps vary, so read the one you are importing from rather than guessing. Some are
