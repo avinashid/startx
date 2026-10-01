@@ -15,7 +15,10 @@ interface Error {
  */
 export const errorMiddleware = (error: Error, _req: Request, res: Response, _next: NextFunction) => {
 	const statusCode = error instanceof ErrorResponse ? error.statusCode : (error?.statusCode ?? 500);
-	const message = error?.message ? error.message : "Internal Server Error";
+	// An unexpected 5xx carries whatever the throwing library put in it — SQL, hostnames, file
+	// paths. Only a deliberate ErrorResponse, or development, gets its message through.
+	const expose = error instanceof ErrorResponse || statusCode < 500 || ENV.NODE_ENV === "development";
+	const message = expose && error?.message ? error.message : "Internal Server Error";
 
 	if (ENV.NODE_ENV === "development" || statusCode >= 500) {
 		if (statusCode < 500) {
