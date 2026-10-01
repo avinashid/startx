@@ -103,6 +103,10 @@ For keys and signing secrets use `envSecret({ min | length, hex })`, not `z.stri
 `NODE_ENV=development|test` it rejects `CHANGE_ME…` and single-repeated-character values, so a
 deployment that copied `.env.example` fails at boot instead of signing tokens with a public key.
 
+`NODE_ENV` defaults to `production`, and `.env.example` leaves it out on purpose: that is what makes the
+checks above apply to a copied example. The backend `dev` scripts set `NODE_ENV=development` themselves
+(via `cross-env`). Do not add `NODE_ENV` back to `.env.example`.
+
 ### React imports
 
 In `packages/ui`, import React as a namespace:

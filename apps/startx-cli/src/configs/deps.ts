@@ -31,6 +31,13 @@ export const DepCheck: WHITELIST_DEPS = {
 		version: "workspace:^",
 		isDevDependency: true,
 	},
+	// The backend dev scripts in scripts.ts set NODE_ENV=development through it, so .env.example can
+	// leave NODE_ENV out and a copied example boots as production.
+	"cross-env": {
+		tags: ["runnable", "node", "backend", "express"],
+		version: "catalog:",
+		isDevDependency: true,
+	},
 	"@types/node": {
 		tags: ["node", "root"],
 		version: "catalog:",

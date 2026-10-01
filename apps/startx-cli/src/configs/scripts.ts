@@ -10,7 +10,7 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "root"],
 		},
 		{
-			script: "tsx watch src/index.ts",
+			script: "cross-env NODE_ENV=development tsx watch src/index.ts",
 			tags: ["runnable", "node", "backend", "express"],
 		},
 		{
@@ -28,7 +28,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "runnable", "root"],
 		},
 		{
-			script: "tsx watch --inspect src/index.ts",
+			script: "cross-env NODE_ENV=development tsx watch --inspect src/index.ts",
 			tags: ["backend", "node", "runnable", "express"],
 		},
 	],
@@ -38,7 +38,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "runnable", "root"],
 		},
 		{
-			script: "bun --watch src/index.ts",
+			script: "cross-env NODE_ENV=development bun --watch src/index.ts",
 			tags: ["backend", "node", "runnable", "express"],
 		},
 	],
