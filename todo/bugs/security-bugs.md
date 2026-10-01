@@ -439,7 +439,7 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 **Cause** — The default is safe (it can't be spoofed), but it's only explained in a code comment; the env file a deployer actually reads doesn't mention it.
 
-**Fix** — Keep the safe default and document `TRUST_PROXY` in `.env.example`, with the remote-proxy case spelled out.
+**Fix** — Keep the safe default (`.env.example` already spells out the remote-proxy case). Add `untrustedProxyWarning`, mounted ahead of the limiter: it logs once when a request carries an `X-Forwarded-For` that `trust proxy` did not honour, which is the only visible symptom of the shared bucket. AGENTS.md §6 documents it.
 
 **Verify** — `.env.example` documents TRUST_PROXY
 

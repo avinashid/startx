@@ -299,6 +299,10 @@ middleware and every error becomes a hung request.
 `rate-limit-middleware.ts` uses an in-memory store — it is per-replica, so a multi-replica deployment
 needs a Redis-backed store.
 
+The limiter keys on `req.ip`, so `TRUST_PROXY` decides who shares a bucket. The default `loopback`
+only trusts a proxy on the same host; behind an ALB or a proxy in another container, set it to the
+hop count (`1`). The server logs one warning the first time it sees an `X-Forwarded-For` it ignored.
+
 ---
 
 ## 7. Tests

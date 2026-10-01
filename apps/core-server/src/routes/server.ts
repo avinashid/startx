@@ -7,7 +7,7 @@ import { corsMiddleware } from "@/middlewares/cors-middleware.js";
 import { errorMiddleware } from "@/middlewares/error-middleware.js";
 import { loggerMiddleware } from "@/middlewares/logger-middleware.js";
 import { notFoundMiddleware } from "@/middlewares/notfound-middleware.js";
-import { apiRateLimiter, authRateLimiter } from "@/middlewares/rate-limit-middleware.js";
+import { apiRateLimiter, authRateLimiter, untrustedProxyWarning } from "@/middlewares/rate-limit-middleware.js";
 import { uploadMiddleware } from "@/middlewares/upload-middleware.js";
 
 import { createFilesRouter } from "./files/router.js";
@@ -29,6 +29,7 @@ app.set("trust proxy", ServerConfig.TRUST_PROXY);
  */
 app.use(loggerMiddleware);
 app.use(helmet());
+app.use(untrustedProxyWarning);
 app.use(apiRateLimiter);
 app.use(corsMiddleware);
 app.use(cookieParser());
