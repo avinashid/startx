@@ -26,6 +26,7 @@
 		"!**/.vercel/",
 		"!**/logs/",
 		"_gitignore",
+		"AGENTS.md",
 		".dockerignore",
 		".editorconfig",
 		".env.example",
