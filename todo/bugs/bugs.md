@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B88`
+- **Next free ID:** `B89`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 5 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 84
+- **Open:** 6 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 84
 
 Counts include the four sub-items of B12.
 
@@ -16,7 +16,7 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 0 | 0 | 5 | **5** |
+| open | 0 | 0 | 0 | 6 | **6** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
 | **verified** | 20 | 19 | 20 | 25 | **84** |
@@ -221,6 +221,7 @@ rules were silently not running for any package.
 | B85 | `listFiles` still swallows readdir errors, and the cli entry uses `parse` rather than `parseAsync` | startx-cli, @repo/lib | [function](function-bugs.md#b85) | open |
 | B86 | Access and refresh tokens carry no `typ`/`aud` claim, so they are interchangeable when the secrets match | @repo/lib | [security](security-bugs.md#b86) | open |
 | B87 | The queue-worker image can't start (`bullmq` missing), and both images install unpinned externals | queue-worker, core-server, CI | [runtime](runtime-bugs.md#b87) | verified |
+| B88 | `package add` asks about missing root deps even with `--no-install`, and never exits while stdin stays open | startx-cli | [function](function-bugs.md#b88) | open |
 
 ---
 

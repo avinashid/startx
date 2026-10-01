@@ -5,7 +5,7 @@ Register: [`bugs.md`](bugs.md). Entry template: [`../README.md`](../README.md#6-
 
 Contents: [B2](#b2) · [B3](#b3) · [B15](#b15) · [B16](#b16) · [B17](#b17) · [B18](#b18) ·
 [B19](#b19) · [B20](#b20) · [B21](#b21) · [B27](#b27) · [B34](#b34) · [B35](#b35) · [B38](#b38) ·
-[B39](#b39) · [B40](#b40) · [B71](#b71) · [B72](#b72) · [B76](#b76)
+[B39](#b39) · [B40](#b40) · [B71](#b71) · [B72](#b72) · [B76](#b76) · [B88](#b88)
 
 ---
 
@@ -1026,6 +1026,13 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 - **File:** `apps/startx-cli/src/commands/package.ts:67` (`list`), `:100` (`add`)
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
 - **Fixed in:** `6963d2a` — `package list` hides `mode: "silent"` packages, and `assertAddable` refuses a silent package that no template depends on. Covered by `package.test.ts`. Live on full-biome: `package list` shows none of startx-cli/tsdown-config/typescript-config, and `package add startx-cli` fails with `"startx-cli" is internal to the StartX template`. publish.yml's "Smoke test packed CLI" expected every template in `package list`, so it failed the first 1.2.1 publish (run 67). It now checks that silent templates are present in the installed tarball instead. Checked by running the publish job's steps locally: the old check reproduces the CI errors, and the new one passes (`Installed CLI resolved all 21 templates.`).
+- **Review follow-up:** `5fd56ce` on `fix/review-env-example`.
+  - The reviewer found that the smoke's JS comment contained `` `package list` ``. Inside bash's double-quoted `node -e "…"` that is a command substitution, so the runner executed `package`. The script now goes through a quoted heredoc (`<<'SCRIPT'`), as verify-tarball's does.
+  - The smoke now also runs `package add typescript-config` and `package add tsdown-config` through the installed binary in a temp workspace, and requires `package add startx-cli` to be refused without writing anything. The 1.2.0 tarball fails this check: it copies `apps/startx-cli` and exits 0.
+  - `assertAddable` now seeds `resolvePackageClosure` from offered (non-silent) packages only, so a dependency declared only by startx-cli no longer makes a silent package addable.
+  - `package.test.ts` now also runs against the real template: `list` hides startx-cli, tsdown-config and typescript-config; the two configs are addable; startx-cli is refused.
+  - Evidence: a local replay of the publish job's Clean → Pack → Verify → Smoke steps passes with no `command not found`, and the forced gate passes (73/73, 0 cached, exit 0, 257 tests).
+  - Two things the smoke surfaced, filed as [B88](#b88) and not fixed here: `add` asks about missing root deps even with `--no-install`, and it never exits while stdin stays open.
 
 **Symptom** — `startx package list` lists `startx-cli (apps/startx-cli)`, which the interactive `add` picker hides. `startx package add startx-cli` succeeds and copies the generator into the workspace.
 
@@ -1073,3 +1080,21 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 **Symptom / cause** — A directory that can't be read looks empty, so a scaffold can silently miss files. With `parse`, an async command's rejection isn't awaited by commander.
 
 **Proposed fix** — Let readdir errors propagate (or report them), and switch the entry to `await program.parseAsync()`.
+
+---
+
+## B88
+
+### B88 · `package add` asks about missing root deps even with `--no-install`, and never exits while stdin stays open
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts` (`add`)
+- **Found in:** B76 review follow-up (`tsk_6xnwfzt2`), 2026-10-01, writing the packed-CLI smoke
+
+**Symptom** — `startx package add tsdown-config --name tsdown-config --no-eslint --no-install` in a workspace without `tsdown` still asks "Add them to the workspace root package.json? (Y/n)". With stdin at EOF this throws `ExitPromptError` and a stack trace before anything is copied. Piping `yes n |` answers the prompt and the package is written, but the process then never exits; it hit `timeout`'s exit 124. A finite `printf 'n\n…'` exits 0. publish.yml's smoke relies on that last form.
+
+**Cause** — `--no-install` only skips the package-manager run, and no flag answers the root-deps prompt. The exit hang looks like stdin being left in flowing mode after the prompts.
+
+**Proposed fix** — Add a `--yes`/`--no-root-deps` style flag, or skip the prompt when stdin is not a TTY. Pause or unref stdin when the prompts finish. Then drop the stdin answers from the smoke.
