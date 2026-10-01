@@ -32,10 +32,11 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Install external dependencies locally
-RUN npm install sharp @bull-board/api @bull-board/ui @bull-board/express
+# The build writes dist/package.json pinning the bundle's externals (runtimeDependencies in
+# tsdown.config.ts) to the lockfile's versions. Install exactly those, then add the bundle.
+COPY --from=builder /app/apps/queue-worker/dist/package.json ./
+RUN npm install --omit=dev --no-audit --no-fund
 
-# Copy built server dist
 COPY --from=builder /app/apps/queue-worker/dist ./
 # Bull Board is off outside development and binds 127.0.0.1 by default. To reach it from outside the
 # container set BULL_BOARD_ENABLED=true and BULL_BOARD_HOST=0.0.0.0, behind an authenticating proxy.

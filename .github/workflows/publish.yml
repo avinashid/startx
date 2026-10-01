@@ -27,6 +27,11 @@ jobs:
         image: redis:7.2
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
 
     steps:
       - name: Checkout repo
@@ -58,9 +63,17 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      # The gate above runs on the engines minimum; the runtime images are node:24.
+      - name: Setup Node (runtime image version)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       # No other gate runs a bundle, so an app whose dist cannot start (B68) still
-      # passes lint, build, typecheck and test. Start each backend and wait for its
-      # ready line.
+      # passes lint, build, typecheck and test. Boot each backend the way its
+      # Dockerfile does: dist/ copied out of the workspace, with only the externals
+      # pinned in dist/package.json installed. Wait for every ready line, then
+      # SIGTERM it and require a clean exit 0.
       - name: Boot smoke
         env:
           NODE_ENV: production
@@ -76,20 +89,32 @@ jobs:
           set -euo pipefail
           export ACCESS_TOKEN_SECRET="$(openssl rand -hex 32)" REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" INTEGRATION_ENCRYPTION_KEY="$(openssl rand -hex 32)"
           boot() {
-            local app="$1" ready="$2" log="/tmp/boot-$1.log"
-            (cd "apps/$app" && exec node dist/index.mjs) >"$log" 2>&1 &
-            local pid=$!
+            local app="$1" dir log pid ready
+            shift
+            dir="$(mktemp -d)"
+            log="$dir/boot.log"
+            cp -R "apps/$app/dist/." "$dir/"
+            (cd "$dir" && npm install --omit=dev --no-audit --no-fund --loglevel=error)
+            (cd "$dir" && exec node index.mjs) >"$log" 2>&1 &
+            pid=$!
             for _ in $(seq 1 30); do
-              if grep -q "$ready" "$log"; then kill "$pid"; echo "$app: ok"; return 0; fi
+              ready=true
+              for marker in "$@"; do grep -q "$marker" "$log" || ready=false; done
+              if $ready; then
+                kill -TERM "$pid"
+                if wait "$pid"; then echo "$app: ok"; return 0; fi
+                echo "::error::$app did not exit 0 on SIGTERM"; cat "$log"; return 1
+              fi
               if ! kill -0 "$pid" 2>/dev/null; then break; fi
               sleep 1
             done
             kill "$pid" 2>/dev/null || true
-            echo "::error::$app did not log '$ready'"; cat "$log"; return 1
+            wait "$pid" 2>/dev/null || true
+            echo "::error::$app did not log all of: $*"; cat "$log"; return 1
           }
           boot core-server "Server listening"
           # The board is off in production; enable it so its startup path is exercised too.
-          BULL_BOARD_ENABLED=true boot queue-worker "Bull Board listening"
+          BULL_BOARD_ENABLED=true boot queue-worker "Worker ready" "Bull Board listening"
 
       - name: Upload CLI bundle
         uses: actions/upload-artifact@v4

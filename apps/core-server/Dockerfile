@@ -32,10 +32,11 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-# Install external dependencies locally
-RUN npm install sharp
+# The build writes dist/package.json pinning the bundle's externals (runtimeDependencies in
+# tsdown.config.ts) to the lockfile's versions. Install exactly those, then add the bundle.
+COPY --from=builder /app/apps/core-server/dist/package.json ./
+RUN npm install --omit=dev --no-audit --no-fund
 
-# Copy built server dist
 COPY --from=builder /app/apps/core-server/dist ./
 EXPOSE 3000
 

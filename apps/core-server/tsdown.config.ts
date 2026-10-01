@@ -1,10 +1,11 @@
 import { defineConfig } from "tsdown";
-import { baseConfig } from "tsdown-config";
+import { baseConfig, runtimeDependencies } from "tsdown-config";
 
 export default defineConfig({
 	...baseConfig,
 	platform: "node",
-	external: ["sharp"],
+	// sharp is native, so it stays external, pinned in dist/package.json, which the Dockerfile installs.
+	plugins: [runtimeDependencies(["sharp"])],
 	inlineOnly: false,
 	noExternal: [/(.*)/],
 	clean: false,
