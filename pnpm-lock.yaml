@@ -948,9 +948,6 @@ importers:
       typescript-config:
         specifier: workspace:*
         version: link:../../../configs/typescript-config
-      vine:
-        specifier: link:@types/vinejs/vine
-        version: link:@types/vinejs/vine
       vitest-config:
         specifier: workspace:*
         version: link:../../../configs/vitest-config

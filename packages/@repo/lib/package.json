@@ -23,7 +23,6 @@
 		"@types/nodemailer": "catalog:",
 		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"vine": "link:@types/vinejs/vine",
 		"vitest-config": "workspace:*"
 	},
 	"dependencies": {

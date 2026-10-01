@@ -749,6 +749,11 @@ export class PackageCommand {
 					continue;
 				}
 
+				// Only registry specs (semver ranges, dist-tags) belong in a catalog. A `link:`, `file:`,
+				// `npm:` or git/URL spec, a path or a `user/repo` shorthand stays literal in the package:
+				// cataloged, pnpm resolves it against the workspace root and the install fails (B72).
+				if (/[:/\\]/.test(version) || version.startsWith(".")) continue;
+
 				depMap[name] = "catalog:";
 				if (!doc.hasIn(["catalog", name])) newEntries[name] = version;
 			}
