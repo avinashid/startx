@@ -495,7 +495,8 @@ export class InitCommand {
 		return Array.from(tags);
 	}
 	private static async copyValidatedFilesFromFolder(source: string, destination: string, tags: Set<TAGS>) {
-		const files = await fsTool.listFiles({ dir: source }).catch(() => []);
+		const files = await fsTool.listFiles({ dir: source }).catch((): string[] => []);
+		const failed: string[] = [];
 		for (const file of files) {
 			// `_gitignore` is the template's ignore file and is renamed to `.gitignore` on copy. When
 			// both exist (the startx repo root), the real `.gitignore` is the repo's own — skip it
@@ -511,7 +512,13 @@ export class InitCommand {
 				});
 			} catch (error) {
 				logger.error(`Failed to copy file ${file}:`, error);
+				failed.push(file);
 			}
+		}
+		// A missing tsconfig or package.json only surfaces later as a baffling install or build
+		// error, so a partial copy fails the scaffold here instead (B60).
+		if (failed.length > 0) {
+			throw new Error(`Failed to copy ${failed.join(", ")} from ${source} to ${destination}.`);
 		}
 	}
 }
