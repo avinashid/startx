@@ -32,7 +32,8 @@
 		"tags": [],
 		"requiredDeps": [
 			"@repo/env",
-			"@repo/lib"
+			"@repo/lib",
+			"@repo/logger"
 		],
 		"requiredDevDeps": [
 			"typescript-config"
