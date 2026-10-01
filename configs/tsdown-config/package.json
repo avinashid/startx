@@ -24,8 +24,10 @@
 		"mode": "silent",
 		"ignore": [
 			"eslint-config",
-			"typescript-config",
 			"vitest-config"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
 		]
 	}
 }

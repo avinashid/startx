@@ -339,7 +339,7 @@ from the bundled template directory, never from a user's workspace.
 - `mode: "silent"` — never offered interactively, but still reachable through the dependency closure.
 - `mode: "standalone"` — forced `runnable`, and excluded from an app's auto-wired `workspace:^` deps.
 - `requiredDeps` / `requiredDevDeps` — the BFS closure, and force-added as `workspace:^`.
-- `ignore` — dependency/config names stripped from the emitted package.
+- `ignore` — dependency, config or script names stripped from the emitted package.
 
 **Array order in `src/configs/scripts.ts`, `files.ts` and `deps.ts` is semantic, not cosmetic.**
 Selection is first-match-wins:

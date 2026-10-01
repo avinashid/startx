@@ -122,10 +122,12 @@ export class FileHandler {
 			}
 		}
 
-		// Removing ignore
+		// Removing ignore — dependency names and script names alike, so a package with nothing to
+		// typecheck (typescript-config is JSON presets only) can opt out of `typecheck`.
 		for (const value of props.app.startx?.ignore ?? []) {
 			delete dependencies[value];
 			delete devDependencies[value];
+			delete packageScript[value];
 		}
 
 		// structuredClone so nested objects (exports, bin …) are not aliased into the emitted

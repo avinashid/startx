@@ -69,6 +69,6 @@ export type StartXPackageJson = PackageJson & {
 		gTags?: TAGS[]; // global tags (to be pushed globally if installed)
 		requiredDeps?: string[];
 		requiredDevDeps?: string[];
-		ignore?: string[];
+		ignore?: string[]; // dependency, config or script names stripped from the emitted package
 	};
 };
