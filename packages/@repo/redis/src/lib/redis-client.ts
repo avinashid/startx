@@ -1,16 +1,26 @@
-import { defineEnv, envBool } from "@repo/env";
+import { defineEnv, ENV, envBool } from "@repo/env";
 import { logger } from "@repo/logger";
 import { Cluster, Redis } from "ioredis";
 import z from "zod";
+
+import { assertRedisAuth } from "./redis-auth.js";
 
 const connection = defineEnv({
 	REDIS_HOST: z.string().min(1),
 	REDIS_PORT: z.coerce.number(),
 	// Unauthenticated Redis is the norm in local dev, so these must tolerate being unset.
+	// assertRedisAuth below refuses a blank password anywhere else.
 	REDIS_USERNAME: z.string().default(""),
 	REDIS_PASSWORD: z.string().default(""),
+	REDIS_ALLOW_NO_AUTH: envBool(),
 	REDIS_DB: z.coerce.number().optional(),
 	REDIS_CLUSTER_MODE: envBool(),
+});
+
+assertRedisAuth({
+	password: connection.REDIS_PASSWORD,
+	allowNoAuth: connection.REDIS_ALLOW_NO_AUTH,
+	nodeEnv: ENV.NODE_ENV,
 });
 
 const clients = new Map<number, Redis>();
