@@ -258,3 +258,18 @@ different goal; this one is npm supply-chain attestation.
 **Today** — `create()` always calls `CommonInquirer.getText({ default: packageName })`, so `startx package new @repo/foo` still stops at a "Package name" prompt, and a scripted run blocks. Found in: package E2E `tsk_g84rp5ak`, 2026-10-01.
 
 **Done when** — Validate the argument with `packageNameSchema` when it's present, and prompt only when it's missing (as `add` does for `--name`).
+
+---
+
+## E16
+
+### E16 · `init` shows its version and warns when a newer startx is published
+
+- **Status:** done · **Value:** med · **Effort:** S
+- **Area:** `apps/startx-cli/src/utils/update-check.ts`, `apps/startx-cli/src/commands/init.ts` (`run`, `printSummary`)
+
+**Today** — The template is bundled inside the CLI, so a stale global install or `npx` cache scaffolds a stale template without any error. A report of "no AGENTS.md after init" (2026-10-01, card `tsk_54e5kygv`) came from a pre-1.2.0 CLI: the 1.1.60 tarball has no AGENTS.md, and 1.2.0 emits it. Nothing in the output showed which version ran.
+
+**Done when** — `init` prints `startx vX.Y.Z` first. Before the prompts it asks `registry.npmjs.org/startx/latest` (1.5s timeout, cached 24h in `$XDG_CACHE_HOME/startx/update-check.json`, skipped when `CI` or `STARTX_NO_UPDATE_CHECK` is set or `STARTX_ENV` is development/test) and warns if a newer version exists, without ever failing the scaffold. The closing summary lists the next steps and names AGENTS.md, or warns if it was not written.
+
+- **Fixed in:** see the `feat: … (E16)` commit — `update-check.test.ts` (7 tests). Forced gate 72/72, 238 tests. The built bin was checked against the live registry (cache written with `1.2.0`, no warning), a cached `9.9.9` (warns), the opt-out and `CI=true` (no request), and a fresh scaffold from the built bin.

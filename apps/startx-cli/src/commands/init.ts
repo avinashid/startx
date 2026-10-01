@@ -7,11 +7,13 @@ import path from "path";
 import z from "zod";
 
 import { FileCheck } from "../configs/files";
+import { Constants } from "../constants";
 import type { TAGS } from "../types";
 import { CliUtils, type PackageItem } from "../utils/cli-utils";
 import { resolvePackageClosure } from "../utils/closure";
 import { FileHandler } from "../utils/file-handler";
 import { CommonInquirer } from "../utils/inquirer";
+import { checkForUpdate } from "../utils/update-check";
 
 type InitOptions = {
 	dir?: string;
@@ -26,7 +28,18 @@ export class InitCommand {
 		.action(InitCommand.run.bind(InitCommand));
 
 	private static async run(projectName: string | undefined, options: InitOptions) {
-		const packageList = await CliUtils.getPackageList();
+		// A stale global or npx-cached CLI scaffolds an outdated template without any error, so say
+		// which version is running and warn before the prompts if npm has a newer one.
+		logger.info(`startx v${Constants.version}`);
+		const [packageList, newer] = await Promise.all([
+			CliUtils.getPackageList(),
+			checkForUpdate({ current: Constants.version }),
+		]);
+		if (newer) {
+			logger.warn(
+				`startx ${newer} is available (this is ${Constants.version}); the template you scaffold is the one this CLI bundles. Update with \`npm i -g startx@latest\` or run \`npx startx@latest init\`.`,
+			);
+		}
 		const availableApps = packageList.filter(
 			(pkg) => pkg.type === "apps" && pkg.packageJson?.startx?.mode !== "silent",
 		);
@@ -90,6 +103,23 @@ export class InitCommand {
 				});
 			}),
 		);
+
+		await this.printSummary(prefs.directory.workspace);
+	}
+
+	private static async printSummary(workspace: string) {
+		const relative = path.relative(process.cwd(), workspace) || ".";
+		const hasAgents = await this.pathExists(path.join(workspace, "AGENTS.md"));
+		logger.info(`Workspace ready at ${workspace}`);
+		logger.info("Next steps:");
+		if (relative !== ".") logger.info(`  cd ${relative}`);
+		logger.info("  pnpm install");
+		logger.info("  pnpm exec turbo typecheck lint test build format:check --force");
+		if (hasAgents) {
+			logger.info("AGENTS.md at the workspace root documents this monorepo's conventions for AI coding agents.");
+		} else {
+			logger.warn(`AGENTS.md was not written; this startx (${Constants.version}) may predate it.`);
+		}
 	}
 
 	private static async getPrefs(props: {

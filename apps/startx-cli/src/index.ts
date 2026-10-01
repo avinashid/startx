@@ -4,11 +4,11 @@ import { Command } from "commander";
 
 import { InitCommand } from "./commands/init";
 import { PackageCommand } from "./commands/package";
-import { version } from "../../../package.json";
+import { Constants } from "./constants";
 
 const program = new Command();
 
-program.name("startx").description("StartX CLI - Your all in one monorepo startup tool.").version(version);
+program.name("startx").description("StartX CLI - Your all in one monorepo startup tool.").version(Constants.version);
 
 program.command("ping").action(() => {
 	logger.info("pong");

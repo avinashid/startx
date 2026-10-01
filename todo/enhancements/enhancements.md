@@ -3,8 +3,8 @@
 Improvements to things that **already exist**. If it doesn't exist yet, it's a
 [feature](../features/features.md). If it's broken, it's a [bug](../bugs/bugs.md).
 
-- **Next free ID:** `E16`
-- **Open:** 15 · **In progress:** 0 · **Done:** 0
+- **Next free ID:** `E17`
+- **Open:** 15 · **In progress:** 0 · **Done:** 1
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -22,6 +22,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E11 | Publish with npm provenance | med | S | open |
 | E12 | Skip closure dependencies that already exist instead of prompting for each | med | S | open |
 | E13 | `package new <name>` should not prompt for a name it was given | low | S | open |
+| E16 | `init` shows its version and warns when a newer startx is published | med | S | done |
 
 ## Templates — [`template-enhancements.md`](template-enhancements.md)
 
