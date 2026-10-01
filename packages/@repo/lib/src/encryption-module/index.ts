@@ -1,11 +1,9 @@
-import { defineEnv } from "@repo/env";
+import { defineEnv, envSecret } from "@repo/env";
 import crypto from "crypto";
-import z from "zod";
 
 const env = defineEnv({
-	INTEGRATION_ENCRYPTION_KEY: z
-		.string()
-		.length(64, "INTEGRATION_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)"),
+	// 64 hex characters = 32 bytes for AES-256-GCM.
+	INTEGRATION_ENCRYPTION_KEY: envSecret({ length: 64, hex: true }),
 });
 
 const ALGORITHM = "aes-256-gcm";

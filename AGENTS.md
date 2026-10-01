@@ -99,6 +99,10 @@ For booleans use `envBool`, never `z.coerce.boolean()` — coercion is `Boolean(
 rejects `""`: a blank variable is a misconfiguration, and reading it as `false` is how a cluster-mode
 deployment quietly connects to a single node.
 
+For keys and signing secrets use `envSecret({ min | length, hex })`, not `z.string().min(32)`. Outside
+`NODE_ENV=development|test` it rejects `CHANGE_ME…` and single-repeated-character values, so a
+deployment that copied `.env.example` fails at boot instead of signing tokens with a public key.
+
 ### React imports
 
 In `packages/ui`, import React as a namespace:
@@ -180,7 +184,7 @@ produces wrong-looking code here.
 | File/JSON/YAML I/O | `@repo/lib/file-system-module` (`fsTool`) | `node:fs` directly |
 | File storage (s3/local) | `@repo/lib/storage-module` | AWS SDK directly |
 | Typed API errors | `@repo/lib/error-handlers-module` (`ErrorResponse`) | `throw new Error` |
-| Env parsing | `@repo/env` (`defineEnv`, `envBool`) | `process.env` |
+| Env parsing | `@repo/env` (`defineEnv`, `envBool`, `envSecret`) | `process.env` |
 | Logging | `@repo/logger` | `console.log` |
 | Redis | `@repo/redis` (`getRedis`, `RedisStore`) | `ioredis` directly |
 | Background jobs | `@repo/queue` (`BullQueue`, `JobSchemas`) | `bullmq` directly |
