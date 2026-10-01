@@ -68,6 +68,9 @@ jobs:
           PORT: "3917"
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: "6379"
+          # The redis service container has no password, and @repo/redis refuses that in
+          # production unless it is declared deliberate.
+          REDIS_ALLOW_NO_AUTH: "true"
           COOKIE_DOMAIN: 127.0.0.1
         run: |
           set -euo pipefail
