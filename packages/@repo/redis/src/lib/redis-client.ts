@@ -88,15 +88,17 @@ export function getRedis(props?: { db?: number }): Redis | Cluster {
 }
 
 /**
- * Close every client getRedis has handed out, for graceful shutdown. A lazy client that never
- * connected is just disconnected: QUIT would first try to open the connection it never needed.
+ * Close every client getRedis has handed out, for graceful shutdown. Only a `ready` client gets
+ * QUIT. Any other is just disconnected: on a lazy client QUIT would first open the connection it
+ * never needed, and on a reconnecting one it waits for a server that may not come back, past the
+ * shutdown deadline.
  */
 export async function closeRedis(): Promise<void> {
 	const all: Array<Redis | Cluster> = [...clients.values(), ...(clusterClient ? [clusterClient] : [])];
 	await Promise.all(
 		all.map(async (client) => {
-			if (client.status === "wait") client.disconnect();
-			else await client.quit();
+			if (client.status === "ready") await client.quit();
+			else client.disconnect();
 		}),
 	);
 	clients.clear();

@@ -190,7 +190,7 @@ produces wrong-looking code here.
 | File/JSON/YAML I/O | `@repo/lib/file-system-module` (`fsTool`) | `node:fs` directly |
 | File storage (s3/local) | `@repo/lib/storage-module` | AWS SDK directly |
 | Typed API errors | `@repo/lib/error-handlers-module` (`ErrorResponse`) | `throw new Error` |
-| Graceful shutdown (SIGTERM/SIGINT) | `@repo/lib/shutdown-module` (`onShutdown`) | `process.on("SIGTERM")` directly |
+| Graceful shutdown (SIGTERM/SIGINT) | `@repo/lib/shutdown-module` (`onShutdown`; `trackHttpServer(server)` right after `listen()` for an HTTP drain that does not wait out keep-alive) | `process.on("SIGTERM")` directly |
 | Env parsing | `@repo/env` (`defineEnv`, `envBool`, `envSecret`) | `process.env` |
 | Logging | `@repo/logger` | `console.log` |
 | SQLite | `@db/sqlite` (`db`, drizzle on `node:sqlite`) | `better-sqlite3` / raw `node:sqlite` |

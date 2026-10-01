@@ -7,9 +7,11 @@ import { bullWorker } from "./bullmq/worker.js";
 bullWorker();
 const board = startBullBoard();
 
-// BullQueue.close() waits for active jobs to finish, so a deploy does not leave them stalled.
+// BullQueue.close() waits for active jobs to finish, so a deploy does not leave them stalled. The
+// board is an admin UI with nothing to drain: its connections are cut at once so the queue's drain
+// starts without waiting on the UI's polling keep-alive sockets.
 onShutdown([
-	{ name: "bull board", run: () => new Promise<void>((resolve) => (board ? board.close(() => resolve()) : resolve())) },
+	{ name: "bull board", run: () => board?.close({ graceMs: 0 }) },
 	{ name: "queue", run: () => BullQueue.close() },
 	{ name: "redis", run: closeRedis },
 ]);

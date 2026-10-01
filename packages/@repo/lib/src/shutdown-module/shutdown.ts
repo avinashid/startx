@@ -1,4 +1,5 @@
 import { logger } from "@repo/logger";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 
 export type ShutdownStep = { name: string; run: () => unknown };
 
@@ -62,4 +63,51 @@ export const onShutdown = (steps: ShutdownStep[], options: ShutdownOptions = {})
 			void shutdown(signal);
 		});
 	}
+};
+
+type CloseHttpServerOptions = {
+	/** How long in-flight requests get before their connections are cut. 0 cuts them at once. */
+	graceMs?: number;
+	pollMs?: number;
+};
+
+/**
+ * Call right after `listen()`; `close()` is then the shutdown step. `server.close()` alone stops
+ * accepting connections but closes idle keep-alive sockets only once, when it is called: a socket
+ * whose request was in flight then sits idle for `keepAliveTimeout` after its response, so the
+ * drain can outlast the shutdown deadline. Here every response not yet started when the drain
+ * begins, or arriving during it, carries `Connection: close`, so its socket closes as soon as it is
+ * answered. Idle sockets are swept every `pollMs`, and whatever is left is cut after `graceMs`.
+ */
+export const trackHttpServer = (server: Server) => {
+	const pending = new Set<ServerResponse>();
+	let draining = false;
+
+	server.prependListener("request", (_req: IncomingMessage, res: ServerResponse) => {
+		if (draining) {
+			res.setHeader("Connection", "close");
+			return;
+		}
+		pending.add(res);
+		res.once("close", () => pending.delete(res));
+	});
+
+	const close = ({ graceMs = 6_000, pollMs = 100 }: CloseHttpServerOptions = {}) =>
+		new Promise<void>((resolve, reject) => {
+			draining = true;
+			for (const res of pending) if (!res.headersSent) res.setHeader("Connection", "close");
+			const poll = setInterval(() => server.closeIdleConnections(), pollMs);
+			const force = setTimeout(() => {
+				logger.warn(`HTTP connections still open after ${graceMs}ms; closing them`);
+				server.closeAllConnections();
+			}, graceMs);
+			server.close((error) => {
+				clearInterval(poll);
+				clearTimeout(force);
+				if (error) reject(error);
+				else resolve();
+			});
+		});
+
+	return { close };
 };

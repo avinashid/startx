@@ -202,11 +202,12 @@ export class BullMQProvider implements IQueueProvider {
 		const eventResults = await Promise.allSettled(Array.from(this.events.values()).map((event) => event.close()));
 		const queueResults = await Promise.allSettled(Array.from(this.queues.values()).map((queue) => queue.close()));
 
-		[...workerResults, ...eventResults, ...queueResults]
+		const failures = [...workerResults, ...eventResults, ...queueResults]
 			.filter((result): result is PromiseRejectedResult => result.status === "rejected")
-			.forEach((result) => {
-				logger.error("Error during shutdown", result.reason);
-			});
+			.map((result) => result.reason as unknown);
+		for (const reason of failures) logger.error("Error during shutdown", reason);
+		// Everything above was still closed; throwing lets the shutdown runner exit 1.
+		if (failures.length > 0) throw new AggregateError(failures, "Queue system did not shut down cleanly");
 
 		logger.warn("Queue system shut down safely.");
 	}

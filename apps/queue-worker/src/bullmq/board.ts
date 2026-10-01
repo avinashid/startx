@@ -2,6 +2,7 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { ExpressAdapter } from "@bull-board/express";
 import { defineEnv, ENV, envBool } from "@repo/env";
+import { trackHttpServer } from "@repo/lib/shutdown-module";
 import { logger } from "@repo/logger";
 import { BullQueue, queueList } from "@repo/queue";
 import express from "express";
@@ -33,7 +34,9 @@ export const startBullBoard = () => {
 	const app = express();
 	app.use("/", serverAdapter.getRouter() as express.Router);
 
-	return app.listen(env.BULL_BOARD_PORT, env.BULL_BOARD_HOST, () => {
-		logger.info(`Bull Board listening on http://${env.BULL_BOARD_HOST}:${env.BULL_BOARD_PORT}`);
-	});
+	return trackHttpServer(
+		app.listen(env.BULL_BOARD_PORT, env.BULL_BOARD_HOST, () => {
+			logger.info(`Bull Board listening on http://${env.BULL_BOARD_HOST}:${env.BULL_BOARD_PORT}`);
+		}),
+	);
 };

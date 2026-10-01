@@ -1,8 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createShutdown } from "./shutdown.js";
 
 describe("createShutdown (B73)", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
 	it("runs steps in order and exits 0", async () => {
 		const order: string[] = [];
 		const exit = vi.fn();
@@ -75,6 +79,5 @@ describe("createShutdown (B73)", () => {
 		await vi.advanceTimersByTimeAsync(60);
 
 		expect(exit).toHaveBeenCalledExactlyOnceWith(1);
-		vi.useRealTimers();
 	});
 });
