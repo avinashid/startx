@@ -3,8 +3,8 @@
 Improvements to things that **already exist**. If it doesn't exist yet, it's a
 [feature](../features/features.md). If it's broken, it's a [bug](../bugs/bugs.md).
 
-- **Next free ID:** `E12`
-- **Open:** 11 · **In progress:** 0 · **Done:** 0
+- **Next free ID:** `E16`
+- **Open:** 15 · **In progress:** 0 · **Done:** 0
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -20,6 +20,8 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E5 | Non-interactive mode — a flag for every prompt | med | M | open |
 | E6 | Typed CLI errors and meaningful exit codes | low | S | open |
 | E11 | Publish with npm provenance | med | S | open |
+| E12 | Skip closure dependencies that already exist instead of prompting for each | med | S | open |
+| E13 | `package new <name>` should not prompt for a name it was given | low | S | open |
 
 ## Templates — [`template-enhancements.md`](template-enhancements.md)
 
@@ -30,6 +32,8 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E8 | Unit tests for the pure template logic | med | M | open |
 | E9 | Revisit `typecheck.dependsOn: ["build"]` in `turbo.json` | med | S | open |
 | E10 | Document the tag model in the user-facing README | med | S | open |
+| E14 | The `cli` app template has no `bin` entry | low | S | open |
+| E15 | Emit source maps for bundled apps so a crash is readable | med | S | open |
 
 Effort: **S** ≈ under an hour · **M** ≈ half a day · **L** ≈ multi-day.
 

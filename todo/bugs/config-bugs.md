@@ -6,7 +6,7 @@ Register: [`bugs.md`](bugs.md).
 
 Contents: [B7](#b7) · [B8](#b8) · [B9](#b9) · [B10](#b10) · [B11](#b11) · [B13](#b13) · [B14](#b14) ·
 [B32](#b32) · [B33](#b33) · [B36](#b36) · [B37](#b37) · [B42](#b42) · [B43](#b43) · [B44](#b44) ·
-[B46](#b46)
+[B46](#b46) · [B70](#b70)
 
 ---
 
@@ -940,5 +940,26 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 **Fix** — Add a `FileCheck` entry gating `.env.example` on the `backend` tag.
 
 **Verify** — web-only scaffold has no `.env.example`; server-only scaffold has one
+
+---
+
+## B70
+
+### B70 · `package add core-server` emits an app that fails typecheck: `@repo/common` is missing from core-server's `requiredDeps`
+
+- **Status:** open
+- **Severity:** P1
+- **Area:** core-server (template metadata)
+- **File:** `apps/core-server/package.json` (`startx.requiredDeps`)
+- **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — In any workspace, `startx package add core-server [--name api-v2]` fails `typecheck` with `TS2307: Cannot find module '@repo/common/types/users'` (`src/config/custom-type.ts:1`). Gate in the server-only workspace: 48/49.
+
+**Cause** — `handlePackageJson` strips every `workspace:` dependency and re-adds only `startx.requiredDeps`. `init` hides the gap because it auto-wires every selected package whose `iTags ⊆ app.gTags` (`init.ts:67-82`); `package add` passes no such deps. core-server imports `@repo/common`, but `requiredDeps` is `["@repo/env", "@repo/logger", "@repo/lib"]`. This is the same class of bug as [B51](config-bugs.md#b51).
+
+**Fix** — Add `@repo/common` to core-server's `requiredDeps`. E3 (FileCheck/DepCheck integrity) could grow a check that every workspace import in a template's `src` is in its `requiredDeps`.
+
+**Verify** — server-only scaffold + `package add core-server --name api-v2` → install → forced gate passes, `api-v2#typecheck` included.
 
 ---

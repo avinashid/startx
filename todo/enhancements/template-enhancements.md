@@ -208,3 +208,29 @@ Also fix two smaller README gaps while in there:
   `init` never installs at all. Worth stating once, prominently.
 
 **Done when** — Someone can add a new template package correctly using only the README.
+
+---
+
+## E14
+
+### E14 · The `cli` app template has no `bin` entry
+
+- **Status:** open · **Value:** low · **Effort:** S
+- **Area:** `apps/cli/package.json`
+
+**Today** — The scaffolded CLI builds to `dist/index.mjs` and runs via `node dist/index.mjs`, but it declares no `bin`, so `pnpm link`, `npm i -g` and `npx` can't expose it as a command, which is the point of a CLI template. Found in: runtime smoke `tsk_jv5m7m9a`, 2026-10-01.
+
+**Done when** — `apps/cli/package.json` carries `"bin": { "<name>": "./dist/index.mjs" }` with a shebang, and `handlePackageJson` keeps it (B16 already preserves `bin`).
+
+---
+
+## E15
+
+### E15 · Emit source maps for bundled apps so a crash is readable
+
+- **Status:** open · **Value:** med · **Effort:** S
+- **Area:** `configs/tsdown-config`, app `tsdown.config.ts`
+
+**Today** — core-server and queue-worker bundle every dependency into one file. When either crashes at boot, Node echoes the offending source line, which is several kilobytes of bundled code, and the stack points at `dist/index.mjs:781:2211`. Found in: runtime smoke `tsk_jv5m7m9a`, 2026-10-01.
+
+**Done when** — Builds emit `sourcemap: true`, and `start` runs with `--enable-source-maps`, so a boot failure prints the original `src/` location.

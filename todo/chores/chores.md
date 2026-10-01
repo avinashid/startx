@@ -3,8 +3,8 @@
 Repo hygiene, docs and maintenance. No user-visible behaviour change.
 Not bugs, not features — just things that should be tidy and currently aren't.
 
-- **Next free ID:** `C7`
-- **Open:** 6 · **In progress:** 0 · **Done:** 0
+- **Next free ID:** `C9`
+- **Open:** 8 · **In progress:** 0 · **Done:** 0
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -16,6 +16,8 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | [C4](#c4) | Catalog freshness pass | M | open |
 | [C5](#c5) | Fill in the root `package.json` metadata | S | open |
 | [C6](#c6) | `README.md` is out of date with `c104915` — `--force` and `.prettierrc.mjs` | S | open |
+| [C7](#c7) | web-client `vite.config.ts` start-up noise: `☠ MISSING_ENV_FILE`, deprecated `envFile`, `__dirname` | S | open |
+| [C8](#c8) | cli template: the `test` command's description is stale | S | open |
 
 ---
 
@@ -208,3 +210,29 @@ misfiring inside this repo.
 table with a one-line note on when it appears and what `requirePragma` means, and make a habit of
 treating the README's two tables as part of the definition of done for any flag or template-file
 change.
+
+---
+
+## C7
+
+### C7 · web-client `vite.config.ts` start-up noise: `☠ MISSING_ENV_FILE`, deprecated `envFile`, `__dirname`
+
+- **Status:** open · **Effort:** S
+
+Every `vite preview` / `react-router build` of web-client prints `☠ [MISSING_ENV_FILE] missing file (<root>/.env)` from dotenvx (the `@repo/env` loader passes `ignore: ["MISSING_ENV_FILE"]`; vite.config doesn't), `The envFile option is deprecated, please use envDir: false instead` (twice), and a warning that `__dirname` (`vite.config.ts:28`) is unsupported by Vite's upcoming native config loader. None of these is broken, but a fresh scaffold should start quietly. Found in: runtime smoke `tsk_jv5m7m9a`, 2026-10-01.
+
+**What to do** — Ignore `MISSING_ENV_FILE` in vite.config's dotenvx call, switch to `envDir: false`, and use `import.meta.dirname`.
+
+
+---
+
+## C8
+
+### C8 · cli template: the `test` command's description is stale
+
+- **Status:** open · **Effort:** S
+
+`cli --help` describes `test` as "Test semantic routing and parallel SQL generation", but the command only logs `Test command`. Found in: runtime smoke `tsk_jv5m7m9a`, 2026-10-01.
+
+**What to do** — Make the description match the command, or drop the command.
+

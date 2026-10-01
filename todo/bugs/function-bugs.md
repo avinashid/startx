@@ -5,7 +5,7 @@ Register: [`bugs.md`](bugs.md). Entry template: [`../README.md`](../README.md#6-
 
 Contents: [B2](#b2) · [B3](#b3) · [B15](#b15) · [B16](#b16) · [B17](#b17) · [B18](#b18) ·
 [B19](#b19) · [B20](#b20) · [B21](#b21) · [B27](#b27) · [B34](#b34) · [B35](#b35) · [B38](#b38) ·
-[B39](#b39) · [B40](#b40)
+[B39](#b39) · [B40](#b40) · [B71](#b71) · [B72](#b72) · [B76](#b76)
 
 ---
 
@@ -971,5 +971,68 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 **Fix** — Tag the root `.gitignore` `["never"]`.
 
 **Verify** — scaffold `.gitignore` is byte-identical to `_gitignore`
+
+---
+
+## B71
+
+### B71 · `package new` writes `tsconfig.json` with 2-space indent, so a new package fails `format:check` immediately
+
+- **Status:** open
+- **Severity:** P1
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts:224`
+- **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — `startx package new @repo/foo`, then install and the gate: `@repo/foo#format:check` fails on `tsconfig.json`. This happens under both prettier and biome (both reformat it to tabs). Gate: 41/43 with two new packages.
+
+**Cause** — `create()` writes the tsconfig with `JSON.stringify(..., null, 2)`, while `package.json` goes through `writeJson` with `"\t"`. House style is tabs.
+
+**Fix** — Write the tsconfig through `this.writeJson` (tab indent, trailing newline).
+
+**Verify** — `package new @repo/foo` in a prettier workspace and in a biome workspace → install → forced gate passes.
+
+---
+
+## B72
+
+### B72 · Dead `"vine": "link:@types/vinejs/vine"` devDependency in `@repo/lib`, which `package add` then writes into the catalog, breaking `pnpm install`
+
+- **Status:** open
+- **Severity:** P1
+- **Area:** @repo/lib, startx-cli
+- **File:** `packages/@repo/lib/package.json:26`; `apps/startx-cli/src/commands/package.ts` (`syncDepsWithCatalog`)
+- **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — web-only workspace + `package add core-server` (which brings in `@repo/lib`) → `pnpm install` fails with `ERR_PNPM_CATALOG_ENTRY_INVALID_SPEC: The entry for 'vine' in catalog 'default' declares a dependency using the 'link' protocol`. Separately, every scaffold's `@repo/lib/node_modules/vine` is a dangling symlink.
+
+**Cause** — Two defects. (1) The devDependency has been in the template since `fd4a3b7` (2026-02-23); nothing imports `vine`, and `packages/@repo/lib/@types/vinejs/vine` doesn't exist. (2) `syncDepsWithCatalog`'s `processMap` moves every non-`workspace:`, non-`catalog:` spec into the catalog, including `link:`, `file:`, `git+…`, `npm:` aliases and URLs, which pnpm catalogs reject.
+
+**Fix** — Delete the `vine` devDependency. In `processMap`, catalog only plain semver ranges and dist-tags; leave other protocols in place untouched.
+
+**Verify** — web-only + `package add core-server` → install exit 0 → forced gate passes; `grep -n vine pnpm-workspace.yaml` matches nothing.
+
+---
+
+## B76
+
+### B76 · `package list` shows `mode: "silent"` packages, and `package add startx-cli` installs the CLI itself into a user's workspace
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts:67` (`list`), `:100` (`add`)
+- **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — `startx package list` lists `startx-cli (apps/startx-cli)`, which the interactive `add` picker hides. `startx package add startx-cli` succeeds and copies the generator into the workspace.
+
+**Cause** — `add` filters `mode !== "silent"` only for the interactive choice; `list` doesn't filter at all. `startx-cli` is silent, but unlike the configs it's in nobody's closure, so it should never be addable.
+
+**Fix** — Filter silent packages from `list`. Reject an explicit `add` of a package that's silent and not a closure dependency, or mark `startx-cli` `["never"]` in a way `getPackageList` honours.
+
+**Verify** — `package list` doesn't show startx-cli; `package add startx-cli` exits non-zero with a clear message.
 
 ---

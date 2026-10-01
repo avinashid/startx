@@ -4,7 +4,7 @@ Defects that only surface when a generated app is actually running — the code 
 (such as they are) pass, and the wrong thing happens in production.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29) · [B41](#b41)
+Contents: [B1](#b1) · [B6](#b6) · [B26](#b26) · [B29](#b29) · [B41](#b41) · [B68](#b68) · [B73](#b73) · [B74](#b74) · [B75](#b75) · [B77](#b77)
 
 ---
 
@@ -368,5 +368,110 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 **Fix** — Check `res.headersSent` first.
 
 **Verify** — upload over the limit → single 413, no `ERR_HTTP_HEADERS_SENT`
+
+---
+
+## B68
+
+### B68 · The built queue-worker crashes on start: `require is not defined in ES module scope` from bundled `@bull-board/ui`
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** queue-worker
+- **File:** `apps/queue-worker/tsdown.config.ts`
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — `node dist/index.mjs` (the app's own `start` script) exits immediately with `ReferenceError: require is not defined in ES module scope`. This happens in the repo's own `apps/queue-worker/dist` and in every scaffold. `tsx src/index.ts` works, and the forced gate is green because nothing ever runs the bundle.
+
+**Cause** — `tsdown.config.ts` sets `noExternal: [/(.*)/]`, which inlines every dependency into one ESM file. `@bull-board/api`'s `createBullBoard` locates its UI with an eval'd `require.resolve('@bull-board/ui/package.json')`. In an `.mjs` bundle `require` doesn't exist, and the bundler can't rewrite an eval'd call.
+
+**Fix** — Keep the `@bull-board/*` packages (and anything else that resolves its own files at runtime) external: `external: ["sharp", /^@bull-board\//]`. Or stop bundling dependencies for this app altogether.
+
+**Verify** — Run `pnpm --filter queue-worker build`, then `node apps/queue-worker/dist/index.mjs` against a Redis. It logs `Worker ready` and `Bull Board listening`. Worth adding a boot smoke step to CI so a bundle that can't start fails the gate.
+
+---
+
+## B73
+
+### B73 · core-server and queue-worker have no SIGTERM/SIGINT handling, so a deploy drops in-flight work
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** core-server, queue-worker
+- **File:** `apps/core-server/src/index.ts`, `apps/queue-worker/src/index.ts`
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — On SIGTERM (every container stop or rolling deploy) both processes die at once. core-server cuts in-flight HTTP requests mid-response. queue-worker abandons active BullMQ jobs; they sit `active` until the stalled-job checker requeues them, so they run twice or get flagged stalled.
+
+**Cause** — `grep -rn SIGTERM apps/*/src` matches nothing. There's no `server.close()`, no `worker.close()`, and no Redis `quit()`.
+
+**Fix** — Add a shared `onShutdown` helper (in `@repo/lib` or each app) that stops accepting work, awaits `server.close()` / `worker.close()` / `redis.quit()` with a timeout, then exits 0.
+
+**Verify** — Start the app, open a slow request (or an active job), send SIGTERM: the request completes or the job finishes, the log shows the shutdown, and the exit code is 0.
+
+---
+
+## B74
+
+### B74 · Responses produced before `cors` (429 from the rate limiter) carry no CORS headers, so browsers see a network error rather than a 429
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** core-server
+- **File:** `apps/core-server/src/routes/server.ts:33-34`
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — From a browser on an allowed origin, once the limit is hit, every request fails as an opaque CORS/network error. The SPA can't read the status or `Retry-After`. Preflight `OPTIONS` requests are counted against the same budget and are themselves answered 429 without CORS headers.
+
+**Cause** — The middleware order is `helmet → apiRateLimiter → corsMiddleware`. That order is documented as load-bearing in AGENTS.md §6, so the limiter answers before `cors` ever adds `Access-Control-Allow-Origin`.
+
+**Fix** — Decision needed, because it changes the documented order. Either mount `corsMiddleware` before the limiter (rejecting disallowed origins first is arguably better anyway), or skip `OPTIONS` in the limiter and add CORS headers to its handler. Update AGENTS.md §6 to match.
+
+**Verify** — Exhaust the limit with `Origin: <allowed>`: the 429 carries `Access-Control-Allow-Origin`, and an `OPTIONS` preflight still gets 204.
+
+---
+
+## B75
+
+### B75 · Logger prints winston internals (`Symbol(level)`, `Symbol(splat)`) in "Extra Details" and writes ANSI colour codes to non-TTY output
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/logger
+- **File:** `packages/@repo/logger/src`
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — `logger.info("Registering worker", { queue })` prints an "Extra Details:" block that includes `Symbol(level): 'info'` and `Symbol(splat): [...]`. Production logs redirected to a file or a collector contain `\x1b[32m` escape codes.
+
+**Cause** — The meta formatter inspects the whole winston `info` object rather than the user's meta, and colourisation is applied unconditionally.
+
+**Fix** — Format only the user-supplied meta (strip symbol keys). Colourise only when `process.stdout.isTTY`, or emit JSON outside development.
+
+**Verify** — `node dist/index.mjs > log` contains no `\x1b[` and no `Symbol(`.
+
+---
+
+## B77
+
+### B77 · web-client throws React hydration error #418 on every unknown route
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** web-client
+- **File:** `apps/web-client/react-router.config.ts` (`ssr: false`)
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — Loading any path that isn't `/` in the production build renders the 404 boundary correctly but logs `Minified React error #418` (hydration text mismatch), and React discards the server HTML.
+
+**Cause** — SPA mode prerenders `index.html` for `/`, and the server returns it for every path. On a deep link the client renders a different tree than the HTML it hydrates.
+
+**Fix** — Give the root route a `HydrateFallback` so the prerendered shell carries no route content, which is React Router's SPA-mode guidance.
+
+**Verify** — Playwright: load `/does-not-exist` from `vite preview`; no `pageerror` events.
 
 ---

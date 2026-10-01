@@ -232,3 +232,29 @@ different goal; this one is npm supply-chain attestation.
 
 **Done when** — A published version shows the provenance badge on npmjs.com and
 `npm audit signatures` verifies it.
+
+---
+
+## E12
+
+### E12 · Skip closure dependencies that already exist instead of prompting for each
+
+- **Status:** open · **Value:** med · **Effort:** S
+- **Area:** `apps/startx-cli/src/commands/package.ts:347` (`installTemplatePackage`)
+
+**Today** — `package add core-server` in a workspace that already has its dependencies asks "`<path>` already exists. Overwrite?" nine times, once per closure member the user never named. The default (no) is safe, but the noise trains users to hit Enter, and "yes" overwrites a customised `eslint-config`. Found in: package E2E `tsk_g84rp5ak`, 2026-10-01.
+
+**Done when** — Only the explicitly named package can prompt to overwrite. Closure dependencies that already exist are skipped with one summary line (`Kept 9 existing packages: …`).
+
+---
+
+## E13
+
+### E13 · `package new <name>` should not prompt for a name it was given
+
+- **Status:** open · **Value:** low · **Effort:** S
+- **Area:** `apps/startx-cli/src/commands/package.ts:164` (`create`)
+
+**Today** — `create()` always calls `CommonInquirer.getText({ default: packageName })`, so `startx package new @repo/foo` still stops at a "Package name" prompt, and a scripted run blocks. Found in: package E2E `tsk_g84rp5ak`, 2026-10-01.
+
+**Done when** — Validate the argument with `packageNameSchema` when it's present, and prompt only when it's missing (as `add` does for `--name`).

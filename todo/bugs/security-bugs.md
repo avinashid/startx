@@ -4,7 +4,7 @@ Defects with a security impact in the **generated** backend. These are template 
 scaffolded project inherits them.
 Register: [`bugs.md`](bugs.md).
 
-Contents: [B22](#b22) · [B23](#b23) · [B24](#b24) · [B25](#b25) · [B28](#b28)
+Contents: [B22](#b22) · [B23](#b23) · [B24](#b24) · [B25](#b25) · [B28](#b28) · [B69](#b69) · [B78](#b78)
 
 **Cross-references** — filed elsewhere, but security-relevant:
 - [B3](function-bugs.md#b3) — OTP valid for 3.5 days over a 9 000-code space with no attempt limit. **The most serious item in this folder.**
@@ -489,5 +489,47 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 **Fix** — Decision (Avinash, on `tsk_jg4zgfvj`): require it, with an explicit opt-out. `redis-client.ts` calls `assertRedisAuth` (new `redis-auth.ts`) at load: a blank `REDIS_PASSWORD` throws outside `NODE_ENV=development|test` unless `REDIS_ALLOW_NO_AUTH=true` (`envBool`). `.env.example` documents the opt-out; `@repo/redis` gained `"test": "vitest run"`.
 
 **Verify** — `redis-auth.test.ts` (5 tests): blank in production and staging throws; opt-out, development, test and a set password all pass
+
+---
+
+## B69
+
+### B69 · Bull Board is unauthenticated, listens on every interface, and runs in every `NODE_ENV`
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** queue-worker
+- **File:** `apps/queue-worker/src/bullmq/board.ts`
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — Anyone who can reach port 2866 (`BULL_BOARD_PORT`) of a deployed worker gets the full Bull Board UI. They can read every job payload, which for `email-send` means recipients and mail bodies, and they can retry, promote, clean or delete jobs.
+
+**Cause** — `startBullBoard()` mounts `serverAdapter.getRouter()` on a bare `express()` app with no auth middleware, then calls `app.listen(port)` with no host argument (so 0.0.0.0 / ::). `src/index.ts` starts it unconditionally.
+
+**Fix** — Decision needed. Options: (a) only start the board when `BULL_BOARD_ENABLED=true` (`envBool`, default off outside development); (b) require basic auth from an `envSecret` credential; (c) bind to `127.0.0.1` by default via `BULL_BOARD_HOST`. (a) and (c) together are the safe default.
+
+**Verify** — With `NODE_ENV=production` and no opt-in, nothing listens on 2866. With the opt-in, an unauthenticated `GET /` returns 401.
+
+---
+
+## B78
+
+### B78 · The cli template's `hash` / `hash:compare` commands log the plaintext password
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** cli
+- **File:** `apps/cli/src` (`hash` commands)
+- **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
+- **Fixed in:** —
+
+**Symptom** — `cli hash secret123` logs `Hash for "secret123": $2b$…`, and `hash:compare` logs `Comparing password: "secret123"`. In a shell, history already has the argument, but the logger may also ship it to a collector.
+
+**Cause** — The example commands interpolate the input into `logger.info`.
+
+**Fix** — Log only the hash or the boolean result.
+
+**Verify** — `cli hash x | grep -c '"x"'` prints 0.
 
 ---
