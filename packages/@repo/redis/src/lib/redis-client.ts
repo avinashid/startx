@@ -86,3 +86,19 @@ export function getRedis(props?: { db?: number }): Redis | Cluster {
 
 	return client;
 }
+
+/**
+ * Close every client getRedis has handed out, for graceful shutdown. A lazy client that never
+ * connected is just disconnected: QUIT would first try to open the connection it never needed.
+ */
+export async function closeRedis(): Promise<void> {
+	const all: Array<Redis | Cluster> = [...clients.values(), ...(clusterClient ? [clusterClient] : [])];
+	await Promise.all(
+		all.map(async (client) => {
+			if (client.status === "wait") client.disconnect();
+			else await client.quit();
+		}),
+	);
+	clients.clear();
+	clusterClient = null;
+}

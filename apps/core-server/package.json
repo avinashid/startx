@@ -60,7 +60,8 @@
 			"@repo/env",
 			"@repo/logger",
 			"@repo/lib",
-			"@repo/common"
+			"@repo/common",
+			"@repo/redis"
 		],
 		"requiredDevDeps": [
 			"typescript-config",
