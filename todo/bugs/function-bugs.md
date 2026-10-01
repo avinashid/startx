@@ -1025,7 +1025,7 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts:67` (`list`), `:100` (`add`)
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
-- **Fixed in:** `6963d2a` — `package list` hides `mode: "silent"` packages, and `assertAddable` refuses a silent package that no template depends on. Covered by `package.test.ts`. Live on full-biome: `package list` shows none of startx-cli/tsdown-config/typescript-config, and `package add startx-cli` fails with `"startx-cli" is internal to the StartX template`.
+- **Fixed in:** `6963d2a` — `package list` hides `mode: "silent"` packages, and `assertAddable` refuses a silent package that no template depends on. Covered by `package.test.ts`. Live on full-biome: `package list` shows none of startx-cli/tsdown-config/typescript-config, and `package add startx-cli` fails with `"startx-cli" is internal to the StartX template`. publish.yml's "Smoke test packed CLI" expected every template in `package list`, so it failed the first 1.2.1 publish (run 67). It now checks that silent templates are present in the installed tarball instead. Checked by running the publish job's steps locally: the old check reproduces the CI errors, and the new one passes (`Installed CLI resolved all 21 templates.`).
 
 **Symptom** — `startx package list` lists `startx-cli (apps/startx-cli)`, which the interactive `add` picker hides. `startx package add startx-cli` succeeds and copies the generator into the workspace.
 

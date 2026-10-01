@@ -413,8 +413,17 @@ jobs:
               }
             }
           }
+          // `package list` hides mode: \"silent\" templates (B76); they are still reached through the
+          // dependency closure, so for those check the installed tarball has them instead.
+          const installed = 'node_modules/startx/';
           for (const dir of templates) {
-            if (!out.includes('(' + dir + ')')) problems.push('installed CLI did not resolve template ' + dir);
+            const pkgFile = repo + '/' + dir + '/package.json';
+            const meta = fs.existsSync(pkgFile) ? JSON.parse(fs.readFileSync(pkgFile, 'utf8')) : {};
+            if (meta.startx && meta.startx.mode === 'silent') {
+              if (!fs.existsSync(installed + dir + '/package.json')) problems.push('installed CLI is missing silent template ' + dir);
+            } else if (!out.includes('(' + dir + ')')) {
+              problems.push('installed CLI did not resolve template ' + dir);
+            }
           }
           if (problems.length > 0) {
             for (const p of problems) console.log('::error::' + p);
