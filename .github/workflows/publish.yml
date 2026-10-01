@@ -414,7 +414,7 @@ jobs:
           npm install ./pkg.tgz --no-audit --no-fund > /dev/null
           ./node_modules/.bin/startx --version | tee version.txt
           ./node_modules/.bin/startx package list > list.txt 2>&1 || { cat list.txt; exit 1; }
-          REPO="$REPO" node -e "
+          cat > /tmp/smoke-cli.cjs <<'SCRIPT'
           const fs = require('node:fs');
           const repo = process.env.REPO;
           const out = fs.readFileSync('list.txt', 'utf8');
@@ -438,7 +438,7 @@ jobs:
               }
             }
           }
-          // `package list` hides mode: \"silent\" templates (B76); they are still reached through the
+          // package list hides mode: "silent" templates (B76); they are still reached through the
           // dependency closure, so for those check the installed tarball has them instead.
           const installed = 'node_modules/startx/';
           for (const dir of templates) {
@@ -455,7 +455,30 @@ jobs:
             process.exit(1);
           }
           console.log('Installed CLI resolved all ' + templates.length + ' templates.');
-          "
+          SCRIPT
+          REPO="$REPO" node /tmp/smoke-cli.cjs
+
+          # Silent templates are not listed, so add them by name through the real binary:
+          # typescript-config and tsdown-config sit in an offered package's closure and
+          # must be addable; startx-cli sits in none and must be refused (B76). `add` asks
+          # whether to add missing root deps even with --no-install; stdin answers no.
+          WS="$(mktemp -d)"
+          cd "$WS"
+          printf '{ "name": "smoke-ws", "private": true }\n' > package.json
+          printf 'packages:\n  - configs/*\n' > pnpm-workspace.yaml
+          for name in typescript-config tsdown-config; do
+            printf 'n\nn\nn\n' | "$TMP/node_modules/.bin/startx" package add "$name" --name "$name" --no-eslint --no-install > add.txt 2>&1 \
+              || { cat add.txt; echo "::error::package add $name failed"; exit 1; }
+          done
+          for f in configs/tsdown-config/package.json configs/typescript-config/package.json; do
+            [ -f "$f" ] || { echo "::error::package add did not write $f"; exit 1; }
+          done
+          if "$TMP/node_modules/.bin/startx" package add startx-cli --name startx-cli --no-eslint --no-install < /dev/null > refuse.txt 2>&1; then
+            cat refuse.txt; echo "::error::package add startx-cli was not refused"; exit 1
+          fi
+          grep -q "internal to the StartX template" refuse.txt || { cat refuse.txt; echo "::error::package add startx-cli failed for the wrong reason"; exit 1; }
+          [ ! -e apps/startx-cli ] || { echo "::error::package add startx-cli wrote apps/startx-cli"; exit 1; }
+          echo "package add: typescript-config and tsdown-config added, startx-cli refused."
 
       # --no-git-checks is required: the steps above intentionally leave the
       # working tree dirty (rewritten package.json, downloaded bundle).

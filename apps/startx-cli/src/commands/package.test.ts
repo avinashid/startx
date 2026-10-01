@@ -1,13 +1,14 @@
+import { logger } from "@repo/logger";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import * as prettier from "prettier";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import * as YAML from "yaml";
 
 import { NEW_PACKAGE_TSCONFIG, PackageCommand } from "./package";
 import type { StartXPackageJson } from "../types";
-import type { PackageItem } from "../utils/cli-utils";
+import { CliUtils, type PackageItem } from "../utils/cli-utils";
 
 type Internals = {
 	assertInsideWorkspace: (workspace: string, target: string, label: string) => string;
@@ -75,18 +76,55 @@ describe("PackageCommand.assertAddable (B76)", () => {
 	});
 	const packages = [
 		item("core-server", { requiredDevDeps: ["typescript-config"] }),
-		item("typescript-config", { mode: "silent" }),
-		item("startx-cli", { mode: "silent" }),
+		item("typescript-config", { mode: "silent", requiredDevDeps: ["base-config"] }),
+		item("base-config", { mode: "silent" }),
+		item("startx-cli", { mode: "silent", requiredDeps: ["cli-internal"] }),
+		item("cli-internal", { mode: "silent" }),
 	];
 	const check = (name: string) => () =>
 		assertAddable.call(PackageCommand, packages, packages.find((pkg) => pkg.name === name)!);
 
-	it("allows an ordinary package and a silent one that is a dependency", () => {
+	it("allows an ordinary package and a silent one in an offered package's closure", () => {
 		expect(check("core-server")).not.toThrow();
 		expect(check("typescript-config")).not.toThrow();
+		expect(check("base-config")).not.toThrow();
 	});
 
-	it("rejects a silent package nothing depends on", () => {
+	it("rejects a silent package nothing offered depends on", () => {
+		expect(check("startx-cli")).toThrow(/internal to the StartX template/);
+		expect(check("cli-internal")).toThrow(/internal to the StartX template/);
+	});
+});
+
+describe("PackageCommand against the real template (B76)", () => {
+	const template = path.resolve(import.meta.dirname, "../../../..");
+	const realPackages = async () => {
+		vi.spyOn(CliUtils, "getDirectory").mockReturnValue({ template, workspace: template });
+		return await CliUtils.getPackageList();
+	};
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("lists no silent package", async () => {
+		const packages = await realPackages();
+		const info = vi.spyOn(logger, "info").mockImplementation(() => logger);
+		await (PackageCommand as unknown as { list: () => Promise<void> }).list.call(PackageCommand);
+		const out = info.mock.calls.map(([message]) => (typeof message === "string" ? message : "")).join("\n");
+
+		const silent = packages.filter((pkg) => pkg.packageJson?.startx?.mode === "silent").map((pkg) => pkg.name);
+		expect(silent).toEqual(expect.arrayContaining(["startx-cli", "tsdown-config", "typescript-config"]));
+		for (const name of silent) expect(out).not.toContain(`  ${name} (`);
+		expect(out).toContain("  core-server (apps/core-server)");
+	});
+
+	it("keeps tsdown-config and typescript-config addable and refuses startx-cli", async () => {
+		const packages = await realPackages();
+		const check = (name: string) => () =>
+			assertAddable.call(PackageCommand, packages, packages.find((pkg) => pkg.name === name)!);
+
+		expect(check("tsdown-config")).not.toThrow();
+		expect(check("typescript-config")).not.toThrow();
 		expect(check("startx-cli")).toThrow(/internal to the StartX template/);
 	});
 });

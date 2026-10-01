@@ -636,21 +636,20 @@ export class PackageCommand {
 	}
 
 	/**
-	 * A silent package is never offered, but one that is somebody's dependency (typescript-config,
-	 * tsdown-config) may still be added by name. One that nothing depends on is internal to the
-	 * template, startx-cli itself, and copying it into a workspace is never what was meant (B76).
+	 * A silent package is never offered, but one in the dependency closure of an offered package
+	 * (typescript-config, tsdown-config) may still be added by name. One outside it is internal to
+	 * the template, startx-cli itself, and copying it into a workspace is never what was meant (B76).
+	 * Seeding from offered packages only means a dependency declared by startx-cli does not count.
 	 */
 	private static assertAddable(packages: PackageItem[], pkg: PackageItem) {
 		if (pkg.packageJson?.startx?.mode !== "silent") return;
 
 		const name = pkg.packageJson.name ?? pkg.name;
-		const isDependency = packages.some((other) =>
-			[
-				...(other.packageJson?.startx?.requiredDeps ?? []),
-				...(other.packageJson?.startx?.requiredDevDeps ?? []),
-			].includes(name),
-		);
-		if (!isDependency) {
+		const reachable = resolvePackageClosure({
+			packages,
+			seeds: packages.filter((item) => item.packageJson?.startx?.mode !== "silent"),
+		});
+		if (!reachable.some((item) => item.name === pkg.name)) {
 			throw new Error(`"${name}" is internal to the StartX template and cannot be added to a workspace.`);
 		}
 	}
