@@ -1,5 +1,6 @@
 import { defineEnv } from "@repo/env";
 import fs from "fs/promises";
+import https from "https";
 import os from "os";
 import path from "path";
 import z from "zod";
@@ -13,14 +14,22 @@ const ENV = defineEnv({
 
 const REGISTRY_URL = "https://registry.npmjs.org/startx/latest";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// An offline or firewalled run caches its failure too, so it pays the timeout once an hour, not on every init.
+const FAILURE_TTL_MS = 60 * 60 * 1000;
 const TIMEOUT_MS = 1500;
+const MAX_BODY_BYTES = 64 * 1024;
 
-type Cache = { checkedAt: number; latest: string };
+/** `latest: null` records a failed check. */
+type Cache = { checkedAt: number; latest: string | null };
+
+export type RegistryResponse = { status: number; body: string };
+export type RegistryRequest = (url: string, signal: AbortSignal) => Promise<RegistryResponse>;
 
 export type UpdateCheckOptions = {
 	current: string;
-	fetchImpl?: typeof fetch;
-	cacheFile?: string;
+	request?: RegistryRequest;
+	/** A function, so resolving the default path (`os.homedir()`, which can throw) happens inside the guard. */
+	cacheFile?: () => string;
 	now?: () => number;
 	env?: Partial<typeof ENV>;
 };
@@ -45,7 +54,40 @@ export const isNewer = (a: string, b: string) => {
 async function readCache(file: string): Promise<Cache | null> {
 	try {
 		const parsed = JSON.parse(await fs.readFile(file, "utf-8")) as Partial<Cache>;
-		return typeof parsed.checkedAt === "number" && typeof parsed.latest === "string" ? (parsed as Cache) : null;
+		return typeof parsed.checkedAt === "number" && (typeof parsed.latest === "string" || parsed.latest === null)
+			? (parsed as Cache)
+			: null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * `node:https` rather than `fetch`: after an abort, undici's pending connect keeps the process alive
+ * for its own ~10s connect timeout, so a blackholed registry would hold up a finished command.
+ * An aborted `https` request destroys its socket.
+ */
+export const httpsRequest: RegistryRequest = (url, signal) =>
+	new Promise((resolve, reject) => {
+		const req = https.get(url, { signal, headers: { accept: "application/json" } }, (res) => {
+			let body = "";
+			res.setEncoding("utf-8");
+			res.on("data", (chunk: string) => {
+				body += chunk;
+				if (body.length > MAX_BODY_BYTES) req.destroy(new Error("registry response too large"));
+			});
+			res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
+			res.on("error", reject);
+		});
+		req.on("error", reject);
+	});
+
+async function fetchLatest(request: RegistryRequest): Promise<string | null> {
+	try {
+		const response = await request(REGISTRY_URL, AbortSignal.timeout(TIMEOUT_MS));
+		if (response.status !== 200) return null;
+		const body = JSON.parse(response.body) as { version?: unknown };
+		return typeof body.version === "string" ? body.version : null;
 	} catch {
 		return null;
 	}
@@ -63,24 +105,25 @@ export async function checkForUpdate(options: UpdateCheckOptions): Promise<strin
 	if (env.STARTX_ENV === "development" || env.STARTX_ENV === "test") return undefined;
 
 	const now = options.now ?? Date.now;
-	const cacheFile = options.cacheFile ?? defaultCacheFile();
-	const fetchImpl = options.fetchImpl ?? fetch;
+	const request = options.request ?? httpsRequest;
 
 	try {
-		let latest: string | undefined;
+		const cacheFile = (options.cacheFile ?? defaultCacheFile)();
 		const cached = await readCache(cacheFile);
-		if (cached && now() - cached.checkedAt < CACHE_TTL_MS) {
+		let latest: string | null;
+		if (cached && now() - cached.checkedAt < (cached.latest === null ? FAILURE_TTL_MS : CACHE_TTL_MS)) {
 			latest = cached.latest;
 		} else {
-			const response = await fetchImpl(REGISTRY_URL, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-			if (!response.ok) return undefined;
-			const body = (await response.json()) as { version?: unknown };
-			if (typeof body.version !== "string") return undefined;
-			latest = body.version;
-			await fs.mkdir(path.dirname(cacheFile), { recursive: true });
-			await fs.writeFile(cacheFile, JSON.stringify({ checkedAt: now(), latest } satisfies Cache));
+			latest = await fetchLatest(request);
+			// Its own guard: a read-only cache dir must not throw away a check that succeeded.
+			try {
+				await fs.mkdir(path.dirname(cacheFile), { recursive: true });
+				await fs.writeFile(cacheFile, JSON.stringify({ checkedAt: now(), latest } satisfies Cache));
+			} catch {
+				// Uncached: the next run checks again.
+			}
 		}
-		return isNewer(latest, options.current) ? latest : undefined;
+		return latest !== null && isNewer(latest, options.current) ? latest : undefined;
 	} catch {
 		return undefined;
 	}

@@ -20,6 +20,10 @@ type InitOptions = {
 	force?: boolean;
 };
 
+/** Leaves a plain path as-is and single-quotes anything else, so the printed `cd` can be pasted. */
+export const shellQuote = (value: string) =>
+	/^[\w@%+=:,./-]+$/.test(value) ? value : `'${value.replaceAll("'", `'\\''`)}'`;
+
 export class InitCommand {
 	static command = new Command("init")
 		.argument("[projectName]")
@@ -112,13 +116,16 @@ export class InitCommand {
 		const hasAgents = await this.pathExists(path.join(workspace, "AGENTS.md"));
 		logger.info(`Workspace ready at ${workspace}`);
 		logger.info("Next steps:");
-		if (relative !== ".") logger.info(`  cd ${relative}`);
+		if (relative !== ".") logger.info(`  cd ${shellQuote(relative)}`);
 		logger.info("  pnpm install");
 		logger.info("  pnpm exec turbo typecheck lint test build format:check --force");
 		if (hasAgents) {
 			logger.info("AGENTS.md at the workspace root documents this monorepo's conventions for AI coding agents.");
 		} else {
-			logger.warn(`AGENTS.md was not written; this startx (${Constants.version}) may predate it.`);
+			// Every CLI that runs this summary bundles AGENTS.md, so a missing one is a defect, not an old version.
+			logger.warn(
+				`AGENTS.md is missing from the workspace root, although startx ${Constants.version} ships it. Please report this at https://github.com/avinashid/startx/issues.`,
+			);
 		}
 	}
 

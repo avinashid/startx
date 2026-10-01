@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { TAGS } from "../types";
-import { InitCommand } from "./init";
+import { InitCommand, shellQuote } from "./init";
 
 type Internals = {
 	copyValidatedFilesFromFolder: (source: string, destination: string, tags: Set<TAGS>) => Promise<void>;
@@ -63,5 +63,14 @@ describe("InitCommand.assertSafeToClear", () => {
 		await fs.mkdir(cwd);
 		await fs.mkdir(target);
 		await expect(clearFrom(cwd, target)).resolves.toBe(await fs.realpath(target));
+	});
+});
+
+describe("shellQuote", () => {
+	it("leaves a plain path alone and quotes one a shell would split", () => {
+		expect(shellQuote("my-app")).toBe("my-app");
+		expect(shellQuote("../apps/@scope/x.y")).toBe("../apps/@scope/x.y");
+		expect(shellQuote("my app")).toBe("'my app'");
+		expect(shellQuote("it's $HOME")).toBe(`'it'\\''s $HOME'`);
 	});
 });
