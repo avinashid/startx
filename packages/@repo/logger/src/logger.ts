@@ -19,7 +19,10 @@ addColors(customColors);
 const LOG_DIR = path.join(process.cwd(), "logs");
 
 const customPrintFormat = format.printf((info: Logform.TransformableInfo) => {
-	const { level, message, timestamp, stack, ...metadata } = info;
+	const { level, message, timestamp, stack, ...rest } = info;
+	// Object.entries, not the rest object itself: winston keeps its internals (level, splat, message)
+	// under Symbol keys, and util.inspect would print them as "Symbol(level)" in every entry (B75).
+	const metadata = Object.fromEntries(Object.entries(rest));
 
 	const levelStr = String(level);
 	let messageStr = String(stack || message);
@@ -47,12 +50,17 @@ interface LoggerInput {
 	enableFileLogging?: boolean;
 }
 
+/**
+ * Colour only for a terminal: piped into a file, `docker logs` or a log shipper, ANSI codes are
+ * noise that breaks grep and every log viewer that does not render them (B75).
+ */
+export const consoleFormat = (colors = Boolean(process.stdout.isTTY)) =>
+	colors
+		? format.combine(upperCaseLevel(), format.colorize({ all: true }), customPrintFormat)
+		: format.combine(upperCaseLevel(), customPrintFormat);
+
 const createWLogger = ({ logName, enableFileLogging = true }: LoggerInput) => {
-	const baseTransports = [
-		new transports.Console({
-			format: format.combine(upperCaseLevel(), format.colorize({ all: true }), customPrintFormat),
-		}),
-	];
+	const baseTransports = [new transports.Console({ format: consoleFormat() })];
 	const fileTransports = enableFileLogging
 		? [
 				new transports.File({
