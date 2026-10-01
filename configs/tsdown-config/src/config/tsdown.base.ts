@@ -62,7 +62,21 @@ export const runtimeDependencies = (names: string[]): Rolldown.Plugin => {
 				return { id: source, external: true };
 			},
 		},
-		generateBundle() {
+		generateBundle(outputOptions) {
+			// `node dist/index.mjs` inside the workspace (the app's `start`) resolves externals from the
+			// app's own node_modules, not from the importer's. A package only a library depends on
+			// would install in the image yet fail there, so require it to resolve here, at the same version.
+			const entry = join(outputOptions.dir ?? "dist", "index.mjs");
+			for (const [name, version] of pinned) {
+				const dir = findPackageDir(name, entry);
+				const found =
+					dir && (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { version: string }).version;
+				if (found !== version) {
+					this.error(
+						`${name}@${version} is external, but the app resolves ${found ? `${name}@${found}` : "no copy of it"}: add "${name}": "catalog:" to its dependencies`,
+					);
+				}
+			}
 			const dependencies = Object.fromEntries([...pinned].sort(([a], [b]) => a.localeCompare(b)));
 			this.emitFile({
 				type: "asset",

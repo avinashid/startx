@@ -29,6 +29,7 @@
 		"@repo/queue": "workspace:*",
 		"@bull-board/api": "catalog:",
 		"@bull-board/express": "catalog:",
+		"bullmq": "catalog:",
 		"express": "catalog:"
 	},
 	"devDependencies": {
