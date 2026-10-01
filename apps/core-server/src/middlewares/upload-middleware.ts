@@ -104,13 +104,14 @@ export const uploadMiddleware: RequestHandler = (req, res, next) => {
 	handler(req, res, (error?: unknown) => {
 		req.removeListener("data", countBytes);
 
+		// A limit already answered the request; anything further — including handing an error on
+		// to errorMiddleware — would write to a sent response.
+		if (res.headersSent) return;
+
 		if (error) {
 			next(error);
 			return;
 		}
-
-		// A limit already answered the request; anything further would write to a sent response.
-		if (res.headersSent) return;
 
 		if (countEntries(req.files) > ServerConfig.MAX_UPLOAD_FILES) {
 			rejectTooLarge(res, `Too many files. The limit is ${ServerConfig.MAX_UPLOAD_FILES} per request.`);
