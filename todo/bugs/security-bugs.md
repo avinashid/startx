@@ -554,3 +554,51 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 **Fix** — `NODE_ENV` is removed from `.env.example`, so it falls back to the schema default, `production`. The backend `dev`, `dev:debug` and `bun:dev` scripts (template package.jsons and `scripts.ts`) now run `cross-env NODE_ENV=development …`. `cross-env` was already in the catalog; `deps.ts` adds it as a devDependency for the same tags as those scripts. AGENTS.md §2 documents the rule.
 
 **Verify** — `apps/core-server/src/env-example.test.ts` copies `.env.example` to a temp `.env` (via `PROJECT_ROOT`), boots `src/index.ts` in a child process with NODE_ENV unset, and expects a refusal. It has two cases: the plain copy is refused for Redis auth, and the copy plus `REDIS_PASSWORD` is refused for placeholder secrets. Both fail against the old `.env.example` and pass against the new one. In the server-only scaffold, the test passes inside the scaffold's own gate, and `pnpm --filter core-server dev` with a copied example still boots ("Server listening").
+
+---
+
+## B82
+
+### B82 · OTP attempts key `otp:<email>:attempts` shares the record namespace, and `set(record)` then `del(attempts)` is not atomic
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/lib
+- **File:** `packages/@repo/lib/src/otp-module/index.ts`
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01 (B54 follow-up)
+
+**Symptom / cause** — The record for an email literally named `x:attempts` and the attempt counter for `x` are the same key. The new record is written before the old counter is deleted, so a concurrent guess can land in between. The Lua script and the TTL are never exercised, because `incr` is mocked.
+
+**Proposed fix** — Move the counter to its own namespace (`otp-attempts:`), delete it before writing the record (or use MULTI), and run the Lua path against a real Redis.
+
+---
+
+## B83
+
+### B83 · `isPlaceholderSecret` misses `change-me`, `CHANGE-ME` and `your-secret-here`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/env
+- **File:** `packages/@repo/env/src/env-secret.ts`
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01 (B53 follow-up)
+
+**Symptom / cause** — `/change_?me/i` doesn't match a hyphen, so `change-me-…` passes outside development.
+
+**Proposed fix** — Use `/change[-_]?me/i` and add the common `your-…-here` placeholder forms.
+
+---
+
+## B86
+
+### B86 · Access and refresh tokens carry no `typ`/`aud` claim, so they are interchangeable when the secrets match
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/lib
+- **File:** `packages/@repo/lib/src/token-module/index.ts`
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01 (B58 follow-up)
+
+**Symptom / cause** — B53 makes the two secrets differ outside development, but in development (or if that check is bypassed) a refresh token verifies as an access token.
+
+**Proposed fix** — Sign a `typ` (or `aud`) claim per token kind and require it in verify.

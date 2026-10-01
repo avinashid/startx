@@ -1057,3 +1057,19 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 **Fix** — The cwd counts as outside only when the relative path is exactly `..`, starts with `..` plus `path.sep`, or is absolute. That is the segment test B62 uses in `assertInsideWorkspace`.
 
 **Verify** — `init.test.ts` gains three `assertSafeToClear` cases: a `..foo` cwd refuses its parent, a plain parent is refused, and a sibling of a `..foo` cwd is allowed. The `..foo` case fails on the old code.
+
+---
+
+## B85
+
+### B85 · `listFiles` still swallows readdir errors, and the cli entry uses `parse` rather than `parseAsync`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** startx-cli, @repo/lib
+- **File:** `packages/@repo/lib/src/file-system-module/index.ts:168` and its `.catch(() => [])` callers; the cli entry
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01 (B60 follow-up)
+
+**Symptom / cause** — A directory that can't be read looks empty, so a scaffold can silently miss files. With `parse`, an async command's rejection isn't awaited by commander.
+
+**Proposed fix** — Let readdir errors propagate (or report them), and switch the entry to `await program.parseAsync()`.

@@ -475,3 +475,19 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 **Verify** — Playwright: load `/does-not-exist` from `vite preview`; no `pageerror` events.
 
 ---
+
+---
+
+## B84
+
+### B84 · `envBool` blank rejection is keyed on the exact schema object, so `.describe()` / `.optional()` loses it
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/env
+- **File:** `packages/@repo/env/src/env-bool.ts`, `define-env.ts`
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01 (B63 follow-up)
+
+**Symptom / cause** — `blankRejecting` is a WeakSet holding the schema `envBool()` returned. A wrapped schema is a new object, so `defineEnv` treats `""` as unset again.
+
+**Proposed fix** — Mark the behaviour in a way that survives wrapping (zod metadata/brand), or unwrap before the lookup.

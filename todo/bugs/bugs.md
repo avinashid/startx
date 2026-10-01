@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B82`
+- **Next free ID:** `B87`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 83
+- **Open:** 5 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 83
 
 Counts include the four sub-items of B12.
 
@@ -16,7 +16,7 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 0 | 0 | 0 | **0** |
+| open | 0 | 0 | 0 | 5 | **5** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
 | **verified** | 20 | 18 | 20 | 25 | **83** |
@@ -215,6 +215,11 @@ rules were silently not running for any package.
 | B76 | `package list` shows `mode: "silent"` packages, and `package add startx-cli` installs the CLI itself into a user's workspace | startx-cli | [function](function-bugs.md#b76) | verified |
 | B77 | web-client throws React hydration error #418 on every unknown route | web-client | [runtime](runtime-bugs.md#b77) | verified |
 | B78 | The cli template's `hash` / `hash:compare` commands log the plaintext password | cli | [security](security-bugs.md#b78) | verified |
+| B82 | OTP attempts key `otp:<email>:attempts` shares the record namespace, and `set(record)` then `del(attempts)` is not atomic | @repo/lib | [security](security-bugs.md#b82) | open |
+| B83 | `isPlaceholderSecret` misses `change-me`, `CHANGE-ME` and `your-secret-here` | @repo/env | [security](security-bugs.md#b83) | open |
+| B84 | `envBool` blank rejection is keyed on the exact schema object, so `.describe()` / `.optional()` loses it | @repo/env | [runtime](runtime-bugs.md#b84) | open |
+| B85 | `listFiles` still swallows readdir errors, and the cli entry uses `parse` rather than `parseAsync` | startx-cli, @repo/lib | [function](function-bugs.md#b85) | open |
+| B86 | Access and refresh tokens carry no `typ`/`aud` claim, so they are interchangeable when the secrets match | @repo/lib | [security](security-bugs.md#b86) | open |
 
 ---
 
