@@ -18,7 +18,7 @@ function extractBearerToken(req: Request): string | null {
 	return token;
 }
 
-async function authenticateRequest(req: Request) {
+export async function authenticateRequest(req: Request) {
 	const accessToken = extractBearerToken(req);
 
 	if (!accessToken) {

@@ -291,6 +291,10 @@ Creating the file alone does nothing.
 **Middleware order in `server.ts` is load-bearing**: helmet → rate limit → cors → cookie/body parsers
 → upload → routers → `notFoundMiddleware` → `errorMiddleware` **last**.
 
+`uploadMiddleware` is mounted globally but only parses multipart for a request with a valid session
+(bearer token): an anonymous multipart request gets a 401 before its body is read. A public upload
+route therefore needs its own parser, mounted ahead of the global one.
+
 **`errorMiddleware` must keep all four parameters**, including the unused `_next`. Express detects
 error handlers by arity alone; dropping the fourth parameter silently demotes it to ordinary
 middleware and every error becomes a hung request.

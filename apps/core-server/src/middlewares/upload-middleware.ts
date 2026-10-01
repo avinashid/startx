@@ -6,6 +6,8 @@ import path from "node:path";
 
 import { ServerConfig, UPLOAD_TEMP_ROOT } from "@/config/server-config.js";
 
+import { authenticateRequest } from "@/middlewares/auth-middleware.js";
+
 const MAX_FILE_BYTES = ServerConfig.MAX_UPLOAD_SIZE_MB * 1024 * 1024;
 const MAX_REQUEST_BYTES = ServerConfig.MAX_MULTIPART_SIZE_MB * 1024 * 1024;
 
@@ -33,29 +35,7 @@ const countEntries = (bag: unknown) =>
 		0,
 	);
 
-/**
- * Multipart is the one body type no other limit covers: `json()` and `urlencoded()` ignore it, and
- * busboy's own defaults are unbounded for everything except file size. This wrapper adds what is
- * missing — a cap on the whole request, on every field, and on the number of parts — and gives each
- * request a private temp directory that is deleted when the response ends, however it ends.
- *
- * Non-multipart requests fall straight through, so a global mount costs nothing; mount it
- * per-route (`app.use("/upload", uploadMiddleware, uploadRouter)`) to narrow it further.
- */
-export const uploadMiddleware: RequestHandler = (req, res, next) => {
-	if (!isMultipart(req)) {
-		next();
-		return;
-	}
-
-	const declared = Number(req.headers["content-length"]);
-
-	if (Number.isFinite(declared) && declared > MAX_REQUEST_BYTES) {
-		rejectTooLarge(res, `Request too large. The limit is ${ServerConfig.MAX_MULTIPART_SIZE_MB}MB.`);
-		res.once("finish", () => req.destroy());
-		return;
-	}
-
+const parseMultipart: RequestHandler = (req, res, next) => {
 	// Per request, so cleanup cannot depend on express-fileupload having registered the file:
 	// an aborted, errored or simply unhandled upload leaves nothing behind either way.
 	const tempFileDir = path.join(UPLOAD_TEMP_ROOT, randomUUID());
@@ -125,4 +105,42 @@ export const uploadMiddleware: RequestHandler = (req, res, next) => {
 
 		next();
 	});
+};
+
+/**
+ * Multipart is the one body type no other limit covers: `json()` and `urlencoded()` ignore it, and
+ * busboy's own defaults are unbounded for everything except file size. This wrapper adds what is
+ * missing — a cap on the whole request, on every field, and on the number of parts — and gives each
+ * request a private temp directory that is deleted when the response ends, however it ends.
+ *
+ * Multipart is only parsed for a request carrying a valid session: an anonymous multipart body is
+ * answered 401 before a byte of it is read, so the global mount does not hand every path, 404s
+ * included, to busboy. Non-multipart requests fall straight through and cost no session lookup.
+ * Mount it per-route (`app.use("/upload", uploadMiddleware, uploadRouter)`) to narrow it further.
+ */
+export const uploadMiddleware: RequestHandler = (req, res, next) => {
+	if (!isMultipart(req)) {
+		next();
+		return;
+	}
+
+	const declared = Number(req.headers["content-length"]);
+
+	if (Number.isFinite(declared) && declared > MAX_REQUEST_BYTES) {
+		rejectTooLarge(res, `Request too large. The limit is ${ServerConfig.MAX_MULTIPART_SIZE_MB}MB.`);
+		res.once("finish", () => req.destroy());
+		return;
+	}
+
+	authenticateRequest(req).then((auth) => {
+		if (!auth.ok) {
+			// The body is never read, so the connection cannot be reused for the next request.
+			res.status(auth.status).set("Connection", "close").json({ success: false, message: auth.message });
+			res.once("finish", () => req.destroy());
+			return;
+		}
+
+		req.user = auth.user;
+		parseMultipart(req, res, next);
+	}, next);
 };
