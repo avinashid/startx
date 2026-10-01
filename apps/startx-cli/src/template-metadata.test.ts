@@ -35,3 +35,43 @@ describe("template metadata", () => {
 		expect(dropped).toEqual([]);
 	});
 });
+
+const templateApps = fs
+	.readdirSync(path.join(root, "apps"), { withFileTypes: true })
+	.filter((entry) => entry.isDirectory() && fs.existsSync(path.join(root, "apps", entry.name, "package.json")))
+	.map((entry) => path.join("apps", entry.name));
+
+const workspaceNames = new Set(
+	[...templatePackages, ...templateApps].map(
+		(dir) => (JSON.parse(fs.readFileSync(path.join(root, dir, "package.json"), "utf8")) as StartXPackageJson).name,
+	),
+);
+
+const packageOf = (specifier: string) =>
+	specifier
+		.split("/")
+		.slice(0, specifier.startsWith("@") ? 2 : 1)
+		.join("/");
+
+describe("template app metadata", () => {
+	// `init` auto-wires every selected library into an app, but `package add <app>` only adds the
+	// requiredDeps closure, so a workspace import missing from it fails typecheck there (B70).
+	it.each(templateApps)("%s lists every imported workspace package in requiredDeps (B70)", (dir) => {
+		const pkg = JSON.parse(fs.readFileSync(path.join(root, dir, "package.json"), "utf8")) as StartXPackageJson;
+		const required = new Set(pkg.startx?.requiredDeps ?? []);
+		const src = path.join(root, dir, "src");
+
+		const imported = new Set(
+			fs
+				.readdirSync(src, { recursive: true, encoding: "utf8" })
+				.filter((file) => /\.(ts|tsx)$/.test(file))
+				.flatMap((file) => [
+					...fs.readFileSync(path.join(src, file), "utf8").matchAll(/(?:from|import\()\s*"([^"]+)"/g),
+				])
+				.map((match) => packageOf(match[1]!))
+				.filter((name) => workspaceNames.has(name) && name !== pkg.name && !tagWired.has(name)),
+		);
+
+		expect([...imported].filter((name) => !required.has(name)).sort()).toEqual([]);
+	});
+});
