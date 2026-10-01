@@ -21,6 +21,13 @@ jobs:
     permissions:
       contents: read
 
+    # For the boot smoke step: queue-worker does not reach "Worker ready" without Redis.
+    services:
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -50,6 +57,36 @@ jobs:
 
       - name: Test
         run: pnpm run test
+
+      # No other gate runs a bundle, so an app whose dist cannot start (B68) still
+      # passes lint, build, typecheck and test. Start each backend and wait for its
+      # ready line.
+      - name: Boot smoke
+        env:
+          NODE_ENV: production
+          LOG_LEVEL: info
+          PORT: "3917"
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: "6379"
+          COOKIE_DOMAIN: 127.0.0.1
+        run: |
+          set -euo pipefail
+          export ACCESS_TOKEN_SECRET="$(openssl rand -hex 32)" REFRESH_TOKEN_SECRET="$(openssl rand -hex 32)" INTEGRATION_ENCRYPTION_KEY="$(openssl rand -hex 32)"
+          boot() {
+            local app="$1" ready="$2" log="/tmp/boot-$1.log"
+            (cd "apps/$app" && exec node dist/index.mjs) >"$log" 2>&1 &
+            local pid=$!
+            for _ in $(seq 1 30); do
+              if grep -q "$ready" "$log"; then kill "$pid"; echo "$app: ok"; return 0; fi
+              if ! kill -0 "$pid" 2>/dev/null; then break; fi
+              sleep 1
+            done
+            kill "$pid" 2>/dev/null || true
+            echo "::error::$app did not log '$ready'"; cat "$log"; return 1
+          }
+          boot core-server "Server listening"
+          # The board is off in production; enable it so its startup path is exercised too.
+          BULL_BOARD_ENABLED=true boot queue-worker "Bull Board listening"
 
       - name: Upload CLI bundle
         uses: actions/upload-artifact@v4
