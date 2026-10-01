@@ -419,3 +419,23 @@ import type * as React from "react";
 ```bash
 pnpm --filter @repo/ui exec turbo lint --force
 ```
+
+## B50
+
+### B50 · `apps/cli` imports the workspace **root** `package.json`, so a scaffolded CLI fails typecheck and reports the monorepo's name/version
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** cli
+- **File:** `apps/cli/src/index.ts:3`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30
+
+**Symptom** — `cli#typecheck` fails in every scaffold with cli: `Property 'description' does not exist`. Even where it compiles, `mycli --version` prints the monorepo root's version and name, not the CLI's.
+
+**Cause** — `import packageJson from "../../../package.json"` climbs out of the app to the workspace root. The generator's root allowlist (B16) drops `description` from the root, so the type no longer has it.
+
+**Fix** — Import the app's own manifest, `../package.json`.
+
+**Verify** — scaffold cli → `pnpm exec turbo typecheck --filter cli --force` exits 0
+
+---

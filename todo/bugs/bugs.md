@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B47`
+- **Next free ID:** `B67`
 - **Last full audit:** 2026-09-30 against HEAD `5975f4a`
-- **Open:** 2 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 46
+- **Open:** 22 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 46
 
 Counts include the four sub-items of B12.
 
@@ -16,10 +16,14 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 1 | 1 | 0 | 0 | **2** |
+| open | 9 | 1 | 5 | 7 | **22** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
 | **verified** | 8 | 12 | 12 | 14 | **46** |
+
+**B47–B66 were filed on 2026-10-01** from the E2E scaffold matrix (every fresh scaffold failed its
+own forced gate — see [B47](config-bugs.md#b47)–[B51](config-bugs.md#b51)) and the review of
+`main...c16145f`. They are open.
 
 **B1–B36 and B38–B45 are closed. [B37](config-bugs.md#b37) is half fixed and stays open**, blocked
 on the new [B46](config-bugs.md#b46). Measured uncached at the tip of `fix/p0-bugs`:
@@ -101,6 +105,14 @@ gates were green because they were not looking.
 | B7 | `.env.example` secrets are 24 chars; the code requires 32 | root | [config](config-bugs.md#b7) | **verified** |
 | B34 | A frontend-only selection never broadcasts `node`, so the root gets no `lint`/`format`/`test` | startx-cli | [function](function-bugs.md#b34) | verified |
 | B37 | A stock prettier-only scaffold fails its own `format:check` | startx-cli | [config](config-bugs.md#b37) | **open** — half fixed, 9 of 10 packages → 1 |
+| B47 | Catalog `tsdown: ^0.20.1` resolves 0.20.3 in fresh scaffolds, whose `inlineOnly` ERROR fails every backend build | root catalog | [config](config-bugs.md#b47) | **open** |
+| B48 | `typescript-config` is given `typecheck: tsc --noEmit` but has no `tsconfig.json`, so tsc prints help and exits 1 | startx-cli | [config](config-bugs.md#b48) | **open** |
+| B49 | `tsdown-config`'s `ignore` strips its `typescript-config` devDep while its tsconfig still extends it | tsdown-config | [config](config-bugs.md#b49) | **open** |
+| B50 | `apps/cli` imports the workspace **root** `package.json`, so a scaffolded CLI fails typecheck and reports the monorepo's name/version | cli | [type](type-bugs.md#b50) | **open** |
+| B51 | Workspace imports missing from `requiredDeps` are dropped from emitted packages (aix, @repo/model → @repo/logger; @db/sqlite → @repo/env) | template pkgs | [config](config-bugs.md#b51) | **open** |
+| B53 | Placeholder JWT / encryption secrets from `.env.example` pass validation outside development | @repo/lib | [security](security-bugs.md#b53) | **open** |
+| B54 | `verifyMailOTP` read-modify-writes the attempt counter, so parallel guesses bypass the 5-attempt cap | @repo/lib | [security](security-bugs.md#b54) | **open** |
+| B63 | `defineEnv` maps `""` to `undefined`, so `envBool()` reads a blank var as `false` instead of rejecting it | @repo/env | [runtime](runtime-bugs.md#b63) | **open** |
 
 ¹ B3's pure logic (TTL unit, code keyspace) was verified; the Redis round-trip and the
 attempt-limit path were **not** executed — no Redis or Docker was available on the machine where the
@@ -145,6 +157,11 @@ rules were silently not running for any package.
 | B38 | `package new` emits no `format` / `format:check` script | startx-cli | [function](function-bugs.md#b38) | verified |
 | B40 | `peerDependencies` bypasses `filterDeps` and `syncDepsWithCatalog` | startx-cli | [function](function-bugs.md#b40) | verified |
 | B44 | Per-package prettier never reads the root `.prettierignore`, so `format:check` checks `dist/` | root, template pkgs | [config](config-bugs.md#b44) | verified |
+| B52 | `.env.example` has no `FileCheck` entry and ships core-server secrets into every scaffold | startx-cli | [config](config-bugs.md#b52) | **open** |
+| B60 | `copyValidatedFilesFromFolder` swallows copy errors — a broken scaffold exits 0 | startx-cli | [function](function-bugs.md#b60) | **open** |
+| B61 | `package add` rewrites the workspace `packageManager` to `pnpm@11.5.1` without asking | startx-cli | [function](function-bugs.md#b61) | **open** |
+| B64 | `package add` can never add a root tool dependency — `"root"` is never in its tag set | startx-cli | [function](function-bugs.md#b64) | **open** |
+| B65 | Root `.gitignore` and `_gitignore` are both copied to `<scaffold>/.gitignore`; readdir order picks the winner | startx-cli | [function](function-bugs.md#b65) | **open** |
 
 ## P3 — hardening, papercuts, dead code
 
@@ -163,6 +180,13 @@ rules were silently not running for any package.
 | B39 | `package new` leaks generator-only `startx` metadata into user packages | startx-cli | [function](function-bugs.md#b39) | verified |
 | B41 | Two incompatible boolean env dialects — `@repo/redis` strict, `@repo/lib` lenient | @repo/redis, @repo/lib | [runtime](runtime-bugs.md#b41) | verified |
 | B42 | Shared `eslint-config` ignores `**/dist/**` but not `**/bin/**` | eslint-config | [config](config-bugs.md#b42) | verified |
+| B55 | `uploadMiddleware` is mounted globally before any auth, so anonymous clients can push multipart bodies to every route | core-server | [security](security-bugs.md#b55) | **open** |
+| B56 | `errorMiddleware` returns raw `error.message` for 5xx responses | core-server | [security](security-bugs.md#b56) | **open** |
+| B57 | `TRUST_PROXY=loopback` default collapses all clients into one rate-limit bucket behind a remote proxy | core-server | [security](security-bugs.md#b57) | **open** |
+| B58 | `jwt.verify` does not pin `algorithms` | @repo/lib | [security](security-bugs.md#b58) | **open** |
+| B59 | Redis connects without auth in production when `REDIS_PASSWORD` is unset | @repo/redis | [security](security-bugs.md#b59) | **open** |
+| B62 | `assertInsideWorkspace` rejects a valid directory named `..foo` | startx-cli | [function](function-bugs.md#b62) | **open** |
+| B66 | `uploadMiddleware` may call `next(error)` after it already sent a 413 | core-server | [runtime](runtime-bugs.md#b66) | **open** |
 
 ---
 

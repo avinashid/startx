@@ -344,3 +344,143 @@ open as the record of the gap.
 curl -I http://localhost:3000/test | grep -i x-content-type-options
 for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:3000/test; done | grep -c 429
 ```
+
+## B53
+
+### B53 · Placeholder JWT / encryption secrets from `.env.example` pass validation outside development
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** @repo/lib
+- **File:** `packages/@repo/lib/src/token-module/index.ts`, `encryption-module/index.ts`, `.env.example`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — If `.env.example` is copied to `.env` and deployed, the server boots with `ACCESS_TOKEN_SECRET=CHANGE_ME_000…a`, which is public, so anyone can forge tokens. The all-zero `INTEGRATION_ENCRYPTION_KEY` is accepted the same way.
+
+**Cause** — The only checks are `min(32)` and `length(64)`. The placeholders were made long enough to pass them (that was B7) but are never rejected.
+
+**Fix** — Add an `envSecret()` helper in `@repo/env` that rejects `CHANGE_ME` values and single-character repeats when `NODE_ENV` is not `development` or `test`. The token and encryption modules use it, and the access and refresh secrets must differ.
+
+**Verify** — unit tests in `@repo/env`; `NODE_ENV=production` with placeholders throws at import
+
+---
+
+## B54
+
+### B54 · `verifyMailOTP` read-modify-writes the attempt counter, so parallel guesses bypass the 5-attempt cap
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** @repo/lib
+- **File:** `packages/@repo/lib/src/otp-module/index.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — N concurrent wrong guesses all read `attempts=0` and all write `attempts=1`, so an attacker gets about N×5 guesses per code instead of 5. B3 is recorded as fixed, but its cap only holds for serial requests.
+
+**Cause** — `get` → `compare` → `set({...rows, attempts+1})` with no atomicity.
+
+**Fix** — Count attempts with an atomic Redis `INCR` on a sibling key, with the same TTL, **before** comparing. Once the count reaches max, the code and the counter are deleted. A guess that arrives past the cap is rejected without being compared.
+
+**Verify** — unit test with a fake store: 20 parallel wrong guesses → at most 5 compares, and the code is destroyed
+
+---
+
+## B55
+
+### B55 · `uploadMiddleware` is mounted globally before any auth, so anonymous clients can push multipart bodies to every route
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** core-server
+- **File:** `apps/core-server/src/routes/server.ts:37`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — Any unauthenticated request to any path, including 404s, gets its multipart body parsed and buffered up to the upload limits.
+
+**Cause** — The parser is `app.use`d globally, ahead of the routers and their auth guards.
+
+**Fix** — *(design decision — see the card)*
+
+**Verify** — unauthenticated multipart POST to an unknown route is rejected without the body being parsed
+
+---
+
+## B56
+
+### B56 · `errorMiddleware` returns raw `error.message` for 5xx responses
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** core-server
+- **File:** `apps/core-server/src/middlewares/error-middleware.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — An unhandled `Error("connect ECONNREFUSED 10.0.3.7:5432")` reaches the client verbatim as `message`.
+
+**Cause** — `message` is taken from any error, regardless of status.
+
+**Fix** — For 5xx responses that aren't an `ErrorResponse`, return "Internal Server Error" outside development, and keep logging the real error.
+
+**Verify** — unit test: thrown plain Error → 500 with generic message in production
+
+---
+
+## B57
+
+### B57 · `TRUST_PROXY=loopback` default collapses all clients into one rate-limit bucket behind a remote proxy
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** core-server
+- **File:** `apps/core-server/src/config/server-config.ts`, `.env.example`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — Behind an ALB or a separate nginx container, `req.ip` is the proxy's address, so every client shares one limiter key.
+
+**Cause** — The default is safe (it can't be spoofed), but it's only explained in a code comment; the env file a deployer actually reads doesn't mention it.
+
+**Fix** — Keep the safe default and document `TRUST_PROXY` in `.env.example`, with the remote-proxy case spelled out.
+
+**Verify** — `.env.example` documents TRUST_PROXY
+
+---
+
+## B58
+
+### B58 · `jwt.verify` does not pin `algorithms`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/lib
+- **File:** `packages/@repo/lib/src/token-module/i-token.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — Verification accepts any HMAC algorithm the library supports, rather than only the one tokens are signed with.
+
+**Cause** — `jwt.verify(token, key)` is called without `{ algorithms }`.
+
+**Fix** — Verify with `algorithms: [options.algorithm ?? "HS256"]`.
+
+**Verify** — unit test: HS512-signed token with the same key is rejected
+
+---
+
+## B59
+
+### B59 · Redis connects without auth in production when `REDIS_PASSWORD` is unset
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** @repo/redis
+- **File:** `packages/@repo/redis/src/lib/redis-client.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — If a production deploy forgets `REDIS_PASSWORD`, it silently connects to Redis unauthenticated.
+
+**Cause** — `REDIS_USERNAME` and `REDIS_PASSWORD` default to `""` so that local dev works, and nothing distinguishes production.
+
+**Fix** — *(design decision — see the card)*
+
+**Verify** — —
+
+---

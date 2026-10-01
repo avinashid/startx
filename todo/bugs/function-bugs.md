@@ -868,3 +868,103 @@ startx init   # or: startx package add
 node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 # must resolve to a real version/catalog entry, not the literal string "catalog:"
 ```
+
+## B60
+
+### B60 · `copyValidatedFilesFromFolder` swallows copy errors — a broken scaffold exits 0
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/init.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — A file that fails to copy (permissions, ENOSPC) is only logged. `init` still exits 0 and prints success.
+
+**Cause** — Each copy is wrapped in try/catch and the error is logged, with no rethrow.
+
+**Fix** — Collect the failures and throw at the end, after attempting every file, so the run exits non-zero and names every file that failed.
+
+**Verify** — unit test / manual: unreadable template file → `init` exits 1
+
+---
+
+## B61
+
+### B61 · `package add` rewrites the workspace `packageManager` to `pnpm@11.5.1` without asking
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts` (`ensureMinimumPackageManager`)
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — Running `package add` in a workspace pinned to `pnpm@10.x` silently changes the pin. The only trace is one info line.
+
+**Cause** — The bump is unconditional whenever the major is below 11.
+
+**Fix** — Ask before bumping (default yes). If declined, warn and leave the pin alone.
+
+**Verify** — manual: pnpm@10 workspace → prompt appears; declining leaves the pin
+
+---
+
+## B62
+
+### B62 · `assertInsideWorkspace` rejects a valid directory named `..foo`
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts` (`assertInsideWorkspace`)
+- **Found in:** review of `main...c16145f`, 2026-10-01
+
+**Symptom** — `startx package new x -d ..foo` is refused as being outside the workspace.
+
+**Cause** — `relative.startsWith("..")` also matches path segments that merely begin with two dots.
+
+**Fix** — Treat the path as escaping only when the first segment is exactly `..`.
+
+**Verify** — unit test
+
+---
+
+## B64
+
+### B64 · `package add` can never add a root tool dependency — `"root"` is never in its tag set
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts` (`getInstallTags`, `checkAndInstallMissingDeps`)
+- **Found in:** review of `main...c16145f`, 2026-10-01 (startx review agent)
+
+**Symptom** — A web-only workspace runs `package add core-server`, but `tsdown` is never added to the root, so `core-server#build` fails with `tsdown: not found`.
+
+**Cause** — Every root entry in `DepCheck` carries the `root` tag, and `getInstallTags` never adds it, so `config.tags.every(...)` is always false.
+
+**Fix** — Include `root` when matching root-level DepCheck entries in `checkAndInstallMissingDeps`, still subject to `ignoredRootTools`.
+
+**Verify** — package E2E: web-only + `package add core-server` → install → build passes
+
+---
+
+## B65
+
+### B65 · Root `.gitignore` and `_gitignore` are both copied to `<scaffold>/.gitignore`; readdir order picks the winner
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/configs/files.ts`, `commands/init.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01 (startx review agent)
+
+**Symptom** — Today `_gitignore` happens to be copied last and wins. If readdir returns `.gitignore` last, the scaffold gets the startx repo's own ignore file instead.
+
+**Cause** — `.gitignore` has no `FileCheck` entry, so it's copied unconditionally, and `_gitignore` is renamed to the same destination.
+
+**Fix** — Tag the root `.gitignore` `["never"]`.
+
+**Verify** — scaffold `.gitignore` is byte-identical to `_gitignore`
+
+---

@@ -825,3 +825,103 @@ This blocks [B37](#b37), which stays open until one of the above is chosen and i
 # scaffold cli + web-client with formatter = prettier + biome, then:
 pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a stock scaffold
 ```
+
+## B47
+
+### B47 · Catalog `tsdown: ^0.20.1` resolves 0.20.3 in fresh scaffolds, whose `inlineOnly` ERROR fails every backend build
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** root catalog
+- **File:** `pnpm-workspace.yaml` (catalog), `configs/tsdown-config/src/`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30
+
+**Symptom** — `core-server#build` and `queue-worker#build` fail in every fresh scaffold with `ERROR Consider adding inlineOnly option…`. The repo builds green because its lockfile holds tsdown at 0.20.1, where the same notice is only a WARN. Since `typecheck` dependsOn `build`, the failure also hides those apps' typecheck results.
+
+**Cause** — Scaffolds ship no lockfile, so the caret on a 0.x tool lets every new workspace float to whatever tsdown is latest. tsdown 0.20.3 promoted the `inlineOnly` warning to an error, and the template's `noExternal: [/(.*)/]` bundles everything on purpose.
+
+**Fix** — Pin tsdown exactly in the catalog and set `inlineOnly: false` in the shared tsdown base config, which is the documented opt-out for the intentional full bundle. That makes the build independent of which tsdown version resolves.
+
+**Verify** — scaffold core-server → `pnpm install` → `pnpm exec turbo build --force` exits 0
+
+---
+
+## B48
+
+### B48 · `typescript-config` is given `typecheck: tsc --noEmit` but has no `tsconfig.json`, so tsc prints help and exits 1
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/configs/scripts.ts`, `configs/typescript-config/package.json`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30
+
+**Symptom** — `typescript-config#typecheck` fails in **every** scaffold: tsc prints its usage text and exits 1.
+
+**Cause** — In the repo, `typescript-config` declares no scripts. The generator injects the generic `typecheck` script into every emitted package that matches its tags, including one that contains only JSON presets.
+
+**Fix** — Gate the injected scripts with the package's `startx.ignore` list, so a package can opt out of scripts it can't run, and opt `typescript-config` out of `typecheck`.
+
+**Verify** — scaffold any selection → `pnpm exec turbo typecheck --force` has no `typescript-config#typecheck` task, or it passes
+
+---
+
+## B49
+
+### B49 · `tsdown-config`'s `ignore` strips its `typescript-config` devDep while its tsconfig still extends it
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** tsdown-config
+- **File:** `configs/tsdown-config/package.json`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30
+
+**Symptom** — `tsdown-config#typecheck` fails in every backend scaffold: `TS6053: File 'typescript-config/tsconfig.node.json' not found`, followed by a cascade of module-resolution errors from tsdown's own `.d.mts`.
+
+**Cause** — `startx.ignore` lists `typescript-config` (along with eslint-config and vitest-config), so the emitted package.json loses the devDependency. But `tsconfig.json` keeps `extends: typescript-config/tsconfig.node.json`.
+
+**Fix** — Remove `typescript-config` from `tsdown-config`'s `ignore` list and declare it in `requiredDevDeps`.
+
+**Verify** — backend scaffold → `pnpm exec turbo typecheck --filter tsdown-config --force` exits 0
+
+---
+
+## B51
+
+### B51 · Workspace imports missing from `requiredDeps` are dropped from emitted packages (aix, @repo/model → @repo/logger; @db/sqlite → @repo/env)
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** template pkgs
+- **File:** `packages/aix/package.json`, `packages/@repo/model/package.json`, `packages/@db/sqlite/package.json`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30
+
+**Symptom** — `aix#typecheck` fails in the full scaffold: `TS2307: Cannot find module '@repo/logger'`.
+
+**Cause** — `handlePackageJson` strips every `workspace:` dependency and re-adds only `startx.requiredDeps`. A template that declares a workspace dep in package.json but omits it from requiredDeps loses it on copy, and it isn't pulled into the closure either.
+
+**Fix** — Add the missing names to each package's `requiredDeps`. A unit test now asserts that every non-app template's `workspace:` deps are a subset of requiredDeps ∪ requiredDevDeps ∪ ignore, so the gap can't reopen.
+
+**Verify** — full scaffold → `pnpm exec turbo typecheck --filter aix --force` exits 0; `pnpm --filter startx-cli test`
+
+---
+
+## B52
+
+### B52 · `.env.example` has no `FileCheck` entry and ships core-server secrets into every scaffold
+
+- **Status:** open
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/configs/files.ts`
+- **Found in:** E2E scaffold matrix (`/tmp/sx-e2e`), 2026-09-30; also review
+
+**Symptom** — web-only and cli-only scaffolds receive a `.env.example` full of JWT, encryption, database, Redis and SMTP settings they never read.
+
+**Cause** — Any root file without a `FileCheck` entry is copied unconditionally (AGENTS.md §9).
+
+**Fix** — Add a `FileCheck` entry gating `.env.example` on the `backend` tag.
+
+**Verify** — web-only scaffold has no `.env.example`; server-only scaffold has one
+
+---

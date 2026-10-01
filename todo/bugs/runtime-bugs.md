@@ -328,3 +328,43 @@ REDIS_CLUSTER_MODE=yes pnpm --filter @repo/redis exec node -e "require('./src/li
 COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cookie-module/cookie-module')"
 # both should behave the same way (both accept, or both reject) once fixed
 ```
+
+## B63
+
+### B63 · `defineEnv` maps `""` to `undefined`, so `envBool()` reads a blank var as `false` instead of rejecting it
+
+- **Status:** open
+- **Severity:** P0
+- **Area:** @repo/env
+- **File:** `packages/@repo/env/src/define-env.ts:50`
+- **Found in:** review of `main...c16145f`, 2026-10-01 (startx review agent)
+
+**Symptom** — `REDIS_CLUSTER_MODE=""` resolves to `false`, which is exactly the misconfiguration `envBool` documents it rejects. B6 and B41 were verified only against invalid strings such as `yes`, never against a blank value. Reproduced: `defineEnv({ X: envBool() })` with `X=""` returns `false`, while `envBool().parse("")` throws.
+
+**Cause** — `raw === "" ? normalized.default : raw`. For a bare Zod entry the default is `undefined`, so the schema's own `.default()` fires.
+
+**Fix** — Pass blank values through to the schema unchanged; only an *unset* variable falls back to a default. Schemas that want to allow blank values can say so.
+
+**Verify** — unit test in `@repo/env`
+
+---
+
+## B66
+
+### B66 · `uploadMiddleware` may call `next(error)` after it already sent a 413
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** core-server
+- **File:** `apps/core-server/src/middlewares/upload-middleware.ts`
+- **Found in:** review of `main...c16145f`, 2026-10-01 (startx review agent) — plausible, not reproduced
+
+**Symptom** — When the byte limit trips, the middleware writes a 413 and destroys the request. The resulting abort error can still reach the completion callback and be forwarded to `errorMiddleware`, which then attempts a second response.
+
+**Cause** — The callback checks `error` before `res.headersSent`.
+
+**Fix** — Check `res.headersSent` first.
+
+**Verify** — upload over the limit → single 413, no `ERR_HTTP_HEADERS_SENT`
+
+---
