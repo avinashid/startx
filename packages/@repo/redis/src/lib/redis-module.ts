@@ -66,4 +66,20 @@ export class RedisStore<T> {
 	async del(key: string): Promise<void> {
 		await this.client.del(this.formatKey(key));
 	}
+
+	/**
+	 * Atomically increment a counter and return the new value. The TTL is set only when the
+	 * counter is created, so repeated increments never extend its lifetime. Single key, so it is
+	 * cluster-safe.
+	 */
+	async incr(key: string, ttlSeconds: number): Promise<number> {
+		const result = await this.client.eval(INCR_WITH_TTL, 1, this.formatKey(key), ttlSeconds);
+		return Number(result);
+	}
 }
+
+const INCR_WITH_TTL = `
+local n = redis.call("INCR", KEYS[1])
+if n == 1 then redis.call("EXPIRE", KEYS[1], ARGV[1]) end
+return n
+`;

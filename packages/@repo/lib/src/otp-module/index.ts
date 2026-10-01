@@ -12,7 +12,6 @@ type OtpRecord = {
 	email: string;
 	otp: string;
 	status: "pending" | "verified";
-	attempts: number;
 	/** Epoch ms. Lets a re-set preserve the remaining lifetime instead of extending it. */
 	expiresAt: number;
 };
@@ -22,6 +21,10 @@ const getRedis = () => {
 		namespace: "otp",
 	});
 };
+
+// Failed-guess counter, kept in its own key so it can be bumped with an atomic INCR. A
+// read-modify-write on the record let N concurrent guesses all read the same count (B54).
+const attemptsKey = (email: string) => `${email}:attempts`;
 
 export class OTPModule {
 	/** RedisStore.set takes SECONDS. The unit is in the name so it cannot drift again. */
@@ -51,11 +54,12 @@ export class OTPModule {
 					email: normalizedEmail,
 					otp: hash,
 					status: "pending",
-					attempts: 0,
 					expiresAt: Date.now() + this.otpExpirySeconds * 1000,
 				},
 				this.otpExpirySeconds,
 			);
+			// A fresh code gets a fresh budget of guesses.
+			await getRedis().del(attemptsKey(normalizedEmail));
 		} catch (err) {
 			logger?.error("otp: redis write failed", { email: normalizedEmail, err });
 			throw err;
@@ -84,24 +88,26 @@ export class OTPModule {
 		const rows = await getRedis().get(normalizedEmail);
 		if (!rows?.otp) return false;
 
+		// Reserve an attempt BEFORE comparing. Every caller gets a distinct number, so at most
+		// maxAttempts comparisons can ever run against one code, however many arrive at once.
+		const attempt = await getRedis().incr(attemptsKey(normalizedEmail), this.remainingSeconds(rows.expiresAt));
+		if (attempt > this.maxAttempts) {
+			await this.destroy(normalizedEmail);
+			return false;
+		}
+
 		const verified = await HashingModule.compare(otp, rows.otp);
 
 		if (!verified) {
-			const attempts = (rows.attempts ?? 0) + 1;
-
-			if (attempts >= this.maxAttempts) {
-				await getRedis().del(normalizedEmail);
+			if (attempt >= this.maxAttempts) {
+				await this.destroy(normalizedEmail);
 				logger?.warn("otp: max attempts reached, code destroyed", { email: normalizedEmail });
-				return false;
 			}
-
-			// Re-set with the REMAINING lifetime — a failed guess must never extend the window.
-			await getRedis().set(normalizedEmail, { ...rows, attempts }, this.remainingSeconds(rows.expiresAt));
 			return false;
 		}
 
 		if (deleteOtp) {
-			await getRedis().del(normalizedEmail);
+			await this.destroy(normalizedEmail);
 		} else {
 			await getRedis().set(normalizedEmail, { ...rows, status: "verified" }, this.remainingSeconds(rows.expiresAt));
 		}
@@ -117,7 +123,12 @@ export class OTPModule {
 
 	static async deleteOTP(email: string): Promise<boolean> {
 		const normalizedEmail = email.trim().toLowerCase();
-		await getRedis().del(normalizedEmail);
+		await this.destroy(normalizedEmail);
 		return true;
+	}
+
+	private static async destroy(normalizedEmail: string) {
+		await getRedis().del(normalizedEmail);
+		await getRedis().del(attemptsKey(normalizedEmail));
 	}
 }
