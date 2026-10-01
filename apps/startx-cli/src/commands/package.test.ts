@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import * as YAML from "yaml";
 
 import { PackageCommand } from "./package";
+import type { StartXPackageJson } from "../types";
+import type { PackageItem } from "../utils/cli-utils";
 
 type Internals = {
 	assertInsideWorkspace: (workspace: string, target: string, label: string) => string;
@@ -13,8 +15,9 @@ type Internals = {
 		templateDir: string;
 		packageJson: Record<string, unknown>;
 	}) => Promise<void>;
+	assertAddable: (packages: PackageItem[], pkg: PackageItem) => void;
 };
-const { assertInsideWorkspace, syncDepsWithCatalog } = PackageCommand as unknown as Internals;
+const { assertInsideWorkspace, syncDepsWithCatalog, assertAddable } = PackageCommand as unknown as Internals;
 const check = (target: string) => assertInsideWorkspace.call(PackageCommand, "/ws", target, "package");
 
 describe("PackageCommand.assertInsideWorkspace (B62)", () => {
@@ -52,9 +55,37 @@ describe("PackageCommand.syncDepsWithCatalog (B72)", () => {
 		});
 
 		expect(dependencies).toEqual({ range: "catalog:", tag: "catalog:", own: "workspace:^", ...literal });
-		const doc = YAML.parse(await fs.readFile(path.join(workspace, "pnpm-workspace.yaml"), "utf-8"));
+		const doc = YAML.parse(await fs.readFile(path.join(workspace, "pnpm-workspace.yaml"), "utf-8")) as {
+			catalog: Record<string, string>;
+		};
 		expect(doc.catalog).toEqual({ range: "^1.2.0", tag: "latest" });
 
 		await fs.rm(workspace, { recursive: true, force: true });
+	});
+});
+
+describe("PackageCommand.assertAddable (B76)", () => {
+	const item = (name: string, startx: StartXPackageJson["startx"]): PackageItem => ({
+		type: "apps",
+		path: `/t/${name}`,
+		relativePath: name,
+		name,
+		packageJson: { name, startx } as StartXPackageJson,
+	});
+	const packages = [
+		item("core-server", { requiredDevDeps: ["typescript-config"] }),
+		item("typescript-config", { mode: "silent" }),
+		item("startx-cli", { mode: "silent" }),
+	];
+	const check = (name: string) => () =>
+		assertAddable.call(PackageCommand, packages, packages.find((pkg) => pkg.name === name)!);
+
+	it("allows an ordinary package and a silent one that is a dependency", () => {
+		expect(check("core-server")).not.toThrow();
+		expect(check("typescript-config")).not.toThrow();
+	});
+
+	it("rejects a silent package nothing depends on", () => {
+		expect(check("startx-cli")).toThrow(/internal to the StartX template/);
 	});
 });

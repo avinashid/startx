@@ -68,7 +68,9 @@ export class PackageCommand {
 		const packages = await CliUtils.getPackageList();
 		const byType = new Map<PackageItem["type"], PackageItem[]>();
 
-		for (const pkg of packages) {
+		// The same set the interactive `add` picker offers: silent packages are reachable only as
+		// someone's dependency, so listing them advertises something `add` will not offer (B76).
+		for (const pkg of packages.filter((item) => item.packageJson?.startx?.mode !== "silent")) {
 			const list = byType.get(pkg.type) ?? [];
 			list.push(pkg);
 			byType.set(pkg.type, list);
@@ -101,6 +103,7 @@ export class PackageCommand {
 		if (!selectedPackage) {
 			throw new Error(`Package "${selectedName}" was not found in the StartX template.`);
 		}
+		this.assertAddable(packages, selectedPackage);
 
 		const templateName = selectedPackage.packageJson?.name ?? selectedPackage.name;
 		// `--name` never went through the prompt, so it never went through the schema either:
@@ -626,6 +629,26 @@ export class PackageCommand {
 		}
 
 		return path.join("packages", name);
+	}
+
+	/**
+	 * A silent package is never offered, but one that is somebody's dependency (typescript-config,
+	 * tsdown-config) may still be added by name. One that nothing depends on is internal to the
+	 * template, startx-cli itself, and copying it into a workspace is never what was meant (B76).
+	 */
+	private static assertAddable(packages: PackageItem[], pkg: PackageItem) {
+		if (pkg.packageJson?.startx?.mode !== "silent") return;
+
+		const name = pkg.packageJson.name ?? pkg.name;
+		const isDependency = packages.some((other) =>
+			[
+				...(other.packageJson?.startx?.requiredDeps ?? []),
+				...(other.packageJson?.startx?.requiredDevDeps ?? []),
+			].includes(name),
+		);
+		if (!isDependency) {
+			throw new Error(`"${name}" is internal to the StartX template and cannot be added to a workspace.`);
+		}
 	}
 
 	private static findPackage(packages: PackageItem[], name: string) {
