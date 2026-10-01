@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B80`
+- **Next free ID:** `B82`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 81
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 83
 
 Counts include the four sub-items of B12.
 
@@ -19,7 +19,7 @@ Counts include the four sub-items of B12.
 | open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 19 | 18 | 19 | 25 | **81** |
+| **verified** | 20 | 18 | 20 | 25 | **83** |
 
 **B68–B78 were filed on 2026-10-01, after the 1.2.0 release**, from the package-command E2E
 (`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **verified** for 1.2.1 (2026-10-01). Two were P0:
@@ -128,6 +128,7 @@ gates were green because they were not looking.
 | B63 | `defineEnv` maps `""` to `undefined`, so `envBool()` reads a blank var as `false` instead of rejecting it | @repo/env | [runtime](runtime-bugs.md#b63) | verified |
 | B68 | The built queue-worker crashes on start: `require is not defined in ES module scope` from bundled `@bull-board/ui` | queue-worker | [runtime](runtime-bugs.md#b68) | verified |
 | B69 | Bull Board is unauthenticated, listens on every interface, and runs in every `NODE_ENV` | queue-worker | [security](security-bugs.md#b69) | verified |
+| B80 | `.env.example` sets `NODE_ENV = development`, so a copied example turns off every production guard | root | [security](security-bugs.md#b80) | verified |
 
 ¹ B3's pure logic (TTL unit, code keyspace) was verified; the Redis round-trip and the
 attempt-limit path were **not** executed — no Redis or Docker was available on the machine where the
@@ -184,6 +185,7 @@ rules were silently not running for any package.
 | B65 | Root `.gitignore` and `_gitignore` are both copied to `<scaffold>/.gitignore`; readdir order picks the winner | startx-cli | [function](function-bugs.md#b65) | verified |
 | B73 | core-server and queue-worker have no SIGTERM/SIGINT handling, so a deploy drops in-flight work | core-server, queue-worker | [runtime](runtime-bugs.md#b73) | verified |
 | B74 | Responses produced before `cors` (429 from the rate limiter) carry no CORS headers, so browsers see a network error rather than a 429 | core-server | [runtime](runtime-bugs.md#b74) | verified |
+| B81 | `init --force`'s ancestor guard fails open for a cwd whose first segment starts with `..` | startx-cli | [function](function-bugs.md#b81) | verified |
 
 ## P3 — hardening, papercuts, dead code
 

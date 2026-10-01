@@ -533,3 +533,24 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 **Verify** — `cli hash x | grep -c '"x"'` prints 0.
 
 ---
+
+---
+
+## B80
+
+### B80 · `.env.example` sets `NODE_ENV = development`, so a copied example turns off every production guard
+
+- **Status:** verified
+- **Fixed in:** `9a3d97b`, `573f5cf` on `fix/review-env-example` — forced gate 73/73, exit 0 at `573f5cf` (252 tests); scaffold matrix server-only 36/36, worker-only 40/40, full-biome 75/75, full-prettier 75/75
+- **Severity:** P0
+- **Area:** root, core-server, queue-worker, startx-cli
+- **File:** `.env.example`, `apps/{core-server,queue-worker}/package.json`, `apps/startx-cli/src/configs/{scripts,deps}.ts`
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01
+
+**Symptom** — `cp .env.example .env && pnpm start` on a VM boots in development mode. `CHANGE_ME…` and all-zero secrets are accepted ([B53](#b53)), raw 5xx messages reach clients ([B56](#b56)), Redis connects with no auth ([B59](#b59)), and OTP codes are logged instead of mailed. AGENTS.md says such a deployment "fails at boot". It didn't.
+
+**Cause** — Line 1 of `.env.example` was `NODE_ENV = development`. dotenvx loads `.env` from cwd and the workspace root, and no Dockerfile or start script sets `NODE_ENV`, so the example's value decided the mode. Every guard that says "outside development/test" was switched off by the file it was written to catch.
+
+**Fix** — `NODE_ENV` is removed from `.env.example`, so it falls back to the schema default, `production`. The backend `dev`, `dev:debug` and `bun:dev` scripts (template package.jsons and `scripts.ts`) now run `cross-env NODE_ENV=development …`. `cross-env` was already in the catalog; `deps.ts` adds it as a devDependency for the same tags as those scripts. AGENTS.md §2 documents the rule.
+
+**Verify** — `apps/core-server/src/env-example.test.ts` copies `.env.example` to a temp `.env` (via `PROJECT_ROOT`), boots `src/index.ts` in a child process with NODE_ENV unset, and expects a refusal. It has two cases: the plain copy is refused for Redis auth, and the copy plus `REDIS_PASSWORD` is refused for placeholder secrets. Both fail against the old `.env.example` and pass against the new one. In the server-only scaffold, the test passes inside the scaffold's own gate, and `pnpm --filter core-server dev` with a copied example still boots ("Server listening").

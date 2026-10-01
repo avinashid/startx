@@ -1036,3 +1036,24 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 **Verify** — `package list` doesn't show startx-cli; `package add startx-cli` exits non-zero with a clear message.
 
 ---
+
+---
+
+## B81
+
+### B81 · `init --force`'s ancestor guard fails open for a cwd whose first segment starts with `..`
+
+- **Status:** verified
+- **Fixed in:** `d934be8` on `fix/review-env-example` — forced gate 73/73, exit 0 at `573f5cf` (252 tests); scaffold matrix server-only 36/36, worker-only 40/40, full-biome 75/75, full-prettier 75/75
+- **Severity:** P2
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/init.ts` (`assertSafeToClear`)
+- **Found in:** reviewer's review of the B47–B67 fixes (`tsk_jg4zgfvj`), 2026-10-01
+
+**Symptom** — With cwd `/a/..foo`, `startx init /a --force` doesn't refuse with "current directory or one of its ancestors". After the confirm, it clears `/a`, which contains the cwd.
+
+**Cause** — This is the [B62](#b62) prefix test, failing the other way. `path.relative("/a", "/a/..foo")` is `"..foo"`, and `!toCwd.startsWith("..")` read that as "the cwd is outside the target".
+
+**Fix** — The cwd counts as outside only when the relative path is exactly `..`, starts with `..` plus `path.sep`, or is absolute. That is the segment test B62 uses in `assertInsideWorkspace`.
+
+**Verify** — `init.test.ts` gains three `assertSafeToClear` cases: a `..foo` cwd refuses its parent, a plain parent is refused, and a sibling of a `..foo` cwd is allowed. The `..foo` case fails on the old code.
