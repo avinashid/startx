@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { commands } from "./commands/index.js";
-import packageJson from "../../../package.json" with { type: "json" };
+import packageJson from "../package.json" with { type: "json" };
 
 const { version, name, description } = packageJson;
 
