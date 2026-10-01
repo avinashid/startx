@@ -12,7 +12,8 @@ class HashingCommand extends ICommand {
 	async run(password: string) {
 		const hash = await HashingModule.hash(password);
 
-		logger.info(`Hash for "${password}": ${hash}`);
+		// Never echo the input: log lines get shipped to collectors, shell history does not (B78).
+		logger.info(`Hash: ${hash}`);
 	}
 }
 
@@ -24,11 +25,10 @@ export class HashingCompareCommand extends ICommand {
 		.action(this.run.bind(this));
 
 	async run(password: string, hash: string) {
-		logger.info(`Comparing password: "${password}" against hash: "${hash}"`);
-
 		const compare = await HashingModule.compare(password, hash);
 
-		logger.info(`Hash for "${password}": ${compare ? "Valid" : "Invalid"}`);
+		// The input stays out of the log, as in `hash` (B78).
+		logger.info(`Password ${compare ? "matches" : "does not match"} the hash`);
 	}
 }
 export const HashingCommands = [new HashingCommand(), new HashingCompareCommand()];
