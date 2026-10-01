@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B79`
+- **Next free ID:** `B80`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 80
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 81
 
 Counts include the four sub-items of B12.
 
@@ -19,7 +19,7 @@ Counts include the four sub-items of B12.
 | open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 19 | 17 | 19 | 25 | **80** |
+| **verified** | 19 | 18 | 19 | 25 | **81** |
 
 **B68–B78 were filed on 2026-10-01, after the 1.2.0 release**, from the package-command E2E
 (`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **verified** for 1.2.1 (2026-10-01). Two were P0:
@@ -155,6 +155,7 @@ fix was made. See the entry for exactly what remains unproven.
 | B70 | `package add core-server` emits an app that fails typecheck: `@repo/common` is missing from core-server's `requiredDeps` | core-server (template metadata) | [config](config-bugs.md#b70) | verified |
 | B71 | `package new` writes `tsconfig.json` with 2-space indent, so a new package fails `format:check` immediately | startx-cli | [function](function-bugs.md#b71) | verified |
 | B72 | Dead `"vine": "link:@types/vinejs/vine"` devDependency in `@repo/lib`, which `package add` then writes into the catalog, breaking `pnpm install` | @repo/lib, startx-cli | [function](function-bugs.md#b72) | verified |
+| B79 | `db:push` reports every column twice: drizzle-kit's schema glob also matches the `index.ts` barrel | @db/drizzle | [config](config-bugs.md#b79) | verified |
 
 B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
 rules were silently not running for any package.

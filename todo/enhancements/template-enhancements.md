@@ -234,3 +234,23 @@ Also fix two smaller README gaps while in there:
 **Today** — core-server and queue-worker bundle every dependency into one file. When either crashes at boot, Node echoes the offending source line, which is several kilobytes of bundled code, and the stack points at `dist/index.mjs:781:2211`. Found in: runtime smoke `tsk_jv5m7m9a`, 2026-10-01.
 
 **Done when** — Builds emit `sourcemap: true`, and `start` runs with `--enable-source-maps`, so a boot failure prints the original `src/` location.
+
+---
+
+## E17
+
+### E17 · `@db/sqlite` on drizzle over the built-in `node:sqlite`, without the native `better-sqlite3`
+
+- **Status:** done · **Value:** med · **Effort:** M
+- **Area:** `packages/@db/sqlite`, `pnpm-workspace.yaml` (catalog, `allowBuilds`), `.env.example`, `_gitignore`
+
+**Today** — `@db/sqlite` wrapped `better-sqlite3`, a native addon, and `allowBuilds` blocks its build, so it could not load in a fresh scaffold. It also shipped a hand-rolled string-SQL CRUD class and an xlsx→sqlite importer, built on xlsx 0.18.5, the abandoned npm build with known advisories. The README called it "Drizzle ORM with SQLite", but it had no drizzle at all. Requested in chat by Avinash, card `tsk_3pfjh8aw`. He chose to keep it a single package and to drop the CRUD class and the xlsx importer.
+
+**Done when** — `@db/sqlite` exports a drizzle `db` (`drizzle-orm/node-sqlite`) and the raw `sqlite` `DatabaseSync` handle, opened with WAL, `foreign_keys = ON` and `busy_timeout`. It has `src/schema/`, a sqlite `drizzle.config.ts`, the `db:*` scripts (via the `drizzle` tag) and `engines.node >= 22.13`. `SQLITE_DB_PATH` (default `data/app.db`) resolves a relative path against the nearest `pnpm-workspace.yaml`, so `db:push` (cwd = the package) and the apps (cwd = their own dir) open the same file. Outside a workspace it falls back to cwd. better-sqlite3, `@types/better-sqlite3` and xlsx are gone from the catalog, `allowBuilds` and the lockfile.
+
+- **Fixed in:** `a532527`. `path.test.ts` (4) + `client.test.ts` (4: drizzle round trip, FK enforcement, transaction rollback, `increment`).
+  - Forced gate: 73/73.
+  - Scaffold E2E, from source: `full-biome` 75/75, and `sqlite-server` (core-server + `@db/sqlite`) 40/40.
+  - The sqlite-server scaffold installs no better-sqlite3. With no `SQLITE_DB_PATH` set:
+    - its `db:push` printed `Using 'node:sqlite' driver` and created `<root>/data/app.db`;
+    - a script run from `apps/core-server` wrote and read a `users` row in that same file.

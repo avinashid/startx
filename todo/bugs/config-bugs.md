@@ -963,3 +963,24 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 **Verify** — server-only scaffold + `package add core-server --name api-v2` → install → forced gate passes, `api-v2#typecheck` included.
 
 ---
+
+## B79
+
+### B79 · `db:push` reports every column and constraint twice: drizzle-kit's schema glob also matches the `index.ts` barrel
+
+- **Status:** verified
+- **Severity:** P1
+- **Area:** @db/drizzle (and the new @db/sqlite config)
+- **File:** `packages/@db/drizzle/drizzle.config.ts` (`schema`)
+- **Found in:** E17 scaffold E2E (`tsk_3pfjh8aw`), 2026-10-01
+- **Fixed in:** `ef433f6`. `schema` points at `./src/schema/index.ts`. Against a throwaway postgres:16, `drizzle-kit push --force` exits 0 and creates `files, otp, users`. A fresh sqlite-server scaffold's `db:push` also succeeds. Forced gate 73/73.
+
+**Symptom** — `pnpm db:push` in `@db/drizzle` prints `There's a duplicate column name 'verified_at' in "public"."users" table` for every column, and so does a fresh scaffold. On sqlite it fails outright (`'email' column name is a duplicate across 'users' table`, exit 1).
+
+**Cause** — `schema: "./src/schema/**/*.ts"` loads `common.ts` and also `index.ts`, which does `export * from "./common.js"`. drizzle-kit collects every exported table from every matched file, so each table is registered twice.
+
+**Fix** — Point `schema` at the barrel (`./src/schema/index.ts`), which already lists every schema file.
+
+**Verify** — `DATABASE_URL=… pnpm --filter @db/drizzle exec drizzle-kit push --force` against an empty Postgres exits 0 with no duplicate warnings.
+
+---
