@@ -6,7 +6,7 @@ are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
 - **Next free ID:** `B79`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 11 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 69
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 80
 
 Counts include the four sub-items of B12.
 
@@ -16,15 +16,15 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 2 | 3 | 2 | 4 | **11** |
+| open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 17 | 14 | 17 | 21 | **69** |
+| **verified** | 19 | 17 | 19 | 25 | **80** |
 
 **B68–B78 were filed on 2026-10-01, after the 1.2.0 release**, from the package-command E2E
-(`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **open**. Two are P0:
-the production queue-worker bundle can't start ([B68](runtime-bugs.md#b68)), and Bull Board is open to anyone
-who can reach it ([B69](security-bugs.md#b69)). Both passed every forced gate, because no gate boots an app.
+(`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **verified** for 1.2.1 (2026-10-01). Two were P0:
+the production queue-worker bundle couldn't start ([B68](runtime-bugs.md#b68)), and Bull Board was open to anyone
+who could reach it ([B69](security-bugs.md#b69)). Both passed every forced gate, because no gate boots an app.
 
 **B47–B66 were filed on 2026-10-01** from the E2E scaffold matrix (every fresh scaffold failed its
 own forced gate — see [B47](config-bugs.md#b47)–[B51](config-bugs.md#b51)) and the review of
@@ -126,8 +126,8 @@ gates were green because they were not looking.
 | B53 | Placeholder JWT / encryption secrets from `.env.example` pass validation outside development | @repo/lib | [security](security-bugs.md#b53) | verified |
 | B54 | `verifyMailOTP` read-modify-writes the attempt counter, so parallel guesses bypass the 5-attempt cap | @repo/lib | [security](security-bugs.md#b54) | verified |
 | B63 | `defineEnv` maps `""` to `undefined`, so `envBool()` reads a blank var as `false` instead of rejecting it | @repo/env | [runtime](runtime-bugs.md#b63) | verified |
-| B68 | The built queue-worker crashes on start: `require is not defined in ES module scope` from bundled `@bull-board/ui` | queue-worker | [runtime](runtime-bugs.md#b68) | open |
-| B69 | Bull Board is unauthenticated, listens on every interface, and runs in every `NODE_ENV` | queue-worker | [security](security-bugs.md#b69) | open |
+| B68 | The built queue-worker crashes on start: `require is not defined in ES module scope` from bundled `@bull-board/ui` | queue-worker | [runtime](runtime-bugs.md#b68) | verified |
+| B69 | Bull Board is unauthenticated, listens on every interface, and runs in every `NODE_ENV` | queue-worker | [security](security-bugs.md#b69) | verified |
 
 ¹ B3's pure logic (TTL unit, code keyspace) was verified; the Redis round-trip and the
 attempt-limit path were **not** executed — no Redis or Docker was available on the machine where the
@@ -152,9 +152,9 @@ fix was made. See the entry for exactly what remains unproven.
 | B45 | `import type React from "react"` trips `import-x/default` — `@repo/ui#lint` fails | @repo/ui | [type](type-bugs.md#b45) | verified |
 | B46 | biome and prettier break generics, unions and nested CSS differently — not configurable | root, template src | [config](config-bugs.md#b46) | verified |
 | B67 | `AGENTS.md` is missing from the `files` allowlist, so CI's tarball check blocks every publish | ci / packaging | [ci](ci-bugs.md#b67) | verified |
-| B70 | `package add core-server` emits an app that fails typecheck: `@repo/common` is missing from core-server's `requiredDeps` | core-server (template metadata) | [config](config-bugs.md#b70) | open |
-| B71 | `package new` writes `tsconfig.json` with 2-space indent, so a new package fails `format:check` immediately | startx-cli | [function](function-bugs.md#b71) | open |
-| B72 | Dead `"vine": "link:@types/vinejs/vine"` devDependency in `@repo/lib`, which `package add` then writes into the catalog, breaking `pnpm install` | @repo/lib, startx-cli | [function](function-bugs.md#b72) | open |
+| B70 | `package add core-server` emits an app that fails typecheck: `@repo/common` is missing from core-server's `requiredDeps` | core-server (template metadata) | [config](config-bugs.md#b70) | verified |
+| B71 | `package new` writes `tsconfig.json` with 2-space indent, so a new package fails `format:check` immediately | startx-cli | [function](function-bugs.md#b71) | verified |
+| B72 | Dead `"vine": "link:@types/vinejs/vine"` devDependency in `@repo/lib`, which `package add` then writes into the catalog, breaking `pnpm install` | @repo/lib, startx-cli | [function](function-bugs.md#b72) | verified |
 
 B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
 rules were silently not running for any package.
@@ -181,8 +181,8 @@ rules were silently not running for any package.
 | B61 | `package add` rewrites the workspace `packageManager` to `pnpm@11.5.1` without asking | startx-cli | [function](function-bugs.md#b61) | verified |
 | B64 | `package add` can never add a root tool dependency — `"root"` is never in its tag set | startx-cli | [function](function-bugs.md#b64) | verified |
 | B65 | Root `.gitignore` and `_gitignore` are both copied to `<scaffold>/.gitignore`; readdir order picks the winner | startx-cli | [function](function-bugs.md#b65) | verified |
-| B73 | core-server and queue-worker have no SIGTERM/SIGINT handling, so a deploy drops in-flight work | core-server, queue-worker | [runtime](runtime-bugs.md#b73) | open |
-| B74 | Responses produced before `cors` (429 from the rate limiter) carry no CORS headers, so browsers see a network error rather than a 429 | core-server | [runtime](runtime-bugs.md#b74) | open |
+| B73 | core-server and queue-worker have no SIGTERM/SIGINT handling, so a deploy drops in-flight work | core-server, queue-worker | [runtime](runtime-bugs.md#b73) | verified |
+| B74 | Responses produced before `cors` (429 from the rate limiter) carry no CORS headers, so browsers see a network error rather than a 429 | core-server | [runtime](runtime-bugs.md#b74) | verified |
 
 ## P3 — hardening, papercuts, dead code
 
@@ -208,10 +208,10 @@ rules were silently not running for any package.
 | B59 | Redis connects without auth in production when `REDIS_PASSWORD` is unset | @repo/redis | [security](security-bugs.md#b59) | verified |
 | B62 | `assertInsideWorkspace` rejects a valid directory named `..foo` | startx-cli | [function](function-bugs.md#b62) | verified |
 | B66 | `uploadMiddleware` may call `next(error)` after it already sent a 413 | core-server | [runtime](runtime-bugs.md#b66) | verified |
-| B75 | Logger prints winston internals (`Symbol(level)`, `Symbol(splat)`) in "Extra Details" and writes ANSI colour codes to non-TTY output | @repo/logger | [runtime](runtime-bugs.md#b75) | open |
-| B76 | `package list` shows `mode: "silent"` packages, and `package add startx-cli` installs the CLI itself into a user's workspace | startx-cli | [function](function-bugs.md#b76) | open |
-| B77 | web-client throws React hydration error #418 on every unknown route | web-client | [runtime](runtime-bugs.md#b77) | open |
-| B78 | The cli template's `hash` / `hash:compare` commands log the plaintext password | cli | [security](security-bugs.md#b78) | open |
+| B75 | Logger prints winston internals (`Symbol(level)`, `Symbol(splat)`) in "Extra Details" and writes ANSI colour codes to non-TTY output | @repo/logger | [runtime](runtime-bugs.md#b75) | verified |
+| B76 | `package list` shows `mode: "silent"` packages, and `package add startx-cli` installs the CLI itself into a user's workspace | startx-cli | [function](function-bugs.md#b76) | verified |
+| B77 | web-client throws React hydration error #418 on every unknown route | web-client | [runtime](runtime-bugs.md#b77) | verified |
+| B78 | The cli template's `hash` / `hash:compare` commands log the plaintext password | cli | [security](security-bugs.md#b78) | verified |
 
 ---
 

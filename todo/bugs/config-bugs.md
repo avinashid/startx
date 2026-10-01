@@ -947,12 +947,12 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 
 ### B70 · `package add core-server` emits an app that fails typecheck: `@repo/common` is missing from core-server's `requiredDeps`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** core-server (template metadata)
 - **File:** `apps/core-server/package.json` (`startx.requiredDeps`)
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `7e445fe` — `@repo/common` is added to core-server's `requiredDeps`. The new `template-metadata.test.ts` asserts that, for every app, workspace imports in `src` ⊆ `requiredDeps`. package E2E 2026-10-01 (`package add`/`new` in three scaffolds, then install and `--force` gate: 56/56, 27/27, 45/45; 0 unresolved catalog refs) includes `package add core-server --name api-v2` and `package add core-server` into web-only.
 
 **Symptom** — In any workspace, `startx package add core-server [--name api-v2]` fails `typecheck` with `TS2307: Cannot find module '@repo/common/types/users'` (`src/config/custom-type.ts:1`). Gate in the server-only workspace: 48/49.
 

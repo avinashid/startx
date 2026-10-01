@@ -496,12 +496,12 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B69 · Bull Board is unauthenticated, listens on every interface, and runs in every `NODE_ENV`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P0
 - **Area:** queue-worker
 - **File:** `apps/queue-worker/src/bullmq/board.ts`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `86cd980` — `BULL_BOARD_ENABLED = envBool(NODE_ENV === "development")` and `BULL_BOARD_HOST` defaults to `127.0.0.1`. The adapters are only created when the board is enabled. Production boot smoke without the opt-in: nothing listens on 2866. With it: the board binds 127.0.0.1 only. Auth (option b) wasn't added; the board is loopback-only unless an operator sets a host.
 
 **Symptom** — Anyone who can reach port 2866 (`BULL_BOARD_PORT`) of a deployed worker gets the full Bull Board UI. They can read every job payload, which for `email-send` means recipients and mail bodies, and they can retry, promote, clean or delete jobs.
 
@@ -517,12 +517,12 @@ for i in $(seq 1 200); do curl -s -o /dev/null -w "%{http_code}\n" localhost:300
 
 ### B78 · The cli template's `hash` / `hash:compare` commands log the plaintext password
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** cli
 - **File:** `apps/cli/src` (`hash` commands)
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `1ded3f5` — the hash commands log only the hash and `match`/`no match`. With the built cli and a unique marker as input, the marker appears 0 times in the output, and compare reports both outcomes correctly.
 
 **Symptom** — `cli hash secret123` logs `Hash for "secret123": $2b$…`, and `hash:compare` logs `Comparing password: "secret123"`. In a shell, history already has the argument, but the logger may also ship it to a collector.
 

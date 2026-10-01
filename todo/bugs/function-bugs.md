@@ -978,12 +978,12 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B71 · `package new` writes `tsconfig.json` with 2-space indent, so a new package fails `format:check` immediately
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts:224`
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `769a73a` + `9d07982` — tabs alone weren't enough: prettier and biome also collapse `"include": ["src/**/*.ts"]` onto one line, and `JSON.stringify` never does. The package E2E caught it. The tsconfig is now the literal `NEW_PACKAGE_TSCONFIG`, and a `package.test.ts` case runs it through prettier with the template config and expects no change. package E2E 2026-10-01 (`package add`/`new` in three scaffolds, then install and `--force` gate: 56/56, 27/27, 45/45; 0 unresolved catalog refs) includes three `package new` packages under prettier, and `biome ci .` passes on a `package new` in full-biome.
 
 **Symptom** — `startx package new @repo/foo`, then install and the gate: `@repo/foo#format:check` fails on `tsconfig.json`. This happens under both prettier and biome (both reformat it to tabs). Gate: 41/43 with two new packages.
 
@@ -999,12 +999,12 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B72 · Dead `"vine": "link:@types/vinejs/vine"` devDependency in `@repo/lib`, which `package add` then writes into the catalog, breaking `pnpm install`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P1
 - **Area:** @repo/lib, startx-cli
 - **File:** `packages/@repo/lib/package.json:26`; `apps/startx-cli/src/commands/package.ts` (`syncDepsWithCatalog`)
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `3efef2d` — the `vine` link devDependency is removed from `@repo/lib` (lockfile updated). `syncDepsWithCatalog` only catalogs registry specs: it skips specs containing `:`, `/` or `\`, or starting with `.`. Covered by a `package.test.ts` case. package E2E 2026-10-01 (`package add`/`new` in three scaffolds, then install and `--force` gate: 56/56, 27/27, 45/45; 0 unresolved catalog refs) — every install succeeds.
 
 **Symptom** — web-only workspace + `package add core-server` (which brings in `@repo/lib`) → `pnpm install` fails with `ERR_PNPM_CATALOG_ENTRY_INVALID_SPEC: The entry for 'vine' in catalog 'default' declares a dependency using the 'link' protocol`. Separately, every scaffold's `@repo/lib/node_modules/vine` is a dangling symlink.
 
@@ -1020,12 +1020,12 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 ### B76 · `package list` shows `mode: "silent"` packages, and `package add startx-cli` installs the CLI itself into a user's workspace
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** startx-cli
 - **File:** `apps/startx-cli/src/commands/package.ts:67` (`list`), `:100` (`add`)
 - **Found in:** package E2E `tsk_g84rp5ak`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `6963d2a` — `package list` hides `mode: "silent"` packages, and `assertAddable` refuses a silent package that no template depends on. Covered by `package.test.ts`. Live on full-biome: `package list` shows none of startx-cli/tsdown-config/typescript-config, and `package add startx-cli` fails with `"startx-cli" is internal to the StartX template`.
 
 **Symptom** — `startx package list` lists `startx-cli (apps/startx-cli)`, which the interactive `add` picker hides. `startx package add startx-cli` succeeds and copies the generator into the workspace.
 

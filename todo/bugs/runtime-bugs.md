@@ -375,12 +375,12 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B68 · The built queue-worker crashes on start: `require is not defined in ES module scope` from bundled `@bull-board/ui`
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P0
 - **Area:** queue-worker
 - **File:** `apps/queue-worker/tsdown.config.ts`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `74decae` — queue-worker's tsdown config keeps `@bull-board/*` external. The built `node dist/index.mjs`, run against Redis 7.2 with `BULL_BOARD_ENABLED=true`, logs `Bull Board listening`; core-server's bundle logs `Server listening`. publish.yml's verify job now runs a "Boot smoke" step (redis:7.2 service) that starts both bundles, so a bundle that can't start fails CI. E2E matrix 2026-10-01 (7 fresh scaffolds, each installed and gated with `--force`: full-biome 75/75, full-prettier 75/75, server-only 36/36, web-only 22/22, worker-only 40/40, cli-only 33/33, server-bare 18/18) includes worker-only.
 
 **Symptom** — `node dist/index.mjs` (the app's own `start` script) exits immediately with `ReferenceError: require is not defined in ES module scope`. This happens in the repo's own `apps/queue-worker/dist` and in every scaffold. `tsx src/index.ts` works, and the forced gate is green because nothing ever runs the bundle.
 
@@ -396,12 +396,12 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B73 · core-server and queue-worker have no SIGTERM/SIGINT handling, so a deploy drops in-flight work
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** core-server, queue-worker
 - **File:** `apps/core-server/src/index.ts`, `apps/queue-worker/src/index.ts`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `f375732` — new `@repo/lib/shutdown-module` (`createShutdown`/`onShutdown`: runs the steps once and in order, 8s timeout, a second signal exits 1) with unit tests. `closeRedis()` is in `@repo/redis`. core-server closes the HTTP server and then Redis; queue-worker closes workers, the board and Redis. AGENTS.md §4 lists the module.
 
 **Symptom** — On SIGTERM (every container stop or rolling deploy) both processes die at once. core-server cuts in-flight HTTP requests mid-response. queue-worker abandons active BullMQ jobs; they sit `active` until the stalled-job checker requeues them, so they run twice or get flagged stalled.
 
@@ -417,18 +417,18 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B74 · Responses produced before `cors` (429 from the rate limiter) carry no CORS headers, so browsers see a network error rather than a 429
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P2
 - **Area:** core-server
 - **File:** `apps/core-server/src/routes/server.ts:33-34`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `00488f9` — the limiter stays ahead of `cors` (so rejected origins are throttled too). Its 429 handler adds `Access-Control-Allow-Origin`/`-Credentials`/`Expose-Headers` and `Vary: Origin` for an allowed origin, using the newly exported `isAllowedOrigin`, and it `skip`s `OPTIONS` from allowed origins. Covered by `rate-limit-cors.test.ts`. AGENTS.md §6 documents the rule.
 
 **Symptom** — From a browser on an allowed origin, once the limit is hit, every request fails as an opaque CORS/network error. The SPA can't read the status or `Retry-After`. Preflight `OPTIONS` requests are counted against the same budget and are themselves answered 429 without CORS headers.
 
 **Cause** — The middleware order is `helmet → apiRateLimiter → corsMiddleware`. That order is documented as load-bearing in AGENTS.md §6, so the limiter answers before `cors` ever adds `Access-Control-Allow-Origin`.
 
-**Fix** — Decision needed, because it changes the documented order. Either mount `corsMiddleware` before the limiter (rejecting disallowed origins first is arguably better anyway), or skip `OPTIONS` in the limiter and add CORS headers to its handler. Update AGENTS.md §6 to match.
+**Fix** — Kept `helmet → apiRateLimiter → corsMiddleware`: throttling disallowed origins before cors is deliberate. The limiter's 429 handler sets the CORS headers itself for an allowed origin, and the limiter skips preflights from allowed origins. AGENTS.md §6 says that any middleware ahead of cors that answers requests itself must do the same.
 
 **Verify** — Exhaust the limit with `Origin: <allowed>`: the 429 carries `Access-Control-Allow-Origin`, and an `OPTIONS` preflight still gets 204.
 
@@ -438,12 +438,12 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B75 · Logger prints winston internals (`Symbol(level)`, `Symbol(splat)`) in "Extra Details" and writes ANSI colour codes to non-TTY output
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** @repo/logger
 - **File:** `packages/@repo/logger/src`
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `7de748e` — metadata is built from `Object.entries` (no symbol keys), and `consoleFormat(colors = process.stdout.isTTY)` colours only on a TTY. Covered by `logger.test.ts`. Live: the built cli's output, piped to a file, contains no `\x1b[` and no `Symbol(`.
 
 **Symptom** — `logger.info("Registering worker", { queue })` prints an "Extra Details:" block that includes `Symbol(level): 'info'` and `Symbol(splat): [...]`. Production logs redirected to a file or a collector contain `\x1b[32m` escape codes.
 
@@ -459,18 +459,18 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 ### B77 · web-client throws React hydration error #418 on every unknown route
 
-- **Status:** open
+- **Status:** verified
 - **Severity:** P3
 - **Area:** web-client
 - **File:** `apps/web-client/react-router.config.ts` (`ssr: false`)
 - **Found in:** runtime smoke `tsk_jv5m7m9a`, 2026-10-01
-- **Fixed in:** —
+- **Fixed in:** `d612404` — a root `HydrateFallback` alone did not stop #418, so there is also a splat `*` route (`routes/not-found.tsx`) whose `clientLoader` throws a 404, registered last in `routes.ts`. Playwright against `vite preview`: `/` and `/does-not-exist` produce no `pageerror`, and the 404 page renders.
 
 **Symptom** — Loading any path that isn't `/` in the production build renders the 404 boundary correctly but logs `Minified React error #418` (hydration text mismatch), and React discards the server HTML.
 
 **Cause** — SPA mode prerenders `index.html` for `/`, and the server returns it for every path. On a deep link the client renders a different tree than the HTML it hydrates.
 
-**Fix** — Give the root route a `HydrateFallback` so the prerendered shell carries no route content, which is React Router's SPA-mode guidance.
+**Fix** — A root `HydrateFallback` (renders nothing) plus a splat `*` route registered last, whose `clientLoader` throws `data(null, { status: 404 })`. The prerendered shell then carries no route content, and an unknown path hydrates into the 404 boundary instead of mismatching. The fallback alone was not enough.
 
 **Verify** — Playwright: load `/does-not-exist` from `vite preview`; no `pageerror` events.
 

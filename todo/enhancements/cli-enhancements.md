@@ -272,4 +272,4 @@ different goal; this one is npm supply-chain attestation.
 
 **Done when** — `init` prints `startx vX.Y.Z` first. Before the prompts it asks `registry.npmjs.org/startx/latest` (1.5s timeout, cached 24h in `$XDG_CACHE_HOME/startx/update-check.json`, skipped when `CI` or `STARTX_NO_UPDATE_CHECK` is set or `STARTX_ENV` is development/test) and warns if a newer version exists, without ever failing the scaffold. The closing summary lists the next steps and names AGENTS.md, or warns if it was not written.
 
-- **Fixed in:** see the `feat: … (E16)` commit — `update-check.test.ts` (7 tests). Forced gate 72/72, 238 tests. The built bin was checked against the live registry (cache written with `1.2.0`, no warning), a cached `9.9.9` (warns), the opt-out and `CI=true` (no request), and a fresh scaffold from the built bin.
+- **Fixed in:** `0109f7c` — `update-check.test.ts` (7 tests). Forced gate 72/72, 238 tests. The built bin was checked against the live registry (cache written with `1.2.0`, no warning), a cached `9.9.9` (warns), the opt-out and `CI=true` (no request), and a fresh scaffold from the built bin.
