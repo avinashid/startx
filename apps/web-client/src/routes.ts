@@ -1,3 +1,4 @@
-import { type RouteConfig, index } from "@react-router/dev/routes";
+import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
-export default [index("routes/home.tsx")] satisfies RouteConfig;
+// Keep the splat route last: it catches every path nothing else matched (B77).
+export default [index("routes/home.tsx"), route("*", "routes/not-found.tsx")] satisfies RouteConfig;

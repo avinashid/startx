@@ -52,6 +52,16 @@ export default function App() {
 	);
 }
 
+/**
+ * SPA mode (`ssr: false`) prerenders one index.html, from `/`, and serves it for every path. Without
+ * a root fallback that HTML holds the home route, so any deep link hydrates against a tree it does
+ * not render and React throws #418 (B77). With it, the shell holds only this, and the client
+ * renders the matched route after hydration.
+ */
+export function HydrateFallback() {
+	return null;
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 	let message = "Oops!";
 	let details = "An unexpected error occurred.";
