@@ -6,7 +6,9 @@ const env = defineEnv({
 });
 export default defineConfig({
 	out: "./drizzle",
-	schema: "./src/schema/**/*.ts",
+	// The barrel, not a glob: a glob also matches index.ts, which re-exports every table, and
+	// drizzle-kit then reports each table twice.
+	schema: "./src/schema/index.ts",
 	dialect: "postgresql",
 	dbCredentials: {
 		url: env.DATABASE_URL!,
