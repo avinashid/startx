@@ -14,6 +14,8 @@ export class ITokenModule<T extends object | string = Record<string, unknown>> {
 		return jwt.sign(payload, this.signingKey, this.options);
 	}
 	public verifyToken(token: string) {
-		return jwt.verify(token, this.signingKey) as T;
+		// Pin the algorithm the token was signed with. Without it jsonwebtoken accepts whatever the
+		// token's own header claims, within the family the key type allows.
+		return jwt.verify(token, this.signingKey, { algorithms: [this.options.algorithm ?? "HS256"] }) as T;
 	}
 }
