@@ -50,6 +50,10 @@ export const FileCheck: WHITELIST_FILES = {
 	".env": {
 		tags: ["never"],
 	},
+	// Every variable in it belongs to core-server / queue-worker (JWT, encryption, DB, Redis, SMTP).
+	".env.example": {
+		tags: ["backend"],
+	},
 	"tsdown.config.ts": {
 		tags: ["tsdown"],
 	},

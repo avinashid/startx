@@ -497,6 +497,10 @@ export class InitCommand {
 	private static async copyValidatedFilesFromFolder(source: string, destination: string, tags: Set<TAGS>) {
 		const files = await fsTool.listFiles({ dir: source }).catch(() => []);
 		for (const file of files) {
+			// `_gitignore` is the template's ignore file and is renamed to `.gitignore` on copy. When
+			// both exist (the startx repo root), the real `.gitignore` is the repo's own — skip it
+			// rather than let readdir order decide which one lands last.
+			if (file === ".gitignore" && files.includes("_gitignore")) continue;
 			const checked = FileCheck[file];
 			if (checked && !checked.tags.every((tag) => tags.has(tag))) continue;
 			const destFileName = file === "_gitignore" ? ".gitignore" : file;
