@@ -7,6 +7,7 @@
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",
 		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
 		"lint": "eslint .",

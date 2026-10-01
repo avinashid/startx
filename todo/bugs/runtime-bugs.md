@@ -343,7 +343,7 @@ COOKIE_CROSS_SITE=yes pnpm --filter @repo/lib exec node -e "require('./src/cooki
 
 **Cause** — `raw === "" ? normalized.default : raw`. For a bare Zod entry the default is `undefined`, so the schema's own `.default()` fires.
 
-**Fix** — Pass blank values through to the schema unchanged; only an *unset* variable falls back to a default. Schemas that want to allow blank values can say so.
+**Fix** — `envBool` registers its schema in a `blankRejecting` WeakSet, and `defineEnv` passes `""` through unchanged for those schemas only. Every other schema keeps the blank-means-unset behaviour that `.env.example`'s empty placeholders (`SMTP_PORT =`, `DATABASE_URL =`, …) rely on — passing blanks through globally would have turned those into `""` instead of their defaults.
 
 **Verify** — unit test in `@repo/env`
 

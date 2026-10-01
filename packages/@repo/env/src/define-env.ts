@@ -1,6 +1,7 @@
 import type { ZodTypeAny } from "zod";
 import { ZodError, z } from "zod";
 
+import { blankRejecting } from "./env-bool.js";
 import { loadDotenv } from "./utils.js";
 
 loadDotenv();
@@ -47,7 +48,9 @@ export function defineEnv<S extends Spec>(spec: S): InferSpec<S> {
 		// every library that reads process.env directly take its development path.
 		const raw = process.env[normalized.env];
 
-		rawEnv[key as string] = raw === undefined || raw === "" ? normalized.default : raw;
+		// A blank value counts as unset, except for schemas that reject it on purpose (envBool).
+		const unset = raw === undefined || (raw === "" && !blankRejecting.has(normalized.schema));
+		rawEnv[key as string] = unset ? normalized.default : raw;
 
 		zodShape[key as string] = normalized.schema;
 	}
