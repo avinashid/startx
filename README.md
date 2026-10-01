@@ -63,7 +63,7 @@ pnpm install
 ```
 
 **Version check** — `init` prints the running CLI version and, at most once a day, asks the npm registry
-whether a newer `startx` exists (1.5s timeout, never blocks or fails the scaffold). The template is bundled
+whether a newer `startx` exists (1.5s timeout, never blocks or fails the scaffold; a failed check is retried after an hour). The template is bundled
 inside the CLI, so an old global or `npx`-cached install scaffolds an old template; the warning tells you
 when that is happening. It is skipped when `CI` is set; set `STARTX_NO_UPDATE_CHECK=1` to turn it off.
 

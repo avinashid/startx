@@ -273,3 +273,12 @@ different goal; this one is npm supply-chain attestation.
 **Done when** — `init` prints `startx vX.Y.Z` first. Before the prompts it asks `registry.npmjs.org/startx/latest` (1.5s timeout, cached 24h in `$XDG_CACHE_HOME/startx/update-check.json`, skipped when `CI` or `STARTX_NO_UPDATE_CHECK` is set or `STARTX_ENV` is development/test) and warns if a newer version exists, without ever failing the scaffold. The closing summary lists the next steps and names AGENTS.md, or warns if it was not written.
 
 - **Fixed in:** `0109f7c` — `update-check.test.ts` (7 tests). Forced gate 72/72, 238 tests. The built bin was checked against the live registry (cache written with `1.2.0`, no warning), a cached `9.9.9` (warns), the opt-out and `CI=true` (no request), and a fresh scaffold from the built bin.
+- **Review follow-up:** `3326621` on `fix/review-env-example`. The reviewer's three points and the optional ones:
+  - The cache write has its own `try`, so a read-only cache dir no longer throws away a successful check. Checked against the live registry with a `chmod 555` cache dir: the check returns `1.2.1`.
+  - The cache path (`os.homedir()`) is resolved inside the guard, so a HOME-less container can't abort `init`.
+  - A failure is cached as `latest: null` and retried after 1h, not 24h. Against a blackholed host the first run exits after 1508ms and the cached run after 12ms.
+  - The request now uses `node:https` instead of `fetch`. With fetch, the abort lands at 1.5s but undici's connect keeps the process alive until about 10.5s. An aborted `https` request destroys its socket, and the process exits at about 1.5s.
+  - The summary quotes the `cd` path when a shell would split it. The built bin prints `cd 'my dir'`.
+  - The missing-AGENTS.md warning now says it's a defect to report, not an old version.
+  - Tests: the abort signal and its `TimeoutError`, a cache write failure, a throwing cache path, the 1h failure window, `httpsRequest` rejecting on abort, and `shellQuote`.
+  - Evidence: forced gate 73/73, 0 cached, exit 0, 263 tests.
