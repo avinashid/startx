@@ -1,0 +1,39 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import type { TAGS } from "../types";
+import { InitCommand } from "./init";
+
+type Internals = {
+	copyValidatedFilesFromFolder: (source: string, destination: string, tags: Set<TAGS>) => Promise<void>;
+};
+const { copyValidatedFilesFromFolder } = InitCommand as unknown as Internals;
+const copy = (source: string, destination: string) =>
+	copyValidatedFilesFromFolder.call(InitCommand, source, destination, new Set<TAGS>(["root"]));
+
+let tmp: string;
+beforeEach(async () => {
+	tmp = await fs.mkdtemp(path.join(os.tmpdir(), "startx-init-test-"));
+	await fs.mkdir(path.join(tmp, "src"));
+	await fs.writeFile(path.join(tmp, "src", "tsconfig.json"), "{}");
+});
+afterEach(async () => {
+	await fs.rm(tmp, { recursive: true, force: true });
+});
+
+describe("InitCommand.copyValidatedFilesFromFolder (B60)", () => {
+	it("throws when a file cannot be copied instead of logging and carrying on", async () => {
+		// A regular file where the destination directory should be: every copy fails with ENOTDIR.
+		await fs.writeFile(path.join(tmp, "blocker"), "");
+		await expect(copy(path.join(tmp, "src"), path.join(tmp, "blocker"))).rejects.toThrow(
+			/Failed to copy tsconfig\.json/,
+		);
+	});
+
+	it("copies normally when the destination is writable", async () => {
+		await copy(path.join(tmp, "src"), path.join(tmp, "out"));
+		await expect(fs.readFile(path.join(tmp, "out", "tsconfig.json"), "utf8")).resolves.toBe("{}");
+	});
+});
