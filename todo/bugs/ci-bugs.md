@@ -198,3 +198,41 @@ npm pack --dry-run 2>&1 | grep 'startx-cli/dist/index.mjs'
 
 Better: add a CI step that packs the tarball, installs it into a temp dir, and runs
 `startx --version`. That turns this from a reasoning exercise into a test.
+
+---
+
+## B67
+
+### B67 · `AGENTS.md` is missing from the `files` allowlist, so CI's tarball check blocks every publish
+
+- **Status:** verified
+- **Fixed in:** `c4d0dff`
+- **Severity:** P1
+- **Area:** ci / packaging
+- **File:** `package.json` (`files`)
+- **Found in:** release 1.2.0 gate, `npm pack --dry-run`, 2026-10-01
+
+**Symptom** — `npm pack --dry-run` at the 1.2.0 release candidate lists no `AGENTS.md`. Fed that list,
+publish.yml's own "Verify tarball contents" script fails:
+
+```
+required root files (13): .dockerignore, …, AGENTS.md, _gitignore, …
+::error::root template file missing from tarball: AGENTS.md
+1 problem(s) with the tarball.
+```
+
+So the first push to `main` after `c16145f` would have failed the publish job, and even a forced
+publish would have shipped a CLI whose scaffolds never get the `AGENTS.md` that `c16145f` set out to
+ship. The local E2E matrix could not see it: it runs the CLI from the repo, where the file exists.
+
+**Cause** — `c16145f` gave `AGENTS.md` a `FileCheck` entry (`["root"]`) but did not add it to the
+root `package.json` `files` allowlist, which is what decides the tarball.
+
+**Fix** — add `"AGENTS.md"` to `files`.
+
+**Verify**
+```bash
+npm pack --dry-run --json | grep AGENTS.md
+# then publish.yml's verify-tarball.mjs against the pack list → 0 problems
+```
+

@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B67`
+- **Next free ID:** `B68`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 68
+- **Open:** 0 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 69
 
 Counts include the four sub-items of B12.
 
@@ -19,7 +19,7 @@ Counts include the four sub-items of B12.
 | open | 0 | 0 | 0 | 0 | **0** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 17 | 13 | 17 | 21 | **68** |
+| **verified** | 17 | 14 | 17 | 21 | **69** |
 
 **B47–B66 were filed on 2026-10-01** from the E2E scaffold matrix (every fresh scaffold failed its
 own forced gate — see [B47](config-bugs.md#b47)–[B51](config-bugs.md#b51)) and the review of
@@ -27,6 +27,8 @@ own forced gate — see [B47](config-bugs.md#b47)–[B51](config-bugs.md#b51)) a
 closed** on `fix/p0-bugs` for release 1.2.0. B37/B46 were not fixed in either tool's config — the
 contested code (generic lists, unions, one CSS value) was reshaped into forms both formatters print
 identically. B55 and B59 were design decisions, answered by Avinash on `tsk_jg4zgfvj`.
+[B67](ci-bugs.md#b67) was found by the release gate itself: running publish.yml's tarball check
+locally against `npm pack --dry-run`.
 
 Measured uncached at `9e67d07`:
 
@@ -142,6 +144,7 @@ fix was made. See the entry for exactly what remains unproven.
 | B43 | A stray duplicate `src/eslint.config.ts` fails `web-client#lint` and ships to every scaffold | web-client | [config](config-bugs.md#b43) | verified |
 | B45 | `import type React from "react"` trips `import-x/default` — `@repo/ui#lint` fails | @repo/ui | [type](type-bugs.md#b45) | verified |
 | B46 | biome and prettier break generics, unions and nested CSS differently — not configurable | root, template src | [config](config-bugs.md#b46) | verified |
+| B67 | `AGENTS.md` is missing from the `files` allowlist, so CI's tarball check blocks every publish | ci / packaging | [ci](ci-bugs.md#b67) | verified |
 
 B32 and B33 were found while fixing B11 and B8. B33 is the more serious of the two: type-aware lint
 rules were silently not running for any package.
