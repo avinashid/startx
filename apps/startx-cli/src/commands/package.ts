@@ -219,22 +219,17 @@ export class PackageCommand {
 				this.createPackageJson({ name, eslintEnabled, vitestEnabled, hasBiome, hasPrettier }),
 			),
 		);
-		await fs.writeFile(
-			path.join(packageDir, "tsconfig.json"),
-			`${JSON.stringify(
-				{
-					extends: "typescript-config/tsconfig.node.json",
-					compilerOptions: {
-						moduleResolution: "bundler",
-						module: "esnext",
-						target: "es2022",
-					},
-					include: ["src/**/*.ts"],
-				},
-				null,
-				2,
-			)}\n`,
-		);
+		// writeJson, not JSON.stringify(…, 2): the workspace formatters use tabs, so a 2-space
+		// tsconfig fails format:check the moment the package exists (B71).
+		await this.writeJson(path.join(packageDir, "tsconfig.json"), {
+			extends: "typescript-config/tsconfig.node.json",
+			compilerOptions: {
+				moduleResolution: "bundler",
+				module: "esnext",
+				target: "es2022",
+			},
+			include: ["src/**/*.ts"],
+		});
 		await fs.writeFile(path.join(packageDir, "src", "index.ts"), "export {};\n");
 
 		if (eslintEnabled) {
