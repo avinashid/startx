@@ -8,23 +8,27 @@
 		"clean": "rimraf dist .turbo",
 		"watch:dev": "pnpm watch",
 		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"devDependencies": {
+		"drizzle-kit": "catalog:",
+		"eslint-config": "workspace:*",
 		"typescript-config": "workspace:*",
-		"vitest-config": "workspace:*",
-		"@types/better-sqlite3": "catalog:",
-		"eslint-config": "workspace:*"
+		"vitest-config": "workspace:*"
 	},
 	"dependencies": {
-		"better-sqlite3": "catalog:",
-		"xlsx": "catalog:",
 		"@repo/env": "workspace:*",
-		"@repo/logger": "workspace:*"
+		"drizzle-orm": "catalog:"
+	},
+	"engines": {
+		"node": ">=22.13"
 	},
 	"startx": {
 		"iTags": [
@@ -35,10 +39,10 @@
 			"db"
 		],
 		"tags": [
-			"sqlite"
+			"sqlite",
+			"drizzle"
 		],
 		"requiredDeps": [
-			"@repo/logger",
 			"@repo/env"
 		],
 		"requiredDevDeps": [

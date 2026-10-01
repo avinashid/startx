@@ -41,3 +41,8 @@ logs
 .DS_Store
 *.pem
 temp
+
+# SQLite files (@db/sqlite, SQLITE_DB_PATH)
+*.db
+*.db-shm
+*.db-wal

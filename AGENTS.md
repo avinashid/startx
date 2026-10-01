@@ -187,6 +187,7 @@ produces wrong-looking code here.
 | Graceful shutdown (SIGTERM/SIGINT) | `@repo/lib/shutdown-module` (`onShutdown`) | `process.on("SIGTERM")` directly |
 | Env parsing | `@repo/env` (`defineEnv`, `envBool`, `envSecret`) | `process.env` |
 | Logging | `@repo/logger` | `console.log` |
+| SQLite | `@db/sqlite` (`db`, drizzle on `node:sqlite`) | `better-sqlite3` / raw `node:sqlite` |
 | Redis | `@repo/redis` (`getRedis`, `RedisStore`) | `ioredis` directly |
 | Background jobs | `@repo/queue` (`BullQueue`, `JobSchemas`) | `bullmq` directly |
 | Email templates | `@repo/mail` (`EmailTemplate`) → send via `@repo/lib/mail-module` | `nodemailer` directly |
@@ -334,6 +335,9 @@ Do not "fix" these by deleting them, and do not assume they work because they ex
 - `@repo/model` — `src/index.ts` is empty. A placeholder for shared DTOs, with no consumers.
 - `@db/drizzle` — fully configured (schema in `src/schema/`, `db` singleton, `db:push` / `db:studio`)
   but no app imports it yet. There is no `db:generate` or migrate script.
+- `@db/sqlite` — the same shape on Node's built-in `node:sqlite` (Node ≥ 22.13, no native build).
+  A relative `SQLITE_DB_PATH` (default `data/app.db`) resolves against the workspace root, so
+  `db:push` and every app open the same file. No app imports it yet.
 - `useApi` / `ApiSchema` — see §5. Built, exported, unconsumed.
 
 ---

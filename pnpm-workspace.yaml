@@ -6,7 +6,6 @@ packages:
 
 allowBuilds:
   "@firebase/util": false
-  better-sqlite3: false
   esbuild: false
   msgpackr-extract: false
   protobufjs: false
@@ -55,7 +54,6 @@ catalog:
   axios: "^1.13.6"
   date-fns: "^4.1.0"
   nanoid: "^5.1.6"
-  xlsx: "^0.18.5"
 
   # cli
   "@inquirer/prompts": "^8.3.0"
@@ -143,11 +141,9 @@ catalog:
   drizzle-orm: "^1.0.0-beta.22"
   drizzle-kit: "^1.0.0-beta.22"
   pg: "^8.19.0"
-  better-sqlite3: "^12.9.0"
 
   # db types
   "@types/pg": "^8.10.0"
-  "@types/better-sqlite3": "^7.6.13"
 
   # lib
   "@aws-sdk/client-s3": "^3.1045.0"

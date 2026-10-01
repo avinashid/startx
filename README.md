@@ -181,7 +181,7 @@ startx package new my-utils --dir packages/internal/my-utils
 | `@repo/model` | node | Shared Drizzle model definitions |
 | `@repo/common` | node | Common shared utilities |
 | `@db/drizzle` | backend | Drizzle ORM with PostgreSQL |
-| `@db/sqlite` | backend | Drizzle ORM with SQLite |
+| `@db/sqlite` | backend | Drizzle ORM on Node's built-in `node:sqlite` (no native build; Node ≥ 22.13) |
 | `ui` | frontend | React component library |
 | `queue` | node | Job queue |
 | `aix` | node | AI/ML utilities |
