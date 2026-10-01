@@ -32,6 +32,20 @@ const packageNameSchema = z
 	.max(214, "Package name too long")
 	.regex(/^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/, "Invalid package name");
 
+// Literal text, not JSON.stringify: the workspace's formatter must accept it as written, or the
+// package fails format:check the moment it exists (B71). Prettier and biome both indent with
+// tabs and collapse an array that fits on one line, which JSON.stringify never does.
+export const NEW_PACKAGE_TSCONFIG = `{
+	"extends": "typescript-config/tsconfig.node.json",
+	"compilerOptions": {
+		"moduleResolution": "bundler",
+		"module": "esnext",
+		"target": "es2022"
+	},
+	"include": ["src/**/*.ts"]
+}
+`;
+
 export class PackageCommand {
 	static command = new Command("package")
 		.alias("pkg")
@@ -222,17 +236,7 @@ export class PackageCommand {
 				this.createPackageJson({ name, eslintEnabled, vitestEnabled, hasBiome, hasPrettier }),
 			),
 		);
-		// writeJson, not JSON.stringify(…, 2): the workspace formatters use tabs, so a 2-space
-		// tsconfig fails format:check the moment the package exists (B71).
-		await this.writeJson(path.join(packageDir, "tsconfig.json"), {
-			extends: "typescript-config/tsconfig.node.json",
-			compilerOptions: {
-				moduleResolution: "bundler",
-				module: "esnext",
-				target: "es2022",
-			},
-			include: ["src/**/*.ts"],
-		});
+		await fs.writeFile(path.join(packageDir, "tsconfig.json"), NEW_PACKAGE_TSCONFIG);
 		await fs.writeFile(path.join(packageDir, "src", "index.ts"), "export {};\n");
 
 		if (eslintEnabled) {

@@ -1,10 +1,11 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import * as prettier from "prettier";
 import { describe, expect, it } from "vitest";
 import * as YAML from "yaml";
 
-import { PackageCommand } from "./package";
+import { NEW_PACKAGE_TSCONFIG, PackageCommand } from "./package";
 import type { StartXPackageJson } from "../types";
 import type { PackageItem } from "../utils/cli-utils";
 
@@ -87,5 +88,13 @@ describe("PackageCommand.assertAddable (B76)", () => {
 
 	it("rejects a silent package nothing depends on", () => {
 		expect(check("startx-cli")).toThrow(/internal to the StartX template/);
+	});
+});
+
+describe("NEW_PACKAGE_TSCONFIG (B71)", () => {
+	it("is already formatted under the template's prettier config, so a new package passes format:check", async () => {
+		const options = await prettier.resolveConfig(path.resolve(import.meta.dirname, "../../../../.prettierrc.cjs"));
+		const formatted = await prettier.format(NEW_PACKAGE_TSCONFIG, { ...options, filepath: "tsconfig.json" });
+		expect(formatted).toBe(NEW_PACKAGE_TSCONFIG);
 	});
 });
