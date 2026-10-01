@@ -41,9 +41,10 @@ const buttonVariants = cva(
 	},
 );
 
-export interface ButtonProps
-	extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-		VariantProps<typeof buttonVariants> {
+// One alias instead of a two-item `extends` list, which biome and prettier wrap differently (B37).
+type ButtonBaseProps = React.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof buttonVariants>;
+
+export interface ButtonProps extends ButtonBaseProps {
 	asChild?: boolean;
 	loading?: boolean;
 	hideChild?: boolean;

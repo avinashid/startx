@@ -1,12 +1,11 @@
 import jwt from "jsonwebtoken";
 
+type ITokenOptions = { signingKey: string; options: jwt.SignOptions };
+
 export class ITokenModule<T extends object | string = Record<string, unknown>> {
 	private signingKey: string;
 	private options: jwt.SignOptions;
-	constructor(opts: {
-		signingKey: string;
-		options: jwt.SignOptions;
-	}) {
+	constructor(opts: ITokenOptions) {
 		this.signingKey = opts.signingKey;
 		this.options = opts.options;
 	}

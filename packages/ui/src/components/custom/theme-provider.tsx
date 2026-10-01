@@ -2,18 +2,10 @@ import * as React from "react";
 import { Toaster } from "../ui/sonner";
 
 export type Mode = "dark" | "light" | "system";
-export type ThemeColor =
-	| "default"
-	| "orange"
-	| "purple"
-	| "emerald"
-	| "rose"
-	| "amber"
-	| "brick"
-	| "rust"
-	| "cyan"
-	| "indigo"
-	| "blue";
+// Split so the union fits on one line: biome and prettier break a long union differently (B37).
+type WarmThemeColor = "orange" | "rose" | "amber" | "brick" | "rust";
+type CoolThemeColor = "purple" | "emerald" | "cyan" | "indigo" | "blue";
+export type ThemeColor = "default" | WarmThemeColor | CoolThemeColor;
 
 export const themes: Record<ThemeColor, string> = {
 	default: "default",

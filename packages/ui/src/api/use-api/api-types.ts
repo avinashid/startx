@@ -89,14 +89,20 @@ export type IRefetch<
 	cb: CbAction<Schema, IP, IQ, IB, ID, IK, Array<QueryKey<IK>>>;
 };
 
-export interface IFetchOptions<ID, ZQ extends ZQuery = ZQuery, ZP extends ZParams = ZParams, IK extends string = string>
-	extends IBaseApi<ID, ZQ, ZP> {
+// A type alias, not `interface … extends`: with this many parameters biome and prettier wrap the
+// `extends` clause differently, so the file could never pass both formatters (B37).
+export type IFetchOptions<
+	ID,
+	ZQ extends ZQuery = ZQuery,
+	ZP extends ZParams = ZParams,
+	IK extends string = string,
+> = IBaseApi<ID, ZQ, ZP> & {
 	apiType: "fetch";
 	staleTime?: TimeString | number;
 	enable?: { isEnable?: boolean; autoEnable?: boolean };
 	key?: string[];
 	refetch?: IRefetch<IK, z.output<ZQ>, z.output<ZP>, undefined, ID>;
-}
+};
 
 export type IPaginatedData<IData, IOther = unknown> = {
 	data: IData[];

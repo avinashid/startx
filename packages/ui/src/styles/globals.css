@@ -297,14 +297,7 @@
 	border: 1px solid var(--border);
 	background:
 		linear-gradient(var(--card), var(--card)) padding-box,
-		conic-gradient(
-			from var(--qc-border-angle),
-			transparent 0deg,
-			transparent 300deg,
-			var(--primary) 330deg,
-			transparent 360deg
-		)
-		border-box;
+		conic-gradient(from var(--qc-border-angle), transparent 300deg, var(--primary) 330deg, transparent) border-box;
 	background-clip: padding-box, border-box;
 }
 
