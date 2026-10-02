@@ -273,3 +273,35 @@ Also fix two smaller README gaps while in there:
   - The lockfile no longer contains `react@19.2.x`. `pnpm peers check` reports only the existing `@tailwindcss/typography` / `tailwindcss` range quirk.
   - Built SPA under `vite preview` in headless Chromium: `/` renders "Home" and `/does-not-exist` renders the 404 route, with no console errors or warnings.
   - Scaffold E2E, from source: `web-only` 22/22 (emits react-router 8.4.0 and `engines >=22.22`), `full-biome` 75/75.
+
+---
+
+## E19
+
+### E19 · `@repo/observability`: OTLP tracing and `/health` + `/ready`, wired into core-server
+
+- **Status:** done · **Value:** high · **Effort:** M
+- **Area:** `packages/@repo/observability` (new), `apps/core-server`, `pnpm-workspace.yaml` (catalog), `.env.example`
+
+**Today** — no template app could be traced, and core-server had no health or readiness endpoint, so an orchestrator could neither probe it nor take a draining replica out of rotation. Requested in chat by Avinash ("observability only" from the useful-packages list), card `tsk_sf4whtwf`.
+
+**Done when** — `@repo/observability` (iTags `node`, `backend`) exports:
+- `startTracing({ serviceName })`: a `NodeTracerProvider` exporting over OTLP/HTTP to `<OTEL_EXPORTER_OTLP_ENDPOINT>/v1/traces`, with W3C propagation and undici (`fetch`) client spans. It is off, at zero cost, until the endpoint is set. `OTEL_SERVICE_NAME` overrides the name, sampling follows the standard `OTEL_TRACES_SAMPLER*` variables, and SDK export errors are bridged to `@repo/logger`.
+- `startServerSpan`: framework-agnostic, it continues an incoming `traceparent`, is named `METHOD /route/template` (method only when nothing matched) and has no query string in its attributes. Also `withSpan` and `currentTraceId`.
+- `createHealth(checks)`: liveness, plus readiness with a per-check timeout (2s default). It is `shutting_down` after `markShuttingDown()`, and the response names a failed check without its error text.
+
+There is no module-patching auto-instrumentation: tsdown bundles express and ioredis, so nothing is left at runtime to patch. core-server requires the package and mounts `GET /health` and `GET /ready` (Redis ping) ahead of every middleware, then `tracingMiddleware`. It records the route when Express assigns `req.route`, because a nested router's `baseUrl` is already restored by `finish` after an error. Its shutdown order is readiness → HTTP drain → Redis → span flush. The Dockerfile has a `HEALTHCHECK` on `/health`. AGENTS.md (§4 table, §6 order and probes), the README and `.env.example` document all of it.
+
+- **Fixed in:** `da18578`. `tracing.test.ts` (8), `health.test.ts` (5), core-server `tracing-middleware.test.ts` (4) and `routes/health/router.test.ts` (4).
+  - The nested-router route test failed against the first version (`GET /:id/fail`), which led to the `req.route` capture.
+  - Forced gate: 77/77, 0 cached, 285 tests.
+  - Built bundle against real Redis and Jaeger:
+    - `/health` and `/ready` return 200 with `no-store`, and probes produce no spans.
+    - `GET /test` with a `traceparent` arrives in Jaeger under that trace, with `http.route` set and no query string.
+    - The 404 and 401 spans are method-only.
+    - With Redis stopped, `/ready` returns 503 after 2.05s with no error text, while `/health` stays 200. SIGTERM logs "Shutdown complete".
+  - Docker image `apps/core-server/Dockerfile`: the container reports `healthy`, and spans arrive under `OTEL_SERVICE_NAME`.
+  - Scaffold E2E, from source:
+    - `server-only` 40/40: no packages were selected, and `@repo/observability` arrived through core-server's closure.
+    - `full-biome` 79/79.
+
