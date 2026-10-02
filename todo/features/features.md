@@ -4,8 +4,8 @@ Things that **do not exist yet**. If it exists and could be better, it's an
 [enhancement](../enhancements/enhancements.md). If it exists and is broken, it's a
 [bug](../bugs/bugs.md).
 
-- **Next free ID:** `F10`
-- **Open:** 9 · **In progress:** 0 · **Done:** 0
+- **Next free ID:** `F11`
+- **Open:** 9 · **In progress:** 0 · **Done:** 1
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -29,6 +29,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | F9 | Worked auth routes wired to the session module | **high** | M | open |
 | F5 | Supported "serve the SPA from the API" mode | low | M | open |
 | F8 | Named pnpm catalogs support | low | S | open |
+| F10 | Next.js app template (`next-app`) | **high** | M | done |
 
 Effort: **S** ≈ under an hour · **M** ≈ half a day · **L** ≈ multi-day.
 

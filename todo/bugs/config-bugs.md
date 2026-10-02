@@ -984,3 +984,25 @@ pnpm install && pnpm format:check && pnpm biome ci   # both must exit 0 on a sto
 **Verify** — `DATABASE_URL=… pnpm --filter @db/drizzle exec drizzle-kit push --force` against an empty Postgres exits 0 with no duplicate warnings.
 
 ---
+
+---
+
+## B89
+
+### B89 · `@repo/ui`'s globals.css points two `@source` globs at directories that do not exist
+
+- **Status:** verified
+- **Fixed in:** `bc900f3` — forced gate 82/82, exit 0 at `bc900f3` (293 tests)
+- **Severity:** P3
+- **Area:** @repo/ui
+- **File:** `packages/ui/src/styles/globals.css`
+- **Found in:** F10 (next-app, `tsk_k43egjtc`), 2026-10-02
+
+**Symptom** — `@source "../../../apps/**/*.{ts,tsx}"` and `"../../../components/**"` resolve from `packages/ui/src/styles/` to `packages/apps` and `packages/components`, which do not exist. They scan nothing.
+
+**Cause** — The globs are one `../` short. Nothing broke, because Tailwind v4's automatic detection already scans the consuming app's own directory (web-client under Vite, next-app under `@tailwindcss/postcss`). The dead lines read as if they were what made app classes work.
+
+**Fix** — Removed the two dead globs and kept `../**/*.{ts,tsx}` (the ui components), with a comment saying the app's files come from automatic detection. Behaviour is unchanged, since the removed globs matched nothing.
+
+**Verify** — next-app (template and `next-only` scaffold) in headless Chromium: the app's own `text-2xl` resolves to 24px and the ui `Button` has its `bg-primary` colour.
+

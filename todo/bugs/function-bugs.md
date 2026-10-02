@@ -1098,3 +1098,46 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 **Cause** — `--no-install` only skips the package-manager run, and no flag answers the root-deps prompt. The exit hang looks like stdin being left in flowing mode after the prompts.
 
 **Proposed fix** — Add a `--yes`/`--no-root-deps` style flag, or skip the prompt when stdin is not a TTY. Pause or unref stdin when the prompts finish. Then drop the stdin answers from the smoke.
+
+---
+
+## B90
+
+### B90 · `<Button asChild>` always throws React error #143
+
+- **Status:** verified
+- **Fixed in:** `bc900f3` — forced gate 82/82, exit 0 at `bc900f3` (293 tests)
+- **Severity:** P2
+- **Area:** @repo/ui
+- **File:** `packages/ui/src/components/ui/button.tsx`
+- **Found in:** F10 (next-app, `tsk_k43egjtc`), 2026-10-02: `next build` failed prerendering `/`
+
+**Symptom** — `<Button asChild><a href="…">…</a></Button>`, the shadcn way to style a link as a button, throws "React.Children.only expected to receive a single React element child" (#143) on every render. No template code used `asChild` on `Button`, so no gate ever rendered it.
+
+**Cause** — With `asChild` the component renders `Slot.Root`, but it still passes three children: the loader icon, the icon `<span>` and the caller's element. Slot accepts exactly one.
+
+**Fix** — The caller's element is wrapped in `Slot.Slottable` when `asChild` is set. Slot then renders that element with the button's props and moves the loader and icon inside it.
+
+**Verify** — `packages/ui/src/components/ui/button.test.tsx` (2). The `asChild` case renders an `<a>` with `data-slot="button"`, its `href` and its variant. It fails against the previous `button.tsx` (stashed) and passes with the fix. next-app's home page renders its API link through it.
+
+---
+
+## B91
+
+### B91 · `ThemeProvider` reads `localStorage` during render, so any server render of it throws
+
+- **Status:** verified
+- **Fixed in:** `bc900f3` — forced gate 82/82, exit 0 at `bc900f3` (293 tests)
+- **Severity:** P2
+- **Area:** @repo/ui
+- **File:** `packages/ui/src/components/custom/theme-provider.tsx`
+- **Found in:** F10 (next-app, `tsk_k43egjtc`), 2026-10-02
+
+**Symptom** — Under a server render (Next.js renders client components on the server too), `ThemeProvider` throws `ReferenceError: localStorage is not defined`. Avoiding the throw with a `typeof window` guard would only trade it for a hydration mismatch, because the first client render would read a different mode than the server rendered.
+
+**Cause** — The `useState` initialisers call `localStorage.getItem`. That was fine while the only consumer was web-client's SPA build, which never renders on a server.
+
+**Fix** — State starts at `defaultMode` / `defaultColor`, and a `useLayoutEffect` applies the stored values after mount. The server render and the first client render therefore match, and the stored theme still lands before the first paint. web-client's SPA behaviour is unchanged.
+
+**Verify** — next-app `next build` prerenders `/`. In headless Chromium (template and `next-only` scaffold), `<html>` has class `light`; after `localStorage["app-theme-mode"]="dark"` and a reload it has `dark`, with no hydration warnings in the console.
+

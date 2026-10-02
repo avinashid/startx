@@ -3,7 +3,7 @@
 New capabilities for the template apps and packages.
 Register: [`features.md`](features.md).
 
-Contents: [F4](#f4) · [F5](#f5) · [F8](#f8) · [F9](#f9)
+Contents: [F4](#f4) · [F5](#f5) · [F8](#f8) · [F9](#f9) · [F10](#f10)
 
 ---
 
@@ -181,3 +181,44 @@ point.
 
 **Done when** — A scaffolded API supports a full login → authenticated request → refresh → logout
 cycle out of the box, covered by tests.
+
+---
+
+## F10
+
+### F10 · Next.js app template (`next-app`)
+
+- **Status:** done · **Value:** high · **Effort:** M
+- **Area:** `apps/next-app` (new), `apps/startx-cli/src/{types,configs/scripts,configs/files}.ts`, `packages/ui`, root ignore files, `turbo.json`
+
+**Today** — the only frontend template was web-client, a React Router SPA. Requested in chat by Avinash, card `tsk_k43egjtc`.
+
+**Done when** — `apps/next-app` is a Next.js 16 App Router app on `@repo/ui`:
+- **Structure:** a client-only `providers.tsx` (`QueryProvider`, `ThemeProvider`), with the layout kept a server component. Public config in `src/config/env.ts` (literal `NEXT_PUBLIC_*` access), plus a home page, a 404 page and `GET /api/health`.
+- **Config:** `next.config.ts` sets `output: "standalone"`, `outputFileTracingRoot` and `turbopack.root` to the workspace root, `transpilePackages: ["@repo/ui"]` and `poweredByHeader: false`. The tsconfig is complete enough that `next build` leaves it untouched.
+- **Tooling:** ESLint is the shared frontend config plus `@next/eslint-plugin-next` (recommended + core-web-vitals). Vitest resolves the `@/*` alias.
+- **Docker:** the Dockerfile ships `.next/standalone` as the `node` user, with a `HEALTHCHECK` on `/api/health`.
+- **Agent files:** an app-level AGENTS.md carries the block `next dev` would otherwise write on its own, and CLAUDE.md beside it imports it.
+- **CLI:**
+  - A `nextjs` tag. Its `dev`/`start` use port 3001, because core-server owns 3000.
+  - `build`, `start`, `typecheck` (`next typegen && tsc --noEmit`), `clean` and `deep:clean` entries sit **ahead of** the generic tsdown/node ones, so a workspace with core-server (tsdown global) still gives next-app `next build`.
+  - `AGENTS.md`'s FileCheck tags went from `["root"]` to `[]`, so the app-level file ships.
+- **Ignore and publish rules:** `.next` and `next-env.d.ts` are ignored by git, Docker and biome, and excluded from the npm tarball. turbo's build outputs include `.next/**` (minus its cache).
+- **`@repo/ui` fixes found on the way:** [B89](../bugs/config-bugs.md#b89), [B90](../bugs/function-bugs.md#b90), [B91](../bugs/function-bugs.md#b91).
+
+- **Fixed in:** `bc900f3`. Tests: `apps/next-app/src/app/app.test.tsx` (3), `button.test.tsx` (2), and 2 `file-handler.test.ts` cases pinning the script order.
+  - Forced gate: 82/82, 0 cached, 293 tests.
+  - `next build` prerenders `/` and `/_not-found`; `/api/health` is dynamic.
+  - Under `next start` in headless Chromium, in both the template and the scaffold:
+    - `/` returns 200 with the styled button-as-link;
+    - `/does-not-exist` returns 404 with the 404 page;
+    - the stored theme is applied;
+    - the only console error is that document's own 404.
+  - Docker image (293MB): the container reports `healthy` as `node`, and the page CSS is served.
+  - `next dev` under an agent environment leaves the shipped AGENTS.md and CLAUDE.md byte-identical.
+  - `npm pack --dry-run` has the 17 next-app files and no `.next` or `next-env.d.ts`.
+  - Scaffold E2E, from source:
+    - `next-only` (prettier) 15/15;
+    - `full-biome` 84/84, where next-app gets `next build` with tsdown global;
+    - `web-only` 22/22.
+

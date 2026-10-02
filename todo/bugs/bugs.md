@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B89`
+- **Next free ID:** `B92`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 6 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 84
+- **Open:** 6 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 87
 
 Counts include the four sub-items of B12.
 
@@ -19,7 +19,7 @@ Counts include the four sub-items of B12.
 | open | 0 | 0 | 0 | 6 | **6** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
-| **verified** | 20 | 19 | 20 | 25 | **84** |
+| **verified** | 20 | 19 | 22 | 26 | **87** |
 
 **B68–B78 were filed on 2026-10-01, after the 1.2.0 release**, from the package-command E2E
 (`tsk_g84rp5ak`) and the first runtime smoke of the built apps (`tsk_jv5m7m9a`). All are **verified** for 1.2.1 (2026-10-01). Two were P0:
@@ -222,6 +222,9 @@ rules were silently not running for any package.
 | B86 | Access and refresh tokens carry no `typ`/`aud` claim, so they are interchangeable when the secrets match | @repo/lib | [security](security-bugs.md#b86) | open |
 | B87 | The queue-worker image can't start (`bullmq` missing), and both images install unpinned externals | queue-worker, core-server, CI | [runtime](runtime-bugs.md#b87) | verified |
 | B88 | `package add` asks about missing root deps even with `--no-install`, and never exits while stdin stays open | startx-cli | [function](function-bugs.md#b88) | open |
+| B89 | `@repo/ui`'s globals.css points two `@source` globs at directories that do not exist | @repo/ui | [config](config-bugs.md#b89) | verified |
+| B90 | `<Button asChild>` always throws React error #143 | @repo/ui | [function](function-bugs.md#b90) | verified |
+| B91 | `ThemeProvider` reads `localStorage` during render, so any server render of it throws | @repo/ui | [function](function-bugs.md#b91) | verified |
 
 ---
 
