@@ -3,7 +3,7 @@
 New capabilities for the template apps and packages.
 Register: [`features.md`](features.md).
 
-Contents: [F4](#f4) · [F5](#f5) · [F8](#f8) · [F9](#f9) · [F10](#f10)
+Contents: [F4](#f4) · [F5](#f5) · [F8](#f8) · [F9](#f9) · [F10](#f10) · [F11](#f11)
 
 ---
 
@@ -221,4 +221,47 @@ cycle out of the box, covered by tests.
     - `next-only` (prettier) 15/15;
     - `full-biome` 84/84, where next-app gets `next build` with tsdown global;
     - `web-only` 22/22.
+
+---
+
+## F11
+
+### F11 · Hono-on-Bun server template (`bun-server`)
+
+- **Status:** done · **Value:** med · **Effort:** M
+- **Area:** `apps/bun-server` (new), `apps/startx-cli/src/{types,configs/deps,configs/scripts}.ts`, `apps/{core-server,queue-worker}/package.json`, root `package.json`, `pnpm-workspace.yaml`
+
+**Today** — every backend template was Express on Node. Requested in chat by Avinash, who chose Hono on Bun; card `tsk_r3837m7y`.
+
+**Done when** — `apps/bun-server` is a Hono app on Bun:
+- **Shape:** `src/app.ts` builds the app and `src/index.ts` serves it with `Bun.serve`, so tests drive the app with `app.request()` under vitest on Node.
+- **Middleware, in order:**
+  - `/health` and `/ready` first (`createHealth`), so probes skip everything after them;
+  - then `startServerSpan` tracing, named by the matched route template;
+  - then request logging through `@repo/logger`, `requestId`, `secureHeaders`, CORS from `CLIENT_URL`/`CORS_URL`, and `bodyLimit` (413).
+- **Routes:** an example `POST /echo` with `zValidator` (422 with issues). A JSON 404, and an `onError` that logs an unhandled error and hides its message.
+- **Env:** `BUN_SERVER_PORT` (default 3002, so it runs beside core-server) and `BUN_SERVER_MAX_BODY_BYTES` through `defineEnv`.
+- **Shutdown:** `onShutdown` from `@repo/lib`, in the order readiness → `server.stop()` (waits for in-flight requests) → span flush. Tracing is the same `@repo/observability` as core-server, and the OTel Node SDK works on Bun.
+- **Build:** `bun build --target bun --sourcemap=linked`.
+- **Dockerfile:** pnpm builder, then an `oven/bun:1-alpine` runtime holding only the bundle, as user `bun`, with a `HEALTHCHECK`.
+- **`bun` is not a host prerequisite.** `bun` is a catalog root devDependency (DepCheck `["bun","root"]`, where `bun` is the app's gTag), and `allowBuilds: { bun: true }` lets its postinstall link the platform binary. The lockfile carries every platform's `@oven/bun-*`, so CI and the musl Docker builder need no setup step.
+- **CLI:**
+  - bun-server's scripts key on its own `hono` tag. A global `bun` key would have given core-server `bun build`.
+  - The scripts sit ahead of the tsdown/node entries.
+  - `cross-env`'s DepCheck entry now keys on a new own tag `cross-env` (core-server, queue-worker, bun-server) instead of `express`. Keying it on the global `backend` would have handed it to web-client and cli.
+
+- **Fixed in:** `fca9c02`. `apps/bun-server/src/app.test.ts` (11), plus 4 `file-handler.test.ts` cases (bun scripts with tsdown global; core-server unchanged with bun global; no cross-env for a frontend; root `bun` only with the tag).
+  - Forced gate: 87/87, 0 cached, 309 tests.
+  - The built bundle under Bun:
+    - `/`, `/health`, `/ready` and `/echo` (200/422) answer, and `/nope` returns 404.
+    - Jaeger receives `bun-server`'s `GET /` span under the given `traceparent`, with no query string.
+    - SIGTERM with an idle keep-alive socket open exits in 0.05s.
+    - A Bun script shows `server.stop()` waits for an in-flight request (451ms) and refuses new ones.
+  - Docker image (136MB): `healthy` as `bun`, spans arrive under `OTEL_SERVICE_NAME`, and `docker stop` takes 0.18s.
+  - Scaffold E2E, from source:
+    - `bun-only` 38/38. Its root gets `bun`, and its build passes with no global bun on PATH.
+    - `full-biome` 89/89: every app gets its own build/start, and only the three servers get `cross-env`.
+    - `server-only` 40/40, with no `bun` in the root.
+
+**Known limit** — a workspace scaffolded before this change has no `bun: true` under `allowBuilds`. `startx package add bun-server` there offers the root `bun` dependency, but pnpm skips its postinstall until that line is added.
 
