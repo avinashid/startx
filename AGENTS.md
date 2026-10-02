@@ -279,7 +279,7 @@ a parallel data layer.
 
 ### Adding a page (`web-client`)
 
-React Router v7 in framework mode, config-based — **not** file-system routing. Create
+React Router v8 in framework mode, config-based — **not** file-system routing. Create
 `src/routes/<name>.tsx`, then register it in `src/routes.ts` with `route("path", "routes/name.tsx")`.
 Creating the file alone does nothing.
 

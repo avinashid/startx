@@ -40,6 +40,9 @@
 		"vite": "catalog:",
 		"vitest-config": "workspace:*"
 	},
+	"engines": {
+		"node": ">=22.22"
+	},
 	"startx": {
 		"gTags": [
 			"react",

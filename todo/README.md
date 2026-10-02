@@ -55,7 +55,7 @@ startx package new @repo/utils  # create a blank workspace package
 |---|---|
 | `apps/startx-cli/` | **The product.** Commander CLI, bundled by tsdown into a single `.mjs`. |
 | `apps/core-server/` | Template: Express REST API |
-| `apps/web-client/` | Template: React Router v7 SPA |
+| `apps/web-client/` | Template: React Router v8 SPA |
 | `apps/cli/` | Template: Commander CLI app |
 | `apps/queue-worker/` | Template: BullMQ background worker |
 | `packages/@repo/{env,lib,logger,mail,model,redis}` | Template shared libraries (backend) |

@@ -165,7 +165,7 @@ startx package new my-utils --dir packages/internal/my-utils
 | Name | Description |
 |------|-------------|
 | `core-server` | Express.js REST API server |
-| `web-client` | React Router v7 single-page app |
+| `web-client` | React Router v8 single-page app (Node ≥ 22.22) |
 | `cli` | Commander.js CLI application |
 | `queue-worker` | Background job processor |
 

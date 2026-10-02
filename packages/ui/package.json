@@ -21,6 +21,8 @@
 		"@types/react-dom": "catalog:",
 		"autoprefixer": "catalog:",
 		"eslint-config": "workspace:*",
+		"react": "catalog:",
+		"react-dom": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript-config": "workspace:*",
 		"vitest-config": "workspace:*"
