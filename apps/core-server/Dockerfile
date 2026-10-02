@@ -40,4 +40,9 @@ RUN npm install --omit=dev --no-audit --no-fund
 COPY --from=builder /app/apps/core-server/dist ./
 EXPOSE 3000
 
+# Liveness only: /ready fails while Redis is down, and a restart does not bring Redis back. Point the
+# orchestrator's readiness probe at /ready instead. busybox wget ships in the alpine image.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD wget -q -O /dev/null "http://127.0.0.1:${PORT:-3000}/health" || exit 1
+
 CMD ["node", "./index.mjs"]

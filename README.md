@@ -178,6 +178,7 @@ startx package new my-utils --dir packages/internal/my-utils
 | `@repo/logger` | backend | Structured logging |
 | `@repo/mail` | backend | Email sending via Nodemailer |
 | `@repo/redis` | backend | Redis client and session support |
+| `@repo/observability` | backend | OpenTelemetry tracing over OTLP/HTTP (off until an endpoint is set) and `/health` + `/ready` checks |
 | `@repo/model` | node | Shared Drizzle model definitions |
 | `@repo/common` | node | Common shared utilities |
 | `@db/drizzle` | backend | Drizzle ORM with PostgreSQL |

@@ -1,0 +1,46 @@
+{
+	"name": "@repo/observability",
+	"version": "0.0.0",
+	"type": "module",
+	"private": true,
+	"scripts": {
+		"clean": "rimraf dist .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"test": "vitest run"
+	},
+	"exports": "./src/index.ts",
+	"dependencies": {
+		"@opentelemetry/api": "catalog:",
+		"@opentelemetry/exporter-trace-otlp-http": "catalog:",
+		"@opentelemetry/instrumentation": "catalog:",
+		"@opentelemetry/instrumentation-undici": "catalog:",
+		"@opentelemetry/resources": "catalog:",
+		"@opentelemetry/sdk-trace-node": "catalog:",
+		"@opentelemetry/semantic-conventions": "catalog:",
+		"@repo/env": "workspace:*",
+		"@repo/logger": "workspace:*",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"eslint-config": "workspace:*",
+		"typescript-config": "workspace:*",
+		"vitest-config": "workspace:*"
+	},
+	"startx": {
+		"iTags": [
+			"node",
+			"backend"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/logger"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

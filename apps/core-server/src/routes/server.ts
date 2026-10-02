@@ -2,22 +2,25 @@ import cookieParser from "cookie-parser";
 import express, { json, urlencoded } from "express";
 import helmet from "helmet";
 
+import { health } from "@/config/health.js";
 import { ServerConfig } from "@/config/server-config.js";
 import { corsMiddleware } from "@/middlewares/cors-middleware.js";
 import { errorMiddleware } from "@/middlewares/error-middleware.js";
 import { loggerMiddleware } from "@/middlewares/logger-middleware.js";
 import { notFoundMiddleware } from "@/middlewares/notfound-middleware.js";
 import { apiRateLimiter, authRateLimiter, untrustedProxyWarning } from "@/middlewares/rate-limit-middleware.js";
+import { tracingMiddleware } from "@/middlewares/tracing-middleware.js";
 import { uploadMiddleware } from "@/middlewares/upload-middleware.js";
 
 import { createFilesRouter } from "./files/router.js";
+import { createHealthRouter } from "./health/router.js";
 const app = express();
 
 app.set("trust proxy", ServerConfig.TRUST_PROXY);
 
 /**
- * Order matters: security headers, then the rate limiter, then the origin check, and only then the
- * body parsers.
+ * Order matters: health probes, tracing, security headers, then the rate limiter, then the origin
+ * check, and only then the body parsers.
  *
  * The limiter goes BEFORE cors because a disallowed origin is answered with `next(error)`, which
  * jumps to the error handler — anything downstream of cors is skipped for exactly the requests an
@@ -26,7 +29,12 @@ app.set("trust proxy", ServerConfig.TRUST_PROXY);
  *
  * `helmet()`'s defaults suit a JSON API; its CSP has to be relaxed deliberately if this process
  * ever serves a frontend.
+ *
+ * `/health` and `/ready` come first so a probe is never rate-limited, CORS-checked or traced; the
+ * tracing middleware comes next so a span covers everything after it, a 429 included.
  */
+app.use(createHealthRouter(health));
+app.use(tracingMiddleware);
 app.use(loggerMiddleware);
 app.use(helmet());
 app.use(untrustedProxyWarning);

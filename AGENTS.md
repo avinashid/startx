@@ -195,6 +195,7 @@ produces wrong-looking code here.
 | Logging | `@repo/logger` | `console.log` |
 | SQLite | `@db/sqlite` (`db`, drizzle on `node:sqlite`) | `better-sqlite3` / raw `node:sqlite` |
 | Redis | `@repo/redis` (`getRedis`, `RedisStore`) | `ioredis` directly |
+| Tracing, health/readiness | `@repo/observability` (`startTracing`, `startServerSpan`, `withSpan`, `createHealth`) | `@opentelemetry/*` directly |
 | Background jobs | `@repo/queue` (`BullQueue`, `JobSchemas`) | `bullmq` directly |
 | Email templates | `@repo/mail` (`EmailTemplate`) → send via `@repo/lib/mail-module` | `nodemailer` directly |
 | Durations / TTLs | `@repo/common/time` (`Time.minutes/hours/days`) | magic numbers |
@@ -296,8 +297,15 @@ Creating the file alone does nothing.
 5. Mount it in `src/routes/server.ts` with `app.use("/<resource>", createXRouter())`.
 6. New env vars go through `defineEnv`, either in `src/config/server-config.ts` or module-local.
 
-**Middleware order in `server.ts` is load-bearing**: helmet → rate limit → cors → cookie/body parsers
-→ upload → routers → `notFoundMiddleware` → `errorMiddleware` **last**.
+**Middleware order in `server.ts` is load-bearing**: health probes → tracing → helmet → rate limit → cors →
+cookie/body parsers → upload → routers → `notFoundMiddleware` → `errorMiddleware` **last**.
+
+`GET /health` (liveness, checks nothing) and `GET /ready` (readiness, 503 while a check fails or a
+shutdown drains) are mounted first, so probes skip the limiter, cors, tracing and logging. A new hard
+dependency gets a check in `src/config/health.ts`; a soft one does not, or one blip pulls every
+replica out of rotation. Tracing is off until `OTEL_EXPORTER_OTLP_ENDPOINT` is set. There is no
+module-patching auto-instrumentation, because the bundle leaves nothing to patch: requests get a span
+from `tracingMiddleware`, outgoing `fetch` is traced, and your own work goes in `withSpan(name, fn)`.
 
 The limiter sits ahead of cors so that rejected origins are throttled too. Because its 429 is written
 before cors runs, the limiter's handler adds the CORS headers itself for an allowed origin (so the
