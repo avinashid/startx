@@ -18,6 +18,12 @@ export type TAGS =
 	| "node"
 	| "backend"
 	| "express"
+	| "hono"
+	// Runtimes other than Node. Global, so the workspace root gets the runtime as a devDependency;
+	// a script keyed on it would match every package, so per-app scripts key on the app's own tag.
+	| "bun"
+	// An app whose dev scripts set NODE_ENV through cross-env (see deps.ts)
+	| "cross-env"
 	// Frontend tags
 	| "frontend"
 	| "react"

@@ -1,0 +1,59 @@
+{
+	"name": "bun-server",
+	"description": "",
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "cross-env NODE_ENV=development bun --watch src/index.ts",
+		"dev:debug": "cross-env NODE_ENV=development bun --inspect --watch src/index.ts",
+		"build": "bun build src/index.ts --target bun --outdir dist --sourcemap=linked",
+		"start": "bun dist/index.js",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
+		"clean": "rimraf dist build .turbo",
+		"typecheck": "tsc --noEmit",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hono/zod-validator": "catalog:",
+		"@repo/env": "workspace:^",
+		"@repo/lib": "workspace:^",
+		"@repo/logger": "workspace:^",
+		"@repo/observability": "workspace:^",
+		"hono": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@opentelemetry/sdk-trace-node": "catalog:",
+		"@types/bun": "catalog:",
+		"cross-env": "catalog:",
+		"eslint-config": "workspace:*",
+		"typescript-config": "workspace:*",
+		"vitest-config": "workspace:*"
+	},
+	"startx": {
+		"gTags": [
+			"node",
+			"backend",
+			"bun"
+		],
+		"tags": [
+			"hono",
+			"cross-env"
+		],
+		"requiredDeps": [
+			"@repo/env",
+			"@repo/lib",
+			"@repo/logger",
+			"@repo/observability"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		],
+		"ignore": [
+			"tsdown-config"
+		]
+	}
+}

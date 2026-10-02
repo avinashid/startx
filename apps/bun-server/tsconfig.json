@@ -1,0 +1,8 @@
+{
+	"extends": "typescript-config/tsconfig.node.json",
+	"compilerOptions": {
+		// Bun's globals (Bun.serve) on top of Node's; bun-types references @types/node itself.
+		"types": ["bun"]
+	},
+	"include": ["src/**/*.ts"]
+}

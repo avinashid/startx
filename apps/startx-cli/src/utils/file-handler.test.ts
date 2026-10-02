@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { TAGS } from "../types";
 import { FileHandler } from "./file-handler";
 
 describe("FileHandler.handlePackageJson", () => {
@@ -70,5 +71,61 @@ describe("FileHandler.handlePackageJson", () => {
 			typecheck: "tsc --noEmit",
 			clean: "rimraf dist build .turbo",
 		});
+	});
+
+	// A workspace with core-server and bun-server: tsdown and bun are both global.
+	const bothServers = ["common", "node", "backend", "tsdown", "bun", "runnable"] as const;
+
+	it("gives bun-server the bun scripts and cross-env, not the tsdown or node ones", () => {
+		const { packageJson } = FileHandler.handlePackageJson({
+			app: {
+				name: "bun-server",
+				devDependencies: { "cross-env": "catalog:", "@types/bun": "catalog:" },
+				startx: { tags: ["hono", "cross-env"], ignore: ["tsdown-config"] },
+			},
+			tags: [...bothServers, "hono", "cross-env"],
+		});
+
+		expect(packageJson.scripts).toMatchObject({
+			dev: "cross-env NODE_ENV=development bun --watch src/index.ts",
+			"dev:debug": "cross-env NODE_ENV=development bun --inspect --watch src/index.ts",
+			build: "bun build src/index.ts --target bun --outdir dist --sourcemap=linked",
+			start: "bun dist/index.js",
+			typecheck: "tsc --noEmit",
+		});
+		expect(packageJson.devDependencies).toMatchObject({ "cross-env": "catalog:", "@types/bun": "catalog:" });
+		expect(packageJson.devDependencies).not.toHaveProperty("tsdown-config");
+	});
+
+	it("keeps core-server on tsdown and node when bun is in the workspace", () => {
+		const { packageJson } = FileHandler.handlePackageJson({
+			app: { name: "core-server", startx: { tags: ["express", "cross-env"] } },
+			tags: [...bothServers, "express", "cross-env"],
+		});
+
+		expect(packageJson.scripts).toMatchObject({
+			dev: "cross-env NODE_ENV=development tsx watch src/index.ts",
+			build: "tsdown --config-loader unrun",
+			start: "node dist/index.mjs",
+		});
+		expect(packageJson.devDependencies).toHaveProperty("cross-env");
+	});
+
+	it("keeps cross-env out of a frontend app although backend is global", () => {
+		const { packageJson } = FileHandler.handlePackageJson({
+			app: { name: "web-client", startx: { tags: ["react-router"] } },
+			tags: [...bothServers, "react", "frontend", "react-router"],
+		});
+
+		expect(packageJson.devDependencies).not.toHaveProperty("cross-env");
+	});
+
+	it("puts bun in the workspace root only when bun-server is selected", () => {
+		const root = (tags: TAGS[]) =>
+			FileHandler.handlePackageJson({ app: { name: "startx" }, tags: ["root", "common", "node", ...tags] }).packageJson
+				.devDependencies as Record<string, string>;
+
+		expect(root(["bun"])).toHaveProperty("bun", "catalog:");
+		expect(root([])).not.toHaveProperty("bun");
 	});
 });

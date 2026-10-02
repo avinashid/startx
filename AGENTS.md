@@ -35,7 +35,7 @@ lint first.
 ## 1. Layout
 
 ```
-apps/          runnable things (core-server, web-client, next-app, cli, queue-worker, startx-cli)
+apps/          runnable things (core-server, bun-server, web-client, next-app, cli, queue-worker, startx-cli)
 packages/      shared libraries — @repo/*, @db/*, ui, common, queue, aix
 configs/       shared tool config — typescript-config, eslint-config, vitest-config, tsdown-config
 ```
@@ -43,7 +43,8 @@ configs/       shared tool config — typescript-config, eslint-config, vitest-c
 `pnpm-workspace.yaml` globs `apps/*`, `packages/*`, `packages/*/*`, `configs/*`. A new directory
 matching one of those globs is a workspace package automatically; nothing registers it by hand.
 
-**Apps are built** (tsdown → `dist/`, run via `node dist/index.mjs`). **Libraries are consumed as
+**Apps are built** (tsdown → `dist/`, run via `node dist/index.mjs`; `bun-server` is the exception,
+`bun build` → `dist/index.js`, run via `bun`, and `next-app` builds with `next build`). **Libraries are consumed as
 TypeScript source** — no build step, no `dist`. An app bundles all its dependencies except those it lists in
 `runtimeDependencies([...])` in its `tsdown.config.ts`. Those are written, pinned, to `dist/package.json`, which
 is what the Dockerfile installs, so a native or self-resolving package (sharp, `@bull-board/*`) goes there. Do not add a `build` script to a library unless you
@@ -326,6 +327,13 @@ route therefore needs its own parser, mounted ahead of the global one.
 **`errorMiddleware` must keep all four parameters**, including the unused `_next`. Express detects
 error handlers by arity alone; dropping the fourth parameter silently demotes it to ordinary
 middleware and every error becomes a hung request.
+
+`bun-server` is the same idea on Hono and Bun. `src/app.ts` builds the Hono app (probes first, then
+tracing, logging, secure headers, CORS, the body limit, then routes) and `src/index.ts` serves it with
+`Bun.serve`, so tests drive the app with `app.request()` under vitest on Node. Validate with
+`zValidator` from `@hono/zod-validator` (422 on failure), throw `HTTPException` for a handled error,
+and do not use Bun-only APIs outside `index.ts`. The `bun` binary is the root devDependency, linked by
+its postinstall (`allowBuilds: { bun: true }`), so no global install is needed.
 
 `src/config/server-config.ts` centralises body-size, upload, rate-limit and trust-proxy config.
 `rate-limit-middleware.ts` uses an in-memory store — it is per-replica, so a multi-replica deployment

@@ -165,6 +165,7 @@ startx package new my-utils --dir packages/internal/my-utils
 | Name | Description |
 |------|-------------|
 | `core-server` | Express.js REST API server |
+| `bun-server` | Hono HTTP server on Bun, bundled by `bun build` (port 3002; `bun` comes from `pnpm install`) |
 | `web-client` | React Router v8 single-page app (Node ≥ 22.22) |
 | `next-app` | Next.js 16 App Router app on `@repo/ui`, standalone Docker output (port 3001) |
 | `cli` | Commander.js CLI application |

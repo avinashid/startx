@@ -32,9 +32,17 @@ export const DepCheck: WHITELIST_DEPS = {
 		isDevDependency: true,
 	},
 	// The backend dev scripts in scripts.ts set NODE_ENV=development through it, so .env.example can
-	// leave NODE_ENV out and a copied example boots as production.
+	// leave NODE_ENV out and a copied example boots as production. Keyed on the apps' own `cross-env`
+	// tag: `backend` alone is global, and would hand it to web-client and cli as well.
 	"cross-env": {
-		tags: ["runnable", "node", "backend", "express"],
+		tags: ["runnable", "node", "backend", "cross-env"],
+		version: "catalog:",
+		isDevDependency: true,
+	},
+	// Installed by pnpm (allowBuilds lets its postinstall link the binary), so a workspace with
+	// bun-server needs no global bun.
+	bun: {
+		tags: ["bun", "root"],
 		version: "catalog:",
 		isDevDependency: true,
 	},

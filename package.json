@@ -74,7 +74,8 @@
 		"tsdown": "catalog:",
 		"unrun": "catalog:",
 		"tsx": "catalog:",
-		"@types/node": "catalog:"
+		"@types/node": "catalog:",
+		"bun": "catalog:"
 	},
 	"dependencies": {
 		"zod": "catalog:",

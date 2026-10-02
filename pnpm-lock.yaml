@@ -39,6 +39,9 @@ catalogs:
     '@fontsource-variable/inter':
       specifier: ^5.2.8
       version: 5.2.8
+    '@hono/zod-validator':
+      specifier: ^0.9.1
+      version: 0.9.1
     '@hookform/resolvers':
       specifier: ^5.4.0
       version: 5.4.0
@@ -114,6 +117,9 @@ catalogs:
     '@toon-format/toon':
       specifier: ^2.1.0
       version: 2.1.0
+    '@types/bun':
+      specifier: ^1.4.2
+      version: 1.4.2
     '@types/cookie-parser':
       specifier: ^1.4.10
       version: 1.4.10
@@ -180,6 +186,9 @@ catalogs:
     bullmq:
       specifier: ^5.76.4
       version: 5.76.4
+    bun:
+      specifier: ^1.4.2
+      version: 1.4.2
     chokidar:
       specifier: ^4.0.3
       version: 4.0.3
@@ -270,6 +279,9 @@ catalogs:
     helmet:
       specifier: ^8.3.0
       version: 8.3.0
+    hono:
+      specifier: ^4.13.12
+      version: 4.13.12
     input-otp:
       specifier: ^1.4.2
       version: 1.4.2
@@ -429,6 +441,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.2.0
+      bun:
+        specifier: 'catalog:'
+        version: 1.4.2
       eslint:
         specifier: 'catalog:'
         version: 9.39.2(jiti@2.6.1)
@@ -456,6 +471,49 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@opentelemetry/api@1.9.1)(@types/node@25.2.0)(jiti@2.6.1)(jsdom@29.0.1(@noble/hashes@1.8.0))(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  apps/bun-server:
+    dependencies:
+      '@hono/zod-validator':
+        specifier: 'catalog:'
+        version: 0.9.1(hono@4.13.12)(zod@4.3.6)
+      '@repo/env':
+        specifier: workspace:^
+        version: link:../../packages/@repo/env
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../../packages/@repo/lib
+      '@repo/logger':
+        specifier: workspace:^
+        version: link:../../packages/@repo/logger
+      '@repo/observability':
+        specifier: workspace:^
+        version: link:../../packages/@repo/observability
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.12
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@opentelemetry/sdk-trace-node':
+        specifier: 'catalog:'
+        version: 2.11.0(@opentelemetry/api@1.9.1)
+      '@types/bun':
+        specifier: 'catalog:'
+        version: 1.4.2
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
+      eslint-config:
+        specifier: workspace:*
+        version: link:../../configs/eslint-config
+      typescript-config:
+        specifier: workspace:*
+        version: link:../../configs/typescript-config
+      vitest-config:
+        specifier: workspace:*
+        version: link:../../configs/vitest-config
 
   apps/cli:
     dependencies:
@@ -899,7 +957,7 @@ importers:
         version: link:../../@repo/env
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6)
+        version: 1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(bun-types@1.4.2)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6)
       pg:
         specifier: 'catalog:'
         version: 8.19.0
@@ -927,7 +985,7 @@ importers:
         version: link:../../@repo/env
       drizzle-orm:
         specifier: 'catalog:'
-        version: 1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6)
+        version: 1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(bun-types@1.4.2)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6)
     devDependencies:
       drizzle-kit:
         specifier: 'catalog:'
@@ -2572,6 +2630,12 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  '@hono/zod-validator@0.9.1':
+    resolution: {integrity: sha512-iiv6w0qrIc0arfvCtUqBWsvl4fXjzaTcQcCJTTtCnkawF9HHGE+KjEl0ox3gQJ6rKZEgE3mLExlQCF72M+mNuw==}
+    peerDependencies:
+      hono: '>=4.11.2'
+      zod: ^3.25.0 || ^4.0.0
+
   '@hookform/resolvers@5.4.0':
     resolution: {integrity: sha512-EIsqr/t/qbinPIhGjMdtvutIN1Kk4uwbROE9/UQ93CAVGR7GkA7Y92+fX80OzXi/OB67jVFYwKGO1WzkxmkFZw==}
     peerDependencies:
@@ -3525,6 +3589,70 @@ packages:
   '@opentelemetry/semantic-conventions@1.43.0':
     resolution: {integrity: sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg==}
     engines: {node: '>=14'}
+
+  '@oven/bun-darwin-aarch64@1.4.2':
+    resolution: {integrity: sha512-MXdZkP1featqxZ+/VTXWG1BVjM4OGBehVY2Q88EeUj/7L0UMeCGItmyPYTN+wxvlGJ6F66JEtzsw+GvQWewnag==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oven/bun-darwin-x64@1.4.2':
+    resolution: {integrity: sha512-gZTxZuLjkUhAWjTETu3tw0WhsEdNkJ64daj60ybhPf835a2yollV3yTkK9JozvzKPx4TRFzLSl8C+U525pxVbw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oven/bun-freebsd-aarch64@1.4.2':
+    resolution: {integrity: sha512-SMNItMw1Z8QeeQVKnw8jA7xQNkeXdP+OPgin4Wi/QTx/B8RHHLnuZfqmFy7NtVeT2NF0kKYppW4WWd2CCYZjhQ==}
+    cpu: [arm64]
+    os: [freebsd]
+
+  '@oven/bun-freebsd-x64@1.4.2':
+    resolution: {integrity: sha512-THbPKXhO54N0DpFRKZNDZpQ7dpbX0bWASuARckAUS9wRtFIHsiY+uULXJvxJGo2YD1YewvXQ4G8Fj7XT5oBCiw==}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@oven/bun-linux-aarch64-android@1.4.2':
+    resolution: {integrity: sha512-3mZKO2rhsNgbAUtAHC1UKUlF2zTxFraDZT/Elv8wzyH0fJL9h+Iv3TgB9lO63w89PRn3eFe+NRA1bhVgikKNPQ==}
+    cpu: [arm64]
+    os: [android]
+
+  '@oven/bun-linux-aarch64-musl@1.4.2':
+    resolution: {integrity: sha512-+Sm6y+lSiSFBOtXmnekp5Q6n1tUKlyv71FCPWBc61Cgb14T5eBs8SN/nh4MUCOKzONkI3O+as3MGUgikS4aCBQ==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@oven/bun-linux-aarch64@1.4.2':
+    resolution: {integrity: sha512-3BBP9ovJ2RGHFH6Ae1CAtxNtG1+YY6GD6rmYbsUosoAk9+OEl6zeDQ/k4fBkc6dYOJCtWnx8hUxzNzQATSmvYQ==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oven/bun-linux-x64-android@1.4.2':
+    resolution: {integrity: sha512-6HC5tzcC79113n2IHCTJMWv+HsQImv4ZFEK2XpYLxY6HbT8tM4cUM2Zv1bHZBQsS3jv/zYBamDJ1UX7If0d5tw==}
+    cpu: [x64]
+    os: [android]
+
+  '@oven/bun-linux-x64-musl@1.4.2':
+    resolution: {integrity: sha512-vVTKUg1bnPhRP/Hp73jIVoFh2vPFNYEqYX0ERKfZBOQEEHitNAeukZzzuUDZS0SoDCIpuWUGSpd/CDMbjdR+Uw==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@oven/bun-linux-x64@1.4.2':
+    resolution: {integrity: sha512-9/E/UXOTpSo3YsV5g+FhtTd/qTpiWoKuxS12cqtuYA1ssu9fRAoPQnipFgGyck3tWO63iUdxBiygq+kELFawng==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@oven/bun-windows-aarch64@1.4.2':
+    resolution: {integrity: sha512-8EJ1ST7339WJE3poPW5nBgVW/lWf9HBz4W27ZUNhburKmcBLOByPyE6DP9fHD8FQGm5c+ilUN2hX1mrW0jxq9Q==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oven/bun-windows-x64@1.4.2':
+    resolution: {integrity: sha512-+bN6OuVld/9diT/RLSXSW7JE6CvNE3gL9XsAEjULi1nUsXd6DNO6GuA9jNdNb3r8PdJFnYHr5aypNV1Oj3Rd9g==}
+    cpu: [x64]
+    os: [win32]
 
   '@oxc-project/types@0.110.0':
     resolution: {integrity: sha512-6Ct21OIlrEnFEJk5LT4e63pk3btsI6/TusD/GStLi7wYlGJNOl1GI9qvXAnRAxQU9zqA2Oz+UwhfTOU2rPZVow==}
@@ -5363,6 +5491,9 @@ packages:
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
+  '@types/bun@1.4.2':
+    resolution: {integrity: sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ==}
+
   '@types/busboy@1.5.4':
     resolution: {integrity: sha512-kG7WrUuAKK0NoyxfQHsVE6j1m01s6kMma64E+OZenQABMQyTJop1DumUWcLwAQ2JzpefU7PDYoRDKl8uZosFjw==}
 
@@ -5912,6 +6043,15 @@ packages:
   bullmq@5.76.4:
     resolution: {integrity: sha512-hVAplia7zfN3BxSCgAoRInJnbemfLwJdQLqJy/txEX8UMSTAeg0saPFNGWIlzES/Ct5xQ20TUaik/XwS99DOMA==}
     engines: {node: '>=12.22.0'}
+
+  bun-types@1.4.2:
+    resolution: {integrity: sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w==}
+
+  bun@1.4.2:
+    resolution: {integrity: sha512-TrSXo6HJfIEaczpb3kjX82I2pL47vK1QUNmHRCUdz9IzaOwa9lzOXSWwu2l18YHE3sNfGRapVLd4nNm+22vVVA==}
+    cpu: [arm64, x64]
+    os: [darwin, linux, android, freebsd, win32]
+    hasBin: true
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -7061,6 +7201,10 @@ packages:
   helmet@8.3.0:
     resolution: {integrity: sha512-Qgpiaws3Sm30Av8Eah6sjMCZZwjlBu+E68rhpCWBshY1lb09HtLwj5GviX0OyQIn+ulUS0iX0AxN5n3tLZzz1w==}
     engines: {node: '>=18.0.0'}
+
+  hono@4.13.12:
+    resolution: {integrity: sha512-6E2QDAc9Ick9Sq77ZrGS/dk2WUYni91aufTw6LJKpV7w8kW5/GxVUc650FOADOmlwg3K+f7Pun6XlV+pYmW6gw==}
+    engines: {node: '>=16.9.0'}
 
   hookable@6.0.1:
     resolution: {integrity: sha512-uKGyY8BuzN/a5gvzvA+3FVWo0+wUjgtfSdnmjtrOVwQCZPHpHDH2WRO3VZSOeluYrHoDCiXFffZXs8Dj1ULWtw==}
@@ -10985,6 +11129,11 @@ snapshots:
       yargs: 17.7.2
     optional: true
 
+  '@hono/zod-validator@0.9.1(hono@4.13.12)(zod@4.3.6)':
+    dependencies:
+      hono: 4.13.12
+      zod: 4.3.6
+
   '@hookform/resolvers@5.4.0(react-hook-form@7.75.0(react@19.3.0))':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -11702,6 +11851,42 @@ snapshots:
       '@opentelemetry/semantic-conventions': 1.43.0
 
   '@opentelemetry/semantic-conventions@1.43.0': {}
+
+  '@oven/bun-darwin-aarch64@1.4.2':
+    optional: true
+
+  '@oven/bun-darwin-x64@1.4.2':
+    optional: true
+
+  '@oven/bun-freebsd-aarch64@1.4.2':
+    optional: true
+
+  '@oven/bun-freebsd-x64@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-aarch64-android@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-aarch64-musl@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-aarch64@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-x64-android@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-x64-musl@1.4.2':
+    optional: true
+
+  '@oven/bun-linux-x64@1.4.2':
+    optional: true
+
+  '@oven/bun-windows-aarch64@1.4.2':
+    optional: true
+
+  '@oven/bun-windows-x64@1.4.2':
+    optional: true
 
   '@oxc-project/types@0.110.0': {}
 
@@ -13365,6 +13550,10 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/node': 25.2.0
 
+  '@types/bun@1.4.2':
+    dependencies:
+      bun-types: 1.4.2
+
   '@types/busboy@1.5.4':
     dependencies:
       '@types/node': 25.2.0
@@ -13987,6 +14176,25 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  bun-types@1.4.2:
+    dependencies:
+      '@types/node': 25.2.0
+
+  bun@1.4.2:
+    optionalDependencies:
+      '@oven/bun-darwin-aarch64': 1.4.2
+      '@oven/bun-darwin-x64': 1.4.2
+      '@oven/bun-freebsd-aarch64': 1.4.2
+      '@oven/bun-freebsd-x64': 1.4.2
+      '@oven/bun-linux-aarch64': 1.4.2
+      '@oven/bun-linux-aarch64-android': 1.4.2
+      '@oven/bun-linux-aarch64-musl': 1.4.2
+      '@oven/bun-linux-x64': 1.4.2
+      '@oven/bun-linux-x64-android': 1.4.2
+      '@oven/bun-linux-x64-musl': 1.4.2
+      '@oven/bun-windows-aarch64': 1.4.2
+      '@oven/bun-windows-x64': 1.4.2
+
   busboy@1.6.0:
     dependencies:
       streamsearch: 1.1.0
@@ -14328,10 +14536,11 @@ snapshots:
       get-tsconfig: 4.14.0
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6):
+  drizzle-orm@1.0.0-rc.4-5d5b77c(@opentelemetry/api@1.9.1)(@types/pg@8.16.0)(bun-types@1.4.2)(pg@8.19.0)(valibot@1.5.0(typescript@5.9.3))(zod@4.3.6):
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
       '@types/pg': 8.16.0
+      bun-types: 1.4.2
       pg: 8.19.0
       valibot: 1.5.0(typescript@5.9.3)
       zod: 4.3.6
@@ -15281,6 +15490,8 @@ snapshots:
       function-bind: 1.1.2
 
   helmet@8.3.0: {}
+
+  hono@4.13.12: {}
 
   hookable@6.0.1: {}
 

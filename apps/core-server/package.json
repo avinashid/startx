@@ -56,7 +56,8 @@
 			"backend"
 		],
 		"tags": [
-			"express"
+			"express",
+			"cross-env"
 		],
 		"requiredDeps": [
 			"@repo/env",

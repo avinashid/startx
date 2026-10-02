@@ -10,6 +10,10 @@ export const scripts: SCRIPT = {
 			tags: ["runnable", "root"],
 		},
 		{
+			script: "cross-env NODE_ENV=development bun --watch src/index.ts",
+			tags: ["runnable", "node", "hono"],
+		},
+		{
 			script: "cross-env NODE_ENV=development tsx watch src/index.ts",
 			tags: ["runnable", "node", "backend", "express"],
 		},
@@ -31,6 +35,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "turbo run dev:debug",
 			tags: ["node", "runnable", "root"],
+		},
+		{
+			script: "cross-env NODE_ENV=development bun --inspect --watch src/index.ts",
+			tags: ["runnable", "node", "hono"],
 		},
 		{
 			script: "cross-env NODE_ENV=development tsx watch --inspect src/index.ts",
@@ -61,6 +69,11 @@ export const scripts: SCRIPT = {
 			tags: ["nextjs", "frontend", "runnable"],
 		},
 		{
+			// Keyed on `hono`, not `bun`: `bun` is global, and would give core-server this build too.
+			script: "bun build src/index.ts --target bun --outdir dist --sourcemap=linked",
+			tags: ["hono", "runnable"],
+		},
+		{
 			script: "tsdown --config-loader unrun",
 			tags: ["runnable", "node", "tsdown"],
 		},
@@ -87,6 +100,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "next start --port 3001",
 			tags: ["nextjs", "frontend", "runnable"],
+		},
+		{
+			script: "bun dist/index.js",
+			tags: ["hono", "runnable"],
 		},
 		{
 			script: "node dist/index.mjs",

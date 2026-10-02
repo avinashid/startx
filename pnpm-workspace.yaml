@@ -6,6 +6,9 @@ packages:
 
 allowBuilds:
   "@firebase/util": false
+  # Its postinstall links the platform binary, which is how a workspace with bun-server gets `bun`
+  # without a global install.
+  bun: true
   esbuild: false
   msgpackr-extract: false
   protobufjs: false
@@ -129,6 +132,12 @@ catalog:
   "@opentelemetry/resources": "^2.11.0"
   "@opentelemetry/sdk-trace-node": "^2.11.0"
   "@opentelemetry/semantic-conventions": "^1.43.0"
+
+  # bun
+  bun: "^1.4.2"
+  "@types/bun": "^1.4.2"
+  hono: "^4.13.12"
+  "@hono/zod-validator": "^0.9.1"
 
   # backend
   express: "^5.2.1"
