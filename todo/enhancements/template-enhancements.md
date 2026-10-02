@@ -254,3 +254,22 @@ Also fix two smaller README gaps while in there:
   - The sqlite-server scaffold installs no better-sqlite3. With no `SQLITE_DB_PATH` set:
     - its `db:push` printed `Using 'node:sqlite' driver` and created `<root>/data/app.db`;
     - a script run from `apps/core-server` wrote and read a `users` row in that same file.
+
+---
+
+## E18
+
+### E18 · `web-client` on React Router 8 (latest) and React 19.3
+
+- **Status:** done · **Value:** med · **Effort:** S
+- **Area:** `pnpm-workspace.yaml` (catalog), `apps/web-client`, `packages/ui`
+
+**Today** — the catalog pinned `react-router` and `@react-router/{dev,node,serve}` at `^7.14.0`; 8.4.0 is the latest. Requested in chat by Avinash, card `tsk_p5unkg64`. v8 requires Node ≥ 22.22.0, React ≥ 19.2.7 and Vite 7+, and removes the `v8_*` future flags, `react-router-dom` and `meta`'s `data` argument. web-client used none of those APIs and already targeted ES2022.
+
+**Done when** — the four React Router entries are `^8.4.0`; `react`, `react-dom`, `@types/react` and `@types/react-dom` are `^19.3.0`. web-client declares `engines.node >= 22.22` (package-level, like `@db/sqlite`; the workspace floor stays `>=22`). `@repo/ui` takes `react`/`react-dom` as `catalog:` devDependencies: with only its `^19.0.0` peer, pnpm kept the auto-installed peer at the locked 19.2.4 next to react-dom 19.3.0, a version mismatch React rejects at runtime. Docs say v8.
+
+- **Fixed in:** `ac52654`.
+  - Forced gate: 73/73, 0 cached, 263 tests.
+  - The lockfile no longer contains `react@19.2.x`. `pnpm peers check` reports only the existing `@tailwindcss/typography` / `tailwindcss` range quirk.
+  - Built SPA under `vite preview` in headless Chromium: `/` renders "Home" and `/does-not-exist` renders the 404 route, with no console errors or warnings.
+  - Scaffold E2E, from source: `web-only` 22/22 (emits react-router 8.4.0 and `engines >=22.22`), `full-biome` 75/75.

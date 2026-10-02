@@ -3,8 +3,8 @@
 Improvements to things that **already exist**. If it doesn't exist yet, it's a
 [feature](../features/features.md). If it's broken, it's a [bug](../bugs/bugs.md).
 
-- **Next free ID:** `E18`
-- **Open:** 15 · **In progress:** 0 · **Done:** 2
+- **Next free ID:** `E19`
+- **Open:** 15 · **In progress:** 0 · **Done:** 3
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -36,6 +36,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E14 | The `cli` app template has no `bin` entry | low | S | open |
 | E15 | Emit source maps for bundled apps so a crash is readable | med | S | open |
 | E17 | `@db/sqlite` on drizzle over the built-in `node:sqlite`, without the native `better-sqlite3` | med | M | done |
+| E18 | `web-client` on React Router 8 (latest) and React 19.3 | med | S | done |
 
 Effort: **S** ≈ under an hour · **M** ≈ half a day · **L** ≈ multi-day.
 
