@@ -21,6 +21,11 @@ export const scripts: SCRIPT = {
 			script: "react-router dev",
 			tags: ["react-router", "frontend"],
 		},
+		{
+			// 3001: core-server owns 3000.
+			script: "next dev --port 3001",
+			tags: ["nextjs", "frontend"],
+		},
 	],
 	"dev:debug": [
 		{
@@ -52,6 +57,10 @@ export const scripts: SCRIPT = {
 			tags: ["react-router", "frontend", "runnable"],
 		},
 		{
+			script: "next build",
+			tags: ["nextjs", "frontend", "runnable"],
+		},
+		{
 			script: "tsdown --config-loader unrun",
 			tags: ["runnable", "node", "tsdown"],
 		},
@@ -74,6 +83,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "vite preview",
 			tags: ["react-router", "frontend", "runnable"],
+		},
+		{
+			script: "next start --port 3001",
+			tags: ["nextjs", "frontend", "runnable"],
 		},
 		{
 			script: "node dist/index.mjs",
@@ -106,6 +119,10 @@ export const scripts: SCRIPT = {
 			tags: ["root"],
 		},
 		{
+			script: "rimraf .next .turbo",
+			tags: ["nextjs"],
+		},
+		{
 			script: "rimraf dist build .turbo",
 			tags: [],
 		},
@@ -114,6 +131,10 @@ export const scripts: SCRIPT = {
 		{
 			script: "turbo run deep:clean",
 			tags: ["root"],
+		},
+		{
+			script: "rimraf node_modules .next .turbo",
+			tags: ["nextjs"],
 		},
 		{
 			script: "rimraf node_modules dist build .turbo",
@@ -198,6 +219,11 @@ export const scripts: SCRIPT = {
 		{
 			script: "react-router typegen && tsc",
 			tags: ["react-router", "frontend"],
+		},
+		{
+			// typegen writes next-env.d.ts and the route types tsc needs.
+			script: "next typegen && tsc --noEmit",
+			tags: ["nextjs", "frontend"],
 		},
 		{
 			script: "tsc --noEmit",

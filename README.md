@@ -166,6 +166,7 @@ startx package new my-utils --dir packages/internal/my-utils
 |------|-------------|
 | `core-server` | Express.js REST API server |
 | `web-client` | React Router v8 single-page app (Node ≥ 22.22) |
+| `next-app` | Next.js 16 App Router app on `@repo/ui`, standalone Docker output (port 3001) |
 | `cli` | Commander.js CLI application |
 | `queue-worker` | Background job processor |
 

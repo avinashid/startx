@@ -48,11 +48,18 @@ export function ThemeProvider({
 	const colorKey = `${storageKeyPrefix}-color`;
 
 	// --- State ---
-	const [mode, setModeState] = React.useState<Mode>(() => (localStorage.getItem(modeKey) as Mode) || defaultMode);
+	const [mode, setModeState] = React.useState<Mode>(defaultMode);
+	const [color, setColorState] = React.useState<ThemeColor>(defaultColor);
 
-	const [color, setColorState] = React.useState<ThemeColor>(
-		() => (localStorage.getItem(colorKey) as ThemeColor) || defaultColor,
-	);
+	// The stored choice is read after mount, not during render: a server render (Next.js) has no
+	// localStorage, and the first client render has to match it to hydrate. A layout effect runs
+	// before paint, so the stored theme still lands on the first frame.
+	React.useLayoutEffect(() => {
+		const storedMode = localStorage.getItem(modeKey) as Mode | null;
+		const storedColor = localStorage.getItem(colorKey) as ThemeColor | null;
+		if (storedMode) setModeState(storedMode);
+		if (storedColor) setColorState(storedColor);
+	}, [modeKey, colorKey]);
 
 	// --- Actions ---
 	const setMode = React.useCallback(

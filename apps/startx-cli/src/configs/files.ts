@@ -27,10 +27,10 @@ export const FileCheck: WHITELIST_FILES = {
 		tags: ["never"],
 	},
 	// Ships to the workspace root of every scaffold — it documents the monorepo conventions a
-	// generated project inherits, not startx's own CLI. Without an entry here it would be copied
-	// anyway (an unknown filename is copied unconditionally); the entry keeps it to the root pass.
+	// generated project inherits, not startx's own CLI — and with next-app, whose AGENTS.md holds the
+	// block `next dev` would otherwise write into the app on its own (CLAUDE.md beside it imports it).
 	"AGENTS.md": {
-		tags: ["root"],
+		tags: [],
 	},
 	"biome.json": {
 		tags: ["biome"],

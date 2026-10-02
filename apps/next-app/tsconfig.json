@@ -1,0 +1,17 @@
+{
+	"extends": "typescript-config/tsconfig.frontend.json",
+	"compilerOptions": {
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"types": ["node"],
+		"jsx": "react-jsx",
+		"noEmit": true,
+		"incremental": false,
+		"allowImportingTsExtensions": false,
+		"plugins": [{ "name": "next" }],
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts", "next.config.ts"],
+	"exclude": ["node_modules", ".next"]
+}

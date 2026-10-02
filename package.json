@@ -19,6 +19,8 @@
 		"!**/build/",
 		"!**/coverage/",
 		"!**/.react-router/",
+		"!**/.next/",
+		"!**/next-env.d.ts",
 		"!**/*.tsbuildinfo",
 		"!**/.env",
 		"!**/.env.*",

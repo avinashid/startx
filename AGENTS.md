@@ -35,7 +35,7 @@ lint first.
 ## 1. Layout
 
 ```
-apps/          runnable things (core-server, web-client, cli, queue-worker, startx-cli)
+apps/          runnable things (core-server, web-client, next-app, cli, queue-worker, startx-cli)
 packages/      shared libraries — @repo/*, @db/*, ui, common, queue, aix
 configs/       shared tool config — typescript-config, eslint-config, vitest-config, tsdown-config
 ```
@@ -283,6 +283,13 @@ a parallel data layer.
 React Router v8 in framework mode, config-based — **not** file-system routing. Create
 `src/routes/<name>.tsx`, then register it in `src/routes.ts` with `route("path", "routes/name.tsx")`.
 Creating the file alone does nothing.
+
+### Adding a page (`next-app`)
+
+Next.js App Router, which **is** file-system routing: `src/app/<segment>/page.tsx` is the page, with no
+registration step. Components are server components unless the file starts with `"use client"`. A
+workspace library the app imports must be listed in `transpilePackages` in `next.config.ts`. The
+app's own `AGENTS.md` has the rest.
 
 ---
 

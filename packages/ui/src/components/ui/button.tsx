@@ -86,7 +86,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 					className={cn(loading ? "size-6 animate-spin" : "hidden", !hideChild && "mr-2", "transition-transform")}
 				/>
 				<span className={cn((!icon || (hideChild && loading)) && "hidden", props.children && "mr-2")}>{icon}</span>
-				<>{hideChild ? !loading && props.children : props.children}</>
+				{/* Slot accepts exactly one child (React error #143 otherwise). Slottable marks the element the
+				    button renders as, and the loader and icon above are moved inside it (B90). */}
+				{asChild ? (
+					<Slot.Slottable>{props.children}</Slot.Slottable>
+				) : (
+					<>{hideChild ? !loading && props.children : props.children}</>
+				)}
 			</Comp>
 		);
 	},

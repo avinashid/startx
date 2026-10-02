@@ -22,6 +22,7 @@ export type TAGS =
 	| "frontend"
 	| "react"
 	| "react-router"
+	| "nextjs"
 	// Cli tags
 	| "cli"
 	| "commander"

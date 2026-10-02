@@ -17,6 +17,8 @@ coverage
 
 # Frontend
 .react-router
+.next
+next-env.d.ts
 
 # Turbo
 .turbo

@@ -8,8 +8,8 @@
 @import "@fontsource-variable/eb-garamond";
 
 @custom-variant dark (&:is(.dark *));
-@source "../../../apps/**/*.{ts,tsx}";
-@source "../../../components/**/*.{ts,tsx}";
+/* The consuming app's own files are found by Tailwind's automatic detection (from the app's directory);
+   this adds the ui package's components, which live outside it. */
 @source "../**/*.{ts,tsx}";
 
 /* =====================================================

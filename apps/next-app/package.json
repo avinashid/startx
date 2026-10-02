@@ -1,0 +1,49 @@
+{
+	"name": "next-app",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"clean": "rimraf .next .turbo",
+		"build": "next build",
+		"dev": "next dev --port 3001",
+		"format": "biome format --write .",
+		"format:check": "biome ci .",
+		"start": "next start --port 3001",
+		"typecheck": "next typegen && tsc --noEmit",
+		"test": "vitest run",
+		"lint": "eslint .",
+		"lint:fix": "eslint . --fix"
+	},
+	"dependencies": {
+		"@repo/ui": "workspace:*",
+		"next": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@next/eslint-plugin-next": "catalog:",
+		"@tailwindcss/postcss": "catalog:",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"eslint-config": "workspace:*",
+		"tailwindcss": "catalog:",
+		"typescript-config": "workspace:^",
+		"vitest-config": "workspace:*"
+	},
+	"startx": {
+		"gTags": [
+			"react",
+			"frontend"
+		],
+		"tags": [
+			"nextjs"
+		],
+		"requiredDeps": [
+			"@repo/ui"
+		],
+		"requiredDevDeps": [
+			"typescript-config"
+		]
+	}
+}

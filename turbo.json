@@ -15,11 +15,13 @@
 				"tsdown.config.ts",
 				"vite.config.*",
 				"react-router.config.*",
+				"next.config.*",
+				"postcss.config.*",
 				"eslint.config.*",
 				"tsconfig*.json",
 				"package.json"
 			],
-			"outputs": ["dist/**", "build/**", "bin/**"],
+			"outputs": ["dist/**", "build/**", "bin/**", ".next/**", "!.next/cache/**"],
 			"dependsOn": ["lint", "^build"]
 		},
 		"typecheck": {
