@@ -263,5 +263,5 @@ cycle out of the box, covered by tests.
     - `full-biome` 89/89: every app gets its own build/start, and only the three servers get `cross-env`.
     - `server-only` 40/40, with no `bun` in the root.
 
-**Known limit** — a workspace scaffolded before this change has no `bun: true` under `allowBuilds`. `startx package add bun-server` there offers the root `bun` dependency, but pnpm skips its postinstall until that line is added.
+**Known limit** — [B92](../bugs/function-bugs.md#b92): a workspace scaffolded before this change has no `bun: true` under `allowBuilds`. `startx package add bun-server` there adds the root `bun` dependency, and the next `pnpm install` fails with `ERR_PNPM_IGNORED_BUILDS`.
 

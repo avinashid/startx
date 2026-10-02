@@ -4,9 +4,9 @@ The authoritative list. **Every bug appears here exactly once**, with its curren
 Evidence and fixes live in the linked detail file. Conventions, statuses and the entry template
 are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
-- **Next free ID:** `B92`
+- **Next free ID:** `B93`
 - **Last full audit:** 2026-10-01 against HEAD `9e67d07` (release 1.2.0)
-- **Open:** 6 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 87
+- **Open:** 7 · **In progress:** 0 · **Fixed:** 0 · **Verified:** 87
 
 Counts include the four sub-items of B12.
 
@@ -16,7 +16,7 @@ Counts include the four sub-items of B12.
 
 | | P0 | P1 | P2 | P3 | Total |
 |---|---|---|---|---|---|
-| open | 0 | 0 | 0 | 6 | **6** |
+| open | 0 | 0 | 0 | 7 | **7** |
 | in-progress | 0 | 0 | 0 | 0 | 0 |
 | fixed | 0 | 0 | 0 | 0 | 0 |
 | **verified** | 20 | 19 | 22 | 26 | **87** |
@@ -225,6 +225,7 @@ rules were silently not running for any package.
 | B89 | `@repo/ui`'s globals.css points two `@source` globs at directories that do not exist | @repo/ui | [config](config-bugs.md#b89) | verified |
 | B90 | `<Button asChild>` always throws React error #143 | @repo/ui | [function](function-bugs.md#b90) | verified |
 | B91 | `ThemeProvider` reads `localStorage` during render, so any server render of it throws | @repo/ui | [function](function-bugs.md#b91) | verified |
+| B92 | `package add bun-server` into an older workspace breaks `pnpm install` (`bun` build not in `allowBuilds`) | startx-cli | [function](function-bugs.md#b92) | open |
 
 ---
 

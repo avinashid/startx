@@ -1141,3 +1141,21 @@ node -p "require('./<proj>/packages/ui/package.json').peerDependencies"
 
 **Verify** — next-app `next build` prerenders `/`. In headless Chromium (template and `next-only` scaffold), `<html>` has class `light`; after `localStorage["app-theme-mode"]="dark"` and a reload it has `dark`, with no hydration warnings in the console.
 
+---
+
+## B92
+
+### B92 · `package add bun-server` into an older workspace breaks `pnpm install` (`bun` build not in `allowBuilds`)
+
+- **Status:** open
+- **Severity:** P3
+- **Area:** startx-cli
+- **File:** `apps/startx-cli/src/commands/package.ts` (root dependency reconciliation)
+- **Found in:** F11 (bun-server, `tsk_r3837m7y`), 2026-10-02
+
+**Symptom** — In a workspace whose `pnpm-workspace.yaml` predates F11, `startx package add bun-server` adds `bun` to the root devDependencies. The next `pnpm install` then exits 1 with `ERR_PNPM_IGNORED_BUILDS: Ignored build scripts: bun@1.4.2`, and `node_modules/.bin/bun` prints "Bun's postinstall script was not run". Reproduced in a scratch pnpm 11.5.1 workspace without the `allowBuilds` entry.
+
+**Cause** — The binary comes from `bun`'s postinstall, which only runs when `allowBuilds` lists it. `init` ships that line in the template's `pnpm-workspace.yaml`. `package add` reconciles `catalog:` entries into an existing workspace, but not `allowBuilds`.
+
+**Proposed fix** — When a root dependency that needs a build script is added, `package add` also writes its `allowBuilds` entry (`bun: true`), the way it already adds missing catalog entries. Until then: add `bun: true` under `allowBuilds`, or run `pnpm approve-builds`.
+
