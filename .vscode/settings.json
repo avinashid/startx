@@ -8,6 +8,5 @@
 		"js/ts.suggest.autoImports": "explicit",
 		"source.fixAll": "explicit"
 	},
-	"eslint.workingDirectories": [{ "mode": "auto" }],
-	"js/ts.tsdk.path": "node_modules\\typescript\\lib"
+	"eslint.workingDirectories": [{ "mode": "auto" }]
 }

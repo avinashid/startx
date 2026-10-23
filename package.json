@@ -71,6 +71,7 @@
 		"rimraf": "catalog:",
 		"turbo": "catalog:",
 		"typescript": "catalog:",
+		"@typescript/native": "catalog:",
 		"tsdown": "catalog:",
 		"unrun": "catalog:",
 		"tsx": "catalog:",

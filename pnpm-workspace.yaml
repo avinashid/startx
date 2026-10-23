@@ -17,7 +17,12 @@ allowBuilds:
 
 catalog:
   # configs
-  typescript: "^5.9.2"
+  # TypeScript 7 is the Go compiler and has no JS API until 7.1, so `typescript` is Microsoft's 6.0
+  # compat package: whatever imports the compiler (typescript-eslint, Next, tsdown's dts) gets the 6.0
+  # API, and `tsc` comes from `@typescript/native`, which is TypeScript 7. The compat package only
+  # ships a `tsc6` binary, so the two never fight over `tsc`.
+  typescript: "npm:@typescript/typescript6@^6.0.2"
+  "@typescript/native": "npm:typescript@^7.0.2"
   eslint: "^9.39.2"
   # Exact: scaffolds ship no lockfile, and 0.20.3 turned the inlineOnly notice into a build error (B47).
   tsdown: "0.20.1"
@@ -31,10 +36,9 @@ catalog:
   # eslint plugins
   "@eslint/compat": "^2.0.2"
   "@eslint/js": "^9.0.0"
-  "@stylistic/eslint-plugin": "^2.0.0"
-  "@typescript-eslint/eslint-plugin": "^8.0.0"
-  "@typescript-eslint/rule-tester": "^8.54.0"
-  "@typescript-eslint/utils": "^8.0.0"
+  "@typescript-eslint/eslint-plugin": "^8.72.0"
+  "@typescript-eslint/rule-tester": "^8.72.0"
+  "@typescript-eslint/utils": "^8.72.0"
   "@types/eslint-config-prettier": "^6.11.3"
   "@types/eslint-plugin-jsx-a11y": "^6.10.1"
   eslint-config-prettier: "^9.1.0"
@@ -47,7 +51,7 @@ catalog:
   eslint-plugin-unicorn: "^55.0.0"
   eslint-plugin-unused-imports: "^4.0.0"
   globals: "^15.9.0"
-  typescript-eslint: "^8.54.0"
+  typescript-eslint: "^8.72.0"
 
   # utils
   "@biomejs/biome": "^2.3.13"

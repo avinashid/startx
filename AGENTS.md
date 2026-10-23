@@ -69,6 +69,20 @@ entry (`@repo/env`, `@repo/logger`, `@repo/redis`, `@repo/mail`: `"./src/index.t
   `"catalog:"` for a name with no catalog entry fails `pnpm install`.
 - Internal workspace dependency → `"@repo/lib": "workspace:^"`.
 
+### TypeScript is two packages: `tsc` is 7, `import "typescript"` is 6.0
+
+TypeScript 7 is the Go compiler and ships no JS API until 7.1. The catalog therefore installs both:
+
+- `@typescript/native` → `typescript@7`. It provides `tsc`, which every `typecheck` script runs.
+- `typescript` → `@typescript/typescript6`, Microsoft's compat package. Whatever imports the compiler
+  (typescript-eslint, Next's build-time check, tsdown's dts) gets the 6.0 API from it. Its only
+  binary is `tsc6`.
+
+Do not collapse the alias back into a plain `typescript` range: typescript-eslint refuses to start on
+TypeScript 7. Both versions read the same tsconfigs, so the 6.0/7.0 defaults apply everywhere. In
+particular `types` defaults to `[]`: a package that uses Node globals needs `"types": ["node"]`, which
+`tsconfig.node.json` already sets. `baseUrl` and `moduleResolution: node`/`node10` are hard errors.
+
 ### Two formatters, split by package
 
 `biome.json` has `linter.enabled: false`. **Biome is a formatter here, never a linter. ESLint owns
