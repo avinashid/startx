@@ -2,8 +2,8 @@
 	"name": "@repo/model",
 	"type": "module",
 	"scripts": {
-		"lint": "eslint .",
-		"lint:fix": "eslint . src/**/*.ts --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"clean": "rimraf dist build .turbo",
 		"deep:clean": "rimraf node_modules dist build .turbo",
 		"typecheck": "tsc --noEmit",

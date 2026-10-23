@@ -11,8 +11,8 @@
 		"start": "next start --port 3001",
 		"typecheck": "next typegen && tsc --noEmit",
 		"test": "vitest run",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix"
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix"
 	},
 	"dependencies": {
 		"@repo/ui": "workspace:*",

@@ -1,0 +1,13 @@
+{
+	"extends": ["./node_modules/eslint-config/src/oxlint/base.json"],
+	"ignorePatterns": [
+		"eslint.config.ts",
+		"tsup.config.ts",
+		"jest.config.js",
+		"cypress.config.js",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"tsdown.config.ts",
+		"drizzle.config.ts"
+	]
+}

@@ -4,7 +4,7 @@
 	"tasks": {
 		"lint": {
 			"cache": true,
-			"inputs": ["src/**", "eslint.config.*", ".eslintrc.*", "tsdown.config.ts", "package.json"]
+			"inputs": ["src/**", ".oxlintrc.json", "eslint.config.*", ".eslintrc.*", "tsdown.config.ts", "package.json"]
 		},
 
 		"build": {

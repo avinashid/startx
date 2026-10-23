@@ -32,6 +32,23 @@ const packageNameSchema = z
 	.max(214, "Package name too long")
 	.regex(/^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/, "Invalid package name");
 
+// The first lint pass, beside eslint.config.ts. Literal text for the same reason as the tsconfig
+// above (B71). The ignores sit here because oxlint does not apply ignorePatterns from a config it extends.
+export const NEW_PACKAGE_OXLINTRC = `{
+	"extends": ["./node_modules/eslint-config/src/oxlint/base.json"],
+	"ignorePatterns": [
+		"eslint.config.ts",
+		"tsup.config.ts",
+		"jest.config.js",
+		"cypress.config.js",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"tsdown.config.ts",
+		"drizzle.config.ts"
+	]
+}
+`;
+
 // Literal text, not JSON.stringify: the workspace's formatter must accept it as written, or the
 // package fails format:check the moment it exists (B71). Prettier and biome both indent with
 // tabs and collapse an array that fits on one line, which JSON.stringify never does.
@@ -244,6 +261,7 @@ export class PackageCommand {
 				path.join(packageDir, "eslint.config.ts"),
 				`import { baseConfig } from "eslint-config/base";\nimport { extend } from "eslint-config/extend";\n\nexport default extend(baseConfig);\n`,
 			);
+			await fs.writeFile(path.join(packageDir, ".oxlintrc.json"), NEW_PACKAGE_OXLINTRC);
 		}
 
 		if (vitestEnabled) {

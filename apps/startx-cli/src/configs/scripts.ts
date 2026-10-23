@@ -115,8 +115,9 @@ export const scripts: SCRIPT = {
 			script: "turbo run lint",
 			tags: ["node", "eslint", "root"],
 		},
+		// oxlint first (type-aware, from .oxlintrc.json), then ESLint for the rules oxlint lacks.
 		{
-			script: "eslint .",
+			script: "oxlint && eslint .",
 			tags: ["node", "eslint"],
 		},
 	],
@@ -126,7 +127,7 @@ export const scripts: SCRIPT = {
 			tags: ["node", "eslint", "root"],
 		},
 		{
-			script: "eslint . --fix",
+			script: "oxlint --fix && eslint . --fix",
 			tags: ["node", "eslint"],
 		},
 	],

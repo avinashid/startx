@@ -11,8 +11,8 @@
 		"start": "vite preview",
 		"typecheck": "react-router typegen && tsc",
 		"test": "vitest run",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix"
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix"
 	},
 	"dependencies": {
 		"@dotenvx/dotenvx": "catalog:",

@@ -60,6 +60,10 @@ export const FileCheck: WHITELIST_FILES = {
 	"eslint.config.ts": {
 		tags: ["eslint", "node"],
 	},
+	// The first lint pass, which every package with an eslint.config.ts also has.
+	".oxlintrc.json": {
+		tags: ["eslint", "node"],
+	},
 	"vitest.config.ts": {
 		tags: ["vitest", "node"],
 	},

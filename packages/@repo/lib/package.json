@@ -9,8 +9,8 @@
 		"typecheck": "tsc --noEmit",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"test": "vitest run",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},

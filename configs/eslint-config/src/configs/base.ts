@@ -9,7 +9,13 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 import { localRulesPlugin } from "../plugin.js";
 
-// Exported as a standard array for Flat Config
+// Linting is two passes. oxlint runs first, with `src/oxlint/base.json`: every rule it implements,
+// the type-aware ones included (on TypeScript 7, through oxlint-tsgolint). This config is the second
+// pass and holds only the rules oxlint does not implement. None of them needs type information, so
+// the parser builds no TypeScript program, which is where ESLint's time went.
+//
+// Every plugin stays registered even when none of its rules run here: oxlint honours
+// `eslint-disable` comments, and a comment naming a rule from an unregistered plugin is an error.
 export const baseConfig = tseslint.config(
 	// 1. Global Ignores
 	{
@@ -29,19 +35,24 @@ export const baseConfig = tseslint.config(
 		],
 	},
 
-	// 2. Base Configurations
-	...tseslint.configs.recommended,
-	...tseslint.configs.recommendedTypeChecked,
-	importPlugin.flatConfigs.recommended as any,
-	importPlugin.flatConfigs.typescript as any,
+	// 2. Parser and plugins, without any preset's rules. ESLint only lints a file some entry names in
+	// `files`, and its defaults cover JS alone; the recommended preset used to name the TS extensions.
+	tseslint.configs.base,
+	{ files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"] },
 
 	// 3. Main Configuration
 	{
 		plugins: {
+			"import-x": importPlugin,
 			"unused-imports": fixupPluginRules(unusedImportsPlugin),
 			lodash: fixupPluginRules(lodashPlugin),
 			unicorn: unicornPlugin,
 			"local-rules": localRulesPlugin,
+		},
+		linterOptions: {
+			// A disable comment for a rule oxlint runs suppresses nothing in this pass, so this pass
+			// cannot tell whether it is unused.
+			reportUnusedDisableDirectives: "off",
 		},
 		languageOptions: {
 			ecmaVersion: "latest",
@@ -50,43 +61,16 @@ export const baseConfig = tseslint.config(
 				...globals.node,
 				...globals.es2021,
 			},
-			parserOptions: {
-				projectService: true,
-				tsconfigRootDir: process.cwd(),
-			},
 		},
 		settings: {
+			...importPlugin.flatConfigs.typescript.settings,
 			// The v3 resolver interface: the resolvers are built once here, instead of being looked up by
 			// hashing their options on every import.
+			"import-x/resolver": undefined,
 			"import-x/resolver-next": [createTypeScriptImportResolver({ alwaysTryTypes: true }), createNodeResolver()],
 		},
 		rules: {
-			// Core Rules
-			"no-void": ["error", { allowAsStatement: true }],
-			"no-constant-binary-expression": "error",
-			"no-console": ["warn", { allow: ["warn", "error", "info"] }], // Allowed info for debugging
-			eqeqeq: ["warn", "always", { null: "ignore" }],
-			"object-shorthand": "warn",
-			"prefer-const": "warn",
-
-			// TypeScript Quality of Life
-			"@typescript-eslint/await-thenable": "error",
-			"@typescript-eslint/no-floating-promises": ["error", { ignoreVoid: true }],
-			"@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: false }],
-			"@typescript-eslint/only-throw-error": "error",
-			"@typescript-eslint/no-explicit-any": "warn",
-			"@typescript-eslint/no-unsafe-assignment": "warn",
-			"@typescript-eslint/no-unsafe-argument": "warn",
-			"@typescript-eslint/no-unsafe-call": "warn",
-			"@typescript-eslint/no-unsafe-return": "off",
-			"@typescript-eslint/no-unnecessary-type-assertion": "warn",
-
-			"@typescript-eslint/no-unsafe-member-access": ["warn", { allowOptionalChaining: true }],
-			"@typescript-eslint/array-type": ["warn", { default: "array-simple" }],
-			"@typescript-eslint/return-await": ["warn", "always"],
-			"@typescript-eslint/no-empty-object-type": ["warn"],
-
-			// Naming Conventions (Relaxed for APIs and strict for standard code)
+			// Naming Conventions (Relaxed for APIs and strict for standard code). oxlint has no equivalent.
 			"@typescript-eslint/naming-convention": [
 				"warn",
 				{ selector: "default", format: ["camelCase"] },
@@ -113,8 +97,7 @@ export const baseConfig = tseslint.config(
 				},
 			],
 
-			// Handled entirely by unused-imports
-			"@typescript-eslint/no-unused-vars": "off",
+			// Unused imports and variables, with the autofix that removes unused imports.
 			"unused-imports/no-unused-imports": "warn",
 			"unused-imports/no-unused-vars": [
 				"warn",
@@ -126,18 +109,10 @@ export const baseConfig = tseslint.config(
 				},
 			],
 
-			// Imports
-			// typecheck already reports what these four do (unresolved paths, missing namespace members,
-			// conflicting re-exports), and each one makes import-x parse every module the file imports,
-			// declaration files included, to build its export map. That was 30-45% of rule time.
-			// `import-x/default` stays on: it is cheaper, and it catches default imports TS lets through (B45).
-			"import-x/namespace": "off",
-			"import-x/export": "off",
-			"import-x/no-unresolved": "off",
-			"import-x/no-named-as-default-member": "off",
-			"import-x/no-cycle": "off",
-			"import-x/no-named-as-default": "off",
-			"import-x/no-duplicates": "warn",
+			// Imports. oxlint has no `order`, and its `default` lets `import React from "react"` through,
+			// which B45 requires to fail. typecheck covers what `namespace`, `export` and `no-unresolved`
+			// would report.
+			"import-x/default": "error",
 			"import-x/order": [
 				"warn",
 				{
@@ -147,9 +122,7 @@ export const baseConfig = tseslint.config(
 				},
 			],
 
-			// Plugins
-			"unicorn/no-unnecessary-await": "warn",
-			"unicorn/no-useless-promise-resolve-reject": "warn",
+			// Plugins oxlint can only load as alpha JS plugins.
 			"lodash/path-style": ["warn", "as-needed"],
 			"lodash/import-scope": ["warn", "method"],
 		},
@@ -160,9 +133,6 @@ export const baseConfig = tseslint.config(
 		files: ["test/**/*.ts", "**/__tests__/*.ts", "**/*.test.ts", "**/*.cy.ts", "**/*.spec.ts"],
 		rules: {
 			"local-rules/no-plain-errors": "off",
-			"@typescript-eslint/unbound-method": "off",
-			"@typescript-eslint/no-unsafe-call": "off",
-			"@typescript-eslint/no-unsafe-member-access": "off",
 		},
 	},
 

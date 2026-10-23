@@ -10,8 +10,8 @@
 		"./extend": "./src/configs/extend.ts"
 	},
 	"scripts": {
-		"lint": "eslint .",
-		"lint:fix": "eslint . src/**/*.ts --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"clean": "rimraf dist .turbo dist",
 		"deep:clean": "rimraf node_modules dist .turbo",
 		"typecheck": "tsc --noEmit",

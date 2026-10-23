@@ -6,8 +6,8 @@
 	"scripts": {
 		"build": "tsdown --config-loader unrun",
 		"cli": "cross-env STARTX_ENV=development tsx src/index.ts",
-		"lint": "eslint .",
-		"lint:fix": "eslint . src/**/*.ts --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"clean": "rimraf bin .turbo",
 		"deep:clean": "rimraf node_modules bin .turbo",
 		"typecheck": "tsc --noEmit",

@@ -6,8 +6,9 @@ export default extend(
 	{ ignores: [".next/**", "next-env.d.ts", "postcss.config.mjs"] },
 	frontendConfig,
 	{
+		// The Next rules run in oxlint (`.oxlintrc.json`), apart from this one, which it does not implement.
 		plugins: { "@next/next": nextPlugin },
-		rules: { ...nextPlugin.configs.recommended.rules, ...nextPlugin.configs["core-web-vitals"].rules },
+		rules: { "@next/next/no-location-assign-relative-destination": "warn" },
 	},
 	{
 		// Route handlers are named after the HTTP method they answer; Next requires it.

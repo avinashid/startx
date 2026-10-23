@@ -53,7 +53,7 @@ describe("FileHandler.handlePackageJson", () => {
 			typecheck: "next typegen && tsc --noEmit",
 			clean: "rimraf .next .turbo",
 			"deep:clean": "rimraf node_modules .next .turbo",
-			lint: "eslint .",
+			lint: "oxlint && eslint .",
 			test: "vitest run",
 			"format:check": "biome ci .",
 		});

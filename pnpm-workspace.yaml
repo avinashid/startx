@@ -24,6 +24,10 @@ catalog:
   typescript: "npm:@typescript/typescript6@^6.0.2"
   "@typescript/native": "npm:typescript@^7.0.2"
   eslint: "^9.39.2"
+  # Lints first, natively and type-aware; ESLint keeps only the rules oxlint does not have.
+  # oxlint-tsgolint is its type-aware half, built on TypeScript 7.
+  oxlint: "^1.89.0"
+  oxlint-tsgolint: "^7.0.2004"
   # Exact: scaffolds ship no lockfile, and 0.20.3 turned the inlineOnly notice into a build error (B47).
   tsdown: "0.20.1"
   unrun: "^0.2.27"

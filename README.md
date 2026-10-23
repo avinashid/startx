@@ -194,7 +194,7 @@ startx package new my-utils --dir packages/internal/my-utils
 | Name | Description |
 |------|-------------|
 | `typescript-config` | Shared `tsconfig` base files |
-| `eslint-config` | Shared ESLint flat-config rules (TypeScript, imports, unicorn) |
+| `eslint-config` | Shared lint config: oxlint (type-aware, `src/oxlint/`) runs first, then ESLint for the rules oxlint lacks |
 | `vitest-config` | Shared Vitest configuration |
 | `tsdown-config` | Shared tsdown build configuration |
 

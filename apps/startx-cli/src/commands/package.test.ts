@@ -6,7 +6,7 @@ import * as prettier from "prettier";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import * as YAML from "yaml";
 
-import { NEW_PACKAGE_TSCONFIG, PackageCommand } from "./package";
+import { NEW_PACKAGE_OXLINTRC, NEW_PACKAGE_TSCONFIG, PackageCommand } from "./package";
 import type { StartXPackageJson } from "../types";
 import { CliUtils, type PackageItem } from "../utils/cli-utils";
 
@@ -134,5 +134,13 @@ describe("NEW_PACKAGE_TSCONFIG (B71)", () => {
 		const options = await prettier.resolveConfig(path.resolve(import.meta.dirname, "../../../../.prettierrc.cjs"));
 		const formatted = await prettier.format(NEW_PACKAGE_TSCONFIG, { ...options, filepath: "tsconfig.json" });
 		expect(formatted).toBe(NEW_PACKAGE_TSCONFIG);
+	});
+});
+
+describe("NEW_PACKAGE_OXLINTRC (B71)", () => {
+	it("is already formatted under the template's prettier config, so a new package passes format:check", async () => {
+		const options = await prettier.resolveConfig(path.resolve(import.meta.dirname, "../../../../.prettierrc.cjs"));
+		const formatted = await prettier.format(NEW_PACKAGE_OXLINTRC, { ...options, filepath: ".oxlintrc.json" });
+		expect(formatted).toBe(NEW_PACKAGE_OXLINTRC);
 	});
 });

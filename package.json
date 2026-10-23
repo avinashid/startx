@@ -65,6 +65,8 @@
 	},
 	"devDependencies": {
 		"eslint": "catalog:",
+		"oxlint": "catalog:",
+		"oxlint-tsgolint": "catalog:",
 		"vitest": "catalog:",
 		"@biomejs/biome": "catalog:",
 		"prettier": "catalog:",

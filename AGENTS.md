@@ -83,10 +83,31 @@ TypeScript 7. Both versions read the same tsconfigs, so the 6.0/7.0 defaults app
 particular `types` defaults to `[]`: a package that uses Node globals needs `"types": ["node"]`, which
 `tsconfig.node.json` already sets. `baseUrl` and `moduleResolution: node`/`node10` are hard errors.
 
+### Linting is two passes: oxlint, then ESLint
+
+Every package's `lint` script is `oxlint && eslint .`.
+
+- **oxlint** runs first, from the package's `.oxlintrc.json`, which extends
+  `eslint-config/src/oxlint/base.json` or `frontend.json`. It runs every rule it implements,
+  including all the type-aware ones (`no-floating-promises`, `no-unsafe-*`, `no-misused-promises`
+  and the rest), through `oxlint-tsgolint` on TypeScript 7.
+- **ESLint** runs second, from `eslint.config.ts`, and holds only what oxlint does not implement:
+  `@typescript-eslint/naming-convention`, `import-x/order`, `import-x/default`, `unused-imports`,
+  the lodash rules and, for frontend packages, `react/jsx-no-leaked-render`. None of these needs type
+  information, so ESLint builds no TypeScript program.
+
+Put a new rule in oxlint if oxlint has it, and in ESLint only if it does not. A rule in both reports
+everything twice. An `eslint-disable` comment works for both passes, because oxlint honours them.
+ESLint does not report unused disable comments: a comment for a rule oxlint runs suppresses nothing
+in the ESLint pass.
+
+oxlint does not apply `ignorePatterns` from a config it extends, so each `.oxlintrc.json` lists its
+own ignores. Keep that list in line with the `ignores` in the ESLint config.
+
 ### Two formatters, split by package
 
-`biome.json` has `linter.enabled: false`. **Biome is a formatter here, never a linter. ESLint owns
-linting.** Most packages run `biome format --write .` / `biome ci .`; `apps/cli`, `apps/startx-cli`
+`biome.json` has `linter.enabled: false`. **Biome is a formatter here, never a linter. oxlint and
+ESLint own linting.** Most packages run `biome format --write .` / `biome ci .`; `apps/cli`, `apps/startx-cli`
 and `packages/@repo/model` run `prettier --write .` / `prettier --check .` instead. Check the
 package's own `format` script before assuming which one applies.
 
@@ -103,8 +124,8 @@ Two traps:
 
 ### Logging
 
-`logger.info/warn/error` from `@repo/logger`. Not `console.log`. ESLint allows `console.warn`,
-`console.error` and `console.info`, and warns on the rest.
+`logger.info/warn/error` from `@repo/logger`. Not `console.log`. Lint (oxlint's `no-console`) allows
+`console.warn`, `console.error` and `console.info`, and warns on the rest.
 
 ### Environment variables
 
@@ -133,7 +154,8 @@ import * as React from "react";        // or: import type * as React from "react
 ```
 
 `import React from "react"` / `import type React from "react"` trips `import-x/default` and fails
-lint. Do not weaken the rule to make your import work.
+lint. That rule stays in the ESLint pass because oxlint's `import/default` lets these imports through.
+Do not weaken the rule to make your import work.
 
 ---
 
@@ -150,7 +172,7 @@ startx package add core-server --name api-v2   # copy an existing template, opti
 **`startx package new`** writes `package.json` (with `typecheck` and `clean`, plus `format`/
 `format:check`, `lint`/`lint:fix` and `test` only if that tooling is detected in the workspace root),
 `src/index.ts`, and `tsconfig.json` extending `typescript-config/tsconfig.node.json`. It adds
-`eslint.config.ts` and `vitest.config.ts` only if ESLint / vitest are present. Default location is
+`eslint.config.ts` and `.oxlintrc.json`, and `vitest.config.ts`, only if ESLint / vitest are present. Default location is
 `packages/<scope>/<name>`; override with `-d`.
 
 **`startx package add`** copies a real template package instead of generating a blank one, resolves
@@ -177,6 +199,15 @@ If you do add files yourself, these are the exact lines. Copy them; do not impro
 import { baseConfig } from "eslint-config/base";        // or frontendConfig from "eslint-config/frontend"
 import { extend } from "eslint-config/extend";
 export default extend(baseConfig);
+```
+
+```jsonc
+// .oxlintrc.json (the ignores are the ESLint config's, and must be listed here, see §2)
+{
+	"extends": ["./node_modules/eslint-config/src/oxlint/base.json"],   // or frontend.json
+	"ignorePatterns": ["eslint.config.ts", "tsup.config.ts", "jest.config.js", "cypress.config.js",
+		"vite.config.ts", "vitest.config.ts", "tsdown.config.ts", "drizzle.config.ts"]
+}
 ```
 
 ```ts

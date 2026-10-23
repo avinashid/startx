@@ -10,8 +10,8 @@
 		"test": "vitest run",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"watch": "tsc -p tsconfig.build.json --watch"
 	},
 	"exports": "./src/index.ts",

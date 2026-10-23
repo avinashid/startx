@@ -11,8 +11,8 @@
 		"test": "vitest run",
 		"format": "biome format --write .",
 		"format:check": "biome ci .",
-		"lint": "eslint .",
-		"lint:fix": "eslint . --fix",
+		"lint": "oxlint && eslint .",
+		"lint:fix": "oxlint --fix && eslint . --fix",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
 		"watch": "tsc -p tsconfig.build.json --watch"

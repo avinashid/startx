@@ -12,6 +12,8 @@ import { baseConfig } from "./base.js";
 
 const baseWithoutPrettier = baseConfig.filter((config) => config !== eslintConfigPrettier);
 
+// The second lint pass for frontend packages. oxlint runs `src/oxlint/frontend.json` first, which
+// carries the React, hooks and accessibility rules. See base.ts for how the two passes split.
 export const frontendConfig = tseslint.config(
 	...baseWithoutPrettier,
 
@@ -36,21 +38,25 @@ export const frontendConfig = tseslint.config(
 		},
 	},
 
-	// 3. React Recommended Configs
-	reactPlugin.configs.flat.recommended as any,
-	reactPlugin.configs.flat["jsx-runtime"] as any,
-
-	// 4. React, Hooks, and Accessibility Rules
+	// 3. React rules from the recommended set that oxlint does not implement. jsx-uses-vars lets
+	// unused-imports see a variable that is only used in JSX.
 	{
-		files: ["**/*.tsx", "**/*.jsx"],
 		plugins: {
+			react: reactPlugin,
 			"react-hooks": fixupPluginRules(reactHooksPlugin as any),
 			"jsx-a11y": fixupPluginRules(jsxA11yPlugin),
 		},
 		rules: {
-			...reactHooksPlugin.configs.recommended.rules,
-			...jsxA11yPlugin.configs.recommended.rules,
+			"react/jsx-uses-vars": "error",
+			"react/no-deprecated": "error",
+			"react/require-render-return": "error",
+		},
+	},
 
+	// 4. Components
+	{
+		files: ["**/*.tsx", "**/*.jsx"],
+		rules: {
 			// --- Naming Convention Override for React ---
 			// Allows PascalCase for functional components while keeping variables camelCase
 			"@typescript-eslint/naming-convention": [
@@ -66,31 +72,14 @@ export const frontendConfig = tseslint.config(
 				{ selector: "typeLike", format: ["PascalCase"] },
 			],
 
-			// --- React Specifics ---
-			"react/prop-types": "off", // Using TS interfaces instead
-			"react/react-in-jsx-scope": "off", // Not needed for React 17+
-			"react/jsx-uses-react": "off", // Not needed for React 17+
-			"react/display-name": "warn",
-			"react/no-unescaped-entities": "warn",
 			"react/jsx-no-leaked-render": ["error", { validStrategies: ["ternary", "coerce"] }],
-
-			// --- React Hooks Specifics ---
-			"react-hooks/rules-of-hooks": "error",
-			"react-hooks/exhaustive-deps": "warn",
-
-			// --- Accessibility (a11y) Specifics ---
-			"jsx-a11y/no-autofocus": "warn",
-			"jsx-a11y/click-events-have-key-events": "warn",
-			"jsx-a11y/no-static-element-interactions": "warn",
-			"jsx-a11y/anchor-is-valid": "warn",
-			"jsx-a11y/no-onchange": "off", // Deprecated rule, fine to turn off
 		},
 	},
 
+	// Emails render with the classic runtime, so React must count as used where JSX appears.
 	{
 		files: ["**/emails/**/*.tsx", "**/emails/**/*.jsx"],
 		rules: {
-			"react/react-in-jsx-scope": "error",
 			"react/jsx-uses-react": "error",
 		},
 	},

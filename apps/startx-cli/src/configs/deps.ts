@@ -16,6 +16,17 @@ export const DepCheck: WHITELIST_DEPS = {
 		version: "catalog:",
 		isDevDependency: true,
 	},
+	// The eslint tag selects linting as a whole: oxlint runs first, then ESLint for what oxlint lacks.
+	oxlint: {
+		tags: ["node", "eslint", "root"],
+		version: "catalog:",
+		isDevDependency: true,
+	},
+	"oxlint-tsgolint": {
+		tags: ["node", "eslint", "root"],
+		version: "catalog:",
+		isDevDependency: true,
+	},
 	vitest: {
 		tags: ["node", "vitest", "root"],
 		version: "catalog:",

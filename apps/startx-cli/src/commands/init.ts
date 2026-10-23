@@ -382,6 +382,7 @@ export class InitCommand {
 		const extensions = {
 			recommendations: [
 				"dbaeumer.vscode-eslint",
+				"oxc.oxc-vscode",
 				...(usesBiome ? ["biomejs.biome"] : usesPrettier ? ["esbenp.prettier-vscode"] : []),
 			],
 		};
