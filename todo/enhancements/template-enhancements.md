@@ -360,3 +360,41 @@ Tried and rejected, measured as CPU time over all 20 packages linted one at a ti
   - Published-path `full-biome` scaffold with the new `base.ts` (it resolves `eslint-plugin-import-x` 4.17.1): lint gives the same results as the old config, minus the 3 `@repo/lib` warnings. The one failure, `@repo/observability`, comes from `@opentelemetry/api` 1.10.0 drift (E20) and fails under both configs.
 
 **Not changed, worth knowing** — on this host every turbo task pays about 0.85s for pnpm to hand off from the global 11.22.0 to the pinned `pnpm@11.5.1`. A bare `pnpm --version` takes 1.38s, against 0.54s for the pinned one run directly. That is about 17s of CPU per lint run and about 74s per gate. A global pnpm that matches `packageManager` removes it.
+
+---
+
+## E22
+
+### E22 · Lint in two passes: oxlint (type-aware) first, ESLint only for the rules oxlint lacks
+
+- **Status:** done · **Value:** high · **Effort:** M
+- **Area:** `configs/eslint-config` (`src/configs/{base,frontend}.ts`, new `src/oxlint/{base,frontend}.json`), a `.oxlintrc.json` and the `lint` / `lint:fix` scripts in every linted package, `apps/next-app/eslint.config.ts`, `apps/startx-cli/src/{configs/deps,configs/files,configs/scripts,commands/package,commands/init}.ts`, root `package.json`, `startx.json`, `pnpm-workspace.yaml`, `turbo.json`, `AGENTS.md`, `README.md`
+
+**Today** — after E21, lint was still the longest task in the gate. Most of its time went into building a TypeScript program in every package for typescript-eslint's type-aware rules. Requested in chat ("do it", after measuring oxlint on this repo). The plan was a hybrid that keeps every rule.
+
+**Done when** — every package's `lint` is `oxlint && eslint .` (`lint:fix` adds `--fix` to both).
+- **oxlint** reads a per-package `.oxlintrc.json` that extends `eslint-config/src/oxlint/base.json` or `frontend.json`. The rules came from `@oxlint/migrate` run against the E21 ESLint config. That covers the core, typescript-eslint (all type-aware rules, through `oxlint-tsgolint` on TypeScript 7), import, unicorn, React, hooks and jsx-a11y rules. next-app adds the 21 Next rules oxlint has. oxlint does not apply `ignorePatterns` from an extended config, so each `.oxlintrc.json` carries the ESLint config's ignores itself. The shared JSON lives under `src/` because the generator copies a template package's top-level files and its `src/` only.
+- **ESLint** keeps what oxlint does not implement: `naming-convention`, `import-x/order`, `import-x/default` (oxlint's `import/default` lets `import React from "react"` through, which B45 requires to fail), `unused-imports`, lodash, and `react/{jsx-no-leaked-render,no-deprecated,require-render-return,jsx-uses-vars}`. It has no `projectService` and no type-aware preset. Every plugin stays registered, because oxlint honours `eslint-disable` comments and a comment naming a rule from an unloaded plugin is an ESLint error. `reportUnusedDisableDirectives` is off, since a comment for an oxlint rule suppresses nothing in this pass. `tseslint.configs.base` names no `files`, so the config names the TS extensions itself. Without that, ESLint lints nothing in a package that has no JS files.
+- **Generator** — `oxlint` and `oxlint-tsgolint` are root devDependencies under the `eslint` tag: `DepCheck`, `package.json` and `startx.json`. `FileCheck` copies `.oxlintrc.json` with the same tags as `eslint.config.ts`. `package new` writes one from a literal that is already formatted (B71, with a test). The generated `.vscode/extensions.json` recommends `oxc.oxc-vscode`. turbo's `lint` inputs include `.oxlintrc.json`.
+- `oxlint-tsgolint` is `^7.0.2004`. 7.0.2005 was 15 hours old, and pnpm 11's one-day `minimumReleaseAge` made `pnpm install` write a `minimumReleaseAgeExclude` block into `pnpm-workspace.yaml`. That block would have shipped to every scaffold.
+
+- **Fixed in:** `ed39871`.
+  - Coverage: oxlint and ESLint each lint exactly the same 278 files the E21 config linted.
+  - Every finding, against the E21 ESLint-only run (197): the hybrid reports 184 with no errors. The differences:
+    - The 4 unused-disable-directive warnings are gone (reporting is off in the ESLint pass).
+    - `use-update-effect.tsx:10` gets one `exhaustive-deps` warning where ESLint gave two.
+    - `image-picker.tsx` gets a new, correct `no-duplicates` warning: it imports `react` twice.
+    - The other changes are line shifts or code that this change itself edited (`eslint-config`'s `base.ts`/`frontend.ts`, `startx-cli`'s `package.ts`).
+  - Probes: type-aware rules (`no-floating-promises`, `no-unsafe-assignment`, `require-await`), `eslint-disable-next-line`, hooks and a11y all fire in oxlint. `import React from "react"` still fails through ESLint.
+  - Forced gate: 87/87, 0 cached, 310 tests.
+  - `turbo lint --force`, three rounds rotating the three trees:
+
+    | | CPU (3 runs) | Wall, round 1 |
+    |---|---|---|
+    | 1.3.0 | 229.2 / 220.1 / 224.2s, avg 224.5s | 81.3s |
+    | E21 | 199.0 / 189.6 / 196.5s, avg 195.0s | 57.7s |
+    | E22 | 102.2 / 107.3 / 109.0s, avg 106.2s | 30.0s |
+
+    Rounds 2 and 3 ran while another job's `rustc` builds pushed the load average to 25–34, so only their CPU time counts.
+  - Where the E22 CPU goes: the oxlint pass takes 27.8s for 20 packages run one at a time (13.4s wall), the ESLint pass 48.4s, and pnpm's start-up about 32s (1.6s per task, see E21).
+  - Published-CLI path, `full-biome`: the scaffold gets the root deps, an `.oxlintrc.json` in each package, `src/oxlint/`, the new scripts and the VS Code recommendation. Its forced gate shows only the six E20 drift failures. It also caught `@repo/mail`'s `.oxlintrc.json` being unformatted: the template package has no `format` script, so the repo's own gate could not see it.

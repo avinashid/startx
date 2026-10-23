@@ -3,8 +3,8 @@
 Improvements to things that **already exist**. If it doesn't exist yet, it's a
 [feature](../features/features.md). If it's broken, it's a [bug](../bugs/bugs.md).
 
-- **Next free ID:** `E22`
-- **Open:** 15 · **In progress:** 0 · **Done:** 6
+- **Next free ID:** `E23`
+- **Open:** 15 · **In progress:** 0 · **Done:** 7
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -40,6 +40,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E19 | `@repo/observability`: OTLP tracing and `/health` + `/ready`, wired into core-server | high | M | done |
 | E20 | TypeScript 7 (`tsc`) everywhere, with the 6.0 compat package for compiler-API consumers | med | S | done |
 | E21 | Faster lint: drop the import-x rules typecheck already covers, and use the v3 resolver interface | med | S | done |
+| E22 | Lint in two passes: oxlint (type-aware) first, ESLint only for the rules oxlint lacks | high | M | done |
 
 Effort: **S** ≈ under an hour · **M** ≈ half a day · **L** ≈ multi-day.
 
