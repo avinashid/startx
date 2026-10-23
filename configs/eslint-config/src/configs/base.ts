@@ -1,6 +1,7 @@
 import { fixupPluginRules } from "@eslint/compat";
 import eslintConfigPrettier from "eslint-config-prettier";
-import importPlugin from "eslint-plugin-import-x";
+import { createTypeScriptImportResolver } from "eslint-import-resolver-typescript";
+import importPlugin, { createNodeResolver } from "eslint-plugin-import-x";
 import lodashPlugin from "eslint-plugin-lodash";
 import unicornPlugin from "eslint-plugin-unicorn";
 import unusedImportsPlugin from "eslint-plugin-unused-imports";
@@ -55,13 +56,9 @@ export const baseConfig = tseslint.config(
 			},
 		},
 		settings: {
-			"import-x/resolver": {
-				typescript: {
-					alwaysTryTypes: true,
-					project: true,
-				},
-				node: true,
-			},
+			// The v3 resolver interface: the resolvers are built once here, instead of being looked up by
+			// hashing their options on every import.
+			"import-x/resolver-next": [createTypeScriptImportResolver({ alwaysTryTypes: true }), createNodeResolver()],
 		},
 		rules: {
 			// Core Rules
@@ -130,6 +127,14 @@ export const baseConfig = tseslint.config(
 			],
 
 			// Imports
+			// typecheck already reports what these four do (unresolved paths, missing namespace members,
+			// conflicting re-exports), and each one makes import-x parse every module the file imports,
+			// declaration files included, to build its export map. That was 30-45% of rule time.
+			// `import-x/default` stays on: it is cheaper, and it catches default imports TS lets through (B45).
+			"import-x/namespace": "off",
+			"import-x/export": "off",
+			"import-x/no-unresolved": "off",
+			"import-x/no-named-as-default-member": "off",
 			"import-x/no-cycle": "off",
 			"import-x/no-named-as-default": "off",
 			"import-x/no-duplicates": "warn",
