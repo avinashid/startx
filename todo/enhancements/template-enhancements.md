@@ -305,3 +305,31 @@ There is no module-patching auto-instrumentation: tsdown bundles express and ior
     - `server-only` 40/40: no packages were selected, and `@repo/observability` arrived through core-server's closure.
     - `full-biome` 79/79.
 
+
+---
+
+## E20
+
+### E20 · TypeScript 7 (`tsc`) everywhere, with the 6.0 compat package for compiler-API consumers
+
+- **Status:** done · **Value:** med · **Effort:** S
+- **Area:** `pnpm-workspace.yaml` (catalog), root `package.json`, `startx.json`, `configs/eslint-config/package.json`, `AGENTS.md`, `.vscode/settings.json`
+
+**Today** — the catalog pinned `typescript` at `^5.9.2`; 7.0.2 (the Go compiler) is the latest. Requested in chat. TypeScript 7.0 ships no JS API (it lands in 7.1), and typescript-eslint 8.72 declares `typescript >=4.8.4 <6.1.0` and refuses to start on 7. Next's build-time type check and tsdown's dts plugin also import the compiler.
+
+**Done when** — the catalog follows Microsoft's side-by-side setup: `"@typescript/native": "npm:typescript@^7.0.2"` (provides `tsc`, which every `typecheck` script runs) and `"typescript": "npm:@typescript/typescript6@^6.0.2"` (the 6.0 API for whatever imports `typescript`; its only binary is `tsc6`). The root `package.json` and `startx.json` list both. `startx.json` matters here: the publish job strips the root dependency lists, so a scaffold from the published CLI takes them from `startx.json` alone, and without the `@typescript/native` entry it would have no `tsc`. `handlePackageJson` passes root devDependencies outside `DepCheck` through unchanged. typescript-eslint and `@typescript-eslint/*` are `^8.72.0`, the first range that accepts TypeScript 6. `@stylistic/eslint-plugin` is removed: nothing imported it, and its locked `@typescript-eslint/utils@8.54.0` was the last `typescript <6.0.0` peer in the graph. AGENTS.md §2 explains the two packages. The repo's `js/ts.tsdk.path` is gone, because the compat package's `lib/` has no `tsserver.js`; VS Code's TypeScript 7 support comes from the `TypeScriptTeam.native-preview` extension.
+
+No tsconfig needed a change. None uses `baseUrl`, `moduleResolution: node`/`node10` or `target: es5`, and `tsconfig.node.json` already sets `types: ["node"]` for the new `[]` default.
+
+- **Fixed in:** `5420c6d`.
+  - Forced gate after a clean `node_modules` reinstall: 87/87, 0 cached. `tsc --version` is 7.0.2 in every package, and `require("typescript").version` is 6.0.3.
+  - A deliberate `const x: number = "a"` in `packages/common` fails `tsc` 7 with TS2322.
+  - Lint gains 10 warnings, all `@typescript-eslint/no-unnecessary-type-assertion`, which typescript-eslint 8.72 reports in more cases. There are no new errors.
+  - `pnpm peers check` still lists `tsdown@0.20.1` / `rolldown-plugin-dts` wanting `typescript ^5.0.0`. tsdown stays pinned for B47, and no template emits `.d.ts`. The `@tailwindcss/typography` / `tailwindcss` range quirk is unchanged.
+  - Typecheck is 4.5× faster. Each package run alone with `tsc --noEmit` took 60.5s in total under TypeScript 5.9.3 and 13.5s under 7.0.2, with every package 3–11× faster (`@repo/ui` went from 7.7s to 1.1s). TypeScript 7 and `tsc6` see the same files in every package.
+  - Forced `turbo lint` takes about 67s now (two runs: 65s and 70s), against about 85s at the previous commit (88s, 92s and 76s). The gain comes from typescript-eslint building its program on the 6.0 API. The full forced gate took 149s now and 178s before, one run each.
+  - Published-CLI path: I exported the tree, stripped the root dependency lists as the publish job does, and scaffolded `full-biome` from it. The root gets both entries, `tsc` is 7.0.2, and `core-server` typechecks clean.
+  - Scaffold E2E, from source, `full-biome`: the root gets both entries, `tsc` is 7.0.2 and the API is 6.0.3. 83/89 pass. All six failures come from versions that fresh resolution picks without a lockfile, and do not depend on TypeScript:
+    - `@tanstack/react-query` 5.104.5 makes `use-api-control.ts:74` fail with TS2345. TypeScript 5.9.3 fails the same way, and the error fails `@repo/ui`, `web-client` and `next-app` typecheck and `next-app` build.
+    - `@opentelemetry/api` 1.10.0 is outside the OTel SDK's peer range (`<1.10.0`) and fails `@repo/observability` lint with `no-unsafe-enum-comparison`.
+    - Biome 2.6.2 does not match the `biome.json` 2.3.13 schema and fails `next-app` format:check.

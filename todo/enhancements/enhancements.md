@@ -3,8 +3,8 @@
 Improvements to things that **already exist**. If it doesn't exist yet, it's a
 [feature](../features/features.md). If it's broken, it's a [bug](../bugs/bugs.md).
 
-- **Next free ID:** `E20`
-- **Open:** 15 · **In progress:** 0 · **Done:** 4
+- **Next free ID:** `E21`
+- **Open:** 15 · **In progress:** 0 · **Done:** 5
 
 Conventions and the entry template are in [`../README.md`](../README.md#6-how-to-work-this-folder).
 
@@ -38,6 +38,7 @@ Conventions and the entry template are in [`../README.md`](../README.md#6-how-to
 | E17 | `@db/sqlite` on drizzle over the built-in `node:sqlite`, without the native `better-sqlite3` | med | M | done |
 | E18 | `web-client` on React Router 8 (latest) and React 19.3 | med | S | done |
 | E19 | `@repo/observability`: OTLP tracing and `/health` + `/ready`, wired into core-server | high | M | done |
+| E20 | TypeScript 7 (`tsc`) everywhere, with the 6.0 compat package for compiler-API consumers | med | S | done |
 
 Effort: **S** ≈ under an hour · **M** ≈ half a day · **L** ≈ multi-day.
 
