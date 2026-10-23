@@ -333,3 +333,30 @@ No tsconfig needed a change. None uses `baseUrl`, `moduleResolution: node`/`node
     - `@tanstack/react-query` 5.104.5 makes `use-api-control.ts:74` fail with TS2345. TypeScript 5.9.3 fails the same way, and the error fails `@repo/ui`, `web-client` and `next-app` typecheck and `next-app` build.
     - `@opentelemetry/api` 1.10.0 is outside the OTel SDK's peer range (`<1.10.0`) and fails `@repo/observability` lint with `no-unsafe-enum-comparison`.
     - Biome 2.6.2 does not match the `biome.json` 2.3.13 schema and fails `next-app` format:check.
+
+---
+
+## E21
+
+### E21 · Faster lint: drop the import-x rules typecheck already covers, and use the v3 resolver interface
+
+- **Status:** done · **Value:** med · **Effort:** S
+- **Area:** `configs/eslint-config/src/configs/base.ts`, `packages/@repo/mail/src/index.ts`
+
+**Today** — a forced `turbo lint` took about 85s on the 4-core dev host and was the longest part of the gate. Requested in chat ("I want it faster"). Profiling put `import-x/namespace` at 31–46% of rule time in core-server, `@repo/lib` and `@repo/ui`. It builds an export map for every module a file imports, `@types/react` included, and checks the same things `tsc` does. Turning it off alone did not help much: the export-map cost moved to `import-x/export` (`@repo/ui`) and to `import-x/default` and `import-x/no-unresolved` (`@repo/lib`).
+
+**Done when** — `import-x/namespace`, `import-x/export`, `import-x/no-unresolved` and `import-x/no-named-as-default-member` are off in the base config. Typecheck reports unresolved paths, missing namespace members and conflicting `export *`. `import-x/default` stays on, as decided in B45. With the others off it costs 0.1–0.27s per package. The resolver moves from the legacy `import-x/resolver` settings to `import-x/resolver-next`, with `createTypeScriptImportResolver({ alwaysTryTypes: true })` and `createNodeResolver()`, the same resolution as before. `@repo/mail` drops an `import-x/namespace` disable comment that would now be reported as unused.
+
+Tried and rejected, measured as CPU time over all 20 packages linted one at a time:
+- `parserOptions.project: true` instead of `projectService`: 153.3s against 154.8s, which is noise.
+- Turning off `@typescript-eslint/no-unsafe-assignment`: its 2.2s in `@repo/ui` is mostly the type checker's lazy first pass, which moved to `no-unsafe-argument`. That saved 8% of the package and cost a real finding.
+- One ESLint process for several packages (`v10_config_lookup_from_file`): about 30% less CPU for four packages, but findings changed because the configs resolve paths from `process.cwd()`. It would also run single-threaded and drop turbo's per-package cache.
+
+- **Fixed in:** `792ce42`.
+  - Every finding in all 20 packages, before and after: the only difference is the 7 `import-x/no-named-as-default-member` warnings (4 in `eslint-config`, 3 in `@repo/lib`). The other lines move because `base.ts` gained an import. There are no errors.
+  - CPU, 20 packages linted one at a time: 189.5s before. With the four rules off it was 160.2s, and with `resolver-next` added 154.8s (155.1s on a repeat), 18% less in total. `@repo/ui` went from 16.1s to 9.7s.
+  - CPU of `turbo lint --force`, alternating the two configs: 219.6s and 222.4s before, 187.9s and 190.6s after, about 14% less. This includes the pnpm and turbo overhead, which did not change. Wall time could not be compared: other jobs pushed the host's load average to 10–21 during the runs.
+  - Forced gate: 87/87, 0 cached, 309 tests.
+  - Published-path `full-biome` scaffold with the new `base.ts` (it resolves `eslint-plugin-import-x` 4.17.1): lint gives the same results as the old config, minus the 3 `@repo/lib` warnings. The one failure, `@repo/observability`, comes from `@opentelemetry/api` 1.10.0 drift (E20) and fails under both configs.
+
+**Not changed, worth knowing** — on this host every turbo task pays about 0.85s for pnpm to hand off from the global 11.22.0 to the pinned `pnpm@11.5.1`. A bare `pnpm --version` takes 1.38s, against 0.54s for the pinned one run directly. That is about 17s of CPU per lint run and about 74s per gate. A global pnpm that matches `packageManager` removes it.
